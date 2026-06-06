@@ -1,0 +1,115 @@
+body {
+    background: #f5f6fa;
+}
+
+.sidebar {
+    border-right: 1px solid #dee2e6;
+}
+
+.nav-link {
+    color: #333;
+}
+
+.nav-link:hover {
+    background: #e9ecef;
+    border-radius: 5px;
+}
+
+
+body {
+    background: #dfe6e9;
+    font-size: 12px;
+}
+
+/* Cards */
+
+.erp-card {
+    border: 1px solid #b2bec3;
+    border-radius: 0;
+}
+
+.erp-card .card-header {
+    background: #000;
+    color: #fff;
+    font-size: 12px;
+    font-weight: bold;
+    padding: 6px 10px;
+    border-radius: 0;
+}
+
+/* Tables */
+
+.table-erp {
+    margin-bottom: 0;
+}
+
+.table-erp th,
+.table-erp td {
+    padding: 4px;
+    font-size: 11px;
+    vertical-align: middle;
+}
+
+/* Inputs */
+
+.erp-input {
+    border-radius: 0;
+    font-size: 11px;
+    min-height: 28px;
+    padding: 2px 6px;
+}
+
+/* Totales */
+
+.total-row {
+    background: #ffeaa7;
+    font-weight: bold;
+}
+
+.total-box {
+    background: #dfe6e9;
+    font-weight: bold;
+}
+
+/* Colores Excel */
+
+.bg-yellow {
+    background: #fff200;
+}
+
+.bg-blue {
+    background: #cfe2ff;
+}
+
+.bg-green {
+    background: #d1e7dd;
+}
+
+.bg-gray {
+    background: #dfe6e9;
+}
+
+/* .tabletd,
+.tableth {
+    vertical-align:middle;
+    font-size:12px;
+}
+
+.card-header {
+    font-size:13px;
+}
+
+input.form-control-sm {
+    min-width:80px;
+}
+
+.section-total {
+    background: #fff3cd;
+    font-weight:bold;
+}
+
+.bg-summary {
+    background: #d1e7dd;
+} */
+
+

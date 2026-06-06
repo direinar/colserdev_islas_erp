@@ -1,0 +1,92 @@
+OBSERVACIONES
+INFORMACION DE VENTAS DEL TURNO
+VENTA SEGÚN CIERRE DE IAPROPIADA:
+Galones: se toma de las tirillas del cierre al final del turno
+                 El resto se autocalcula y debe estar bloqueado
+
+LECTURA ELECTRONICA DE SURTIDORES:
+INICIAL: Es arrastrado de FINAL de la planilla anterior
+FINAL: Se transcribe de los surtidores. Es el unico que debe estar desbloqueado, el resto se autocalcula.
+PRECIO: Se debe leer de la tabla de precios y solo cambia cuando hay alza o baja de precios de combustible. Debe estar bloqueado SIEMPRE.
+
+VENTA DE UREA Y LUBRICANTES:
+CANTIDAD: Se alimenta la cantidad de unidades vendidas de cada referencia. Debe estar desbloqueada.
+PRODUCTO: Debe ser un DESPLEGABLE para llamar la de la tabla de precios la referencia que se vendió. La referencia va a llegar con NOMBRE DEL PRODUCTO, VALOR SIN IVA E IVA si lo tiene.Debe alimentar esas 3 celdas.
+TOTAL: Multiplica la sumatoria de VALOR SIN IVA más IVA POR EL NUMERO DE UNIDADES VENDIDAS. Debe estar bloqueado.
+
+RESUMEN DE LO VENDIDO EN ESTE TURNO:
+COMBUSTIBLE:Arrastra en la primer columna el total de VENTAS SEGÚN CIERRES DE IAPROPIADA y en la segunda columna el  total de LECTURA ELECTRONICA DE SURTIDORES.
+UREA Y LUBRICANTES: Arrastra para las dos columnas el total de VENTAS DE UREA Y LUBRICANTES. Este módula debe estar TODO bloqueado.
+
+FALTANTES O SOBRANTES: Es la diferencia entre: RESUMEN DE LO RECIBIDO EN ESTE TURNO MENOS RESUMEN DE LO VENDIO EN ESTE TURO. Compara lo recibido con las 2 celdas de IApropiada y Surtidores y define si hay FALTANTE (-) O SOBRANTE. Debe estar bloqueado.
+TASLADO A SOBRANTES O FALTANTES: Una vez revisada por la Administración la Planilla y si se confirma el fatante o sobrante, el Administrdor o el Islero traslada la cifra a la casilla respectiva.
+
+NOMBRE DEL VENDEDOR: Va el nomre de quien hizo el turno.
+REVISÓ: Va un chekin que indica si está o no revisada. Despues de revisado no debe permitir modificaciones de isleros. Solo de Administrador
+
+INFORMACION DE MEDIOS DE PAGO
+Lo que está en AMARILLO son los distintos medios de pago. Van bloqueados. Lo que está en GRIS OSCURO son las sumatorias de cada medio de pago. Deben ir bloqueados, igual que algunas celdas que se inahabilitaron por no requerirse. Tambien van bloqueadas.
+El resto de celdas estarán disponibles para que sean llenadas.
+
+ESTE BLOQUE VA HASTA LA LINEA NEGRA (fila 53 con columna  G a L)
+
+RESUMEN DE LO RECIBIDO EN ESTE TURNO:
+Son las sumatorias de todos los MEDIOS DE PAGO. Este bloque va BLOQUEADO y da el resultado de todo lo recibido en el turno.
+
+RECAUDOS POR ADMINISTRACION:
+Este bloque NO ES DEL MANEJO DEL OPERARIO y no tiene nada que ver con el turno sino que es de manejo del ADMINISTRADOR. Se puede manejar en un bloque separado, para uso solo del ADMINISTRADOR.
+
+MODULOS A DONDE VIAJA LA INFORMACION DE LA PLANILLA DE TURNOS.
+1 - CONTROL TANQUES: Se suma las ventas según cierre de Iapropiada, tanto de gasolina como de ACPM, de todos los turnos del DIA y esta sumatoria se lleva a la celda respectiva en CONTROL TANQUES junto con la fecha respectiva.
+2 - INVENTARIOS DE GASOLINA, ACPM Y UREA Y LUBRICANATES: Viajan de todas LAS PLANILLAS DE TURNOS para cada producto: Fecha, No., unidades vendidos (viajan A UNIDADES - SALIDAS, Valor venta y precio.
+      INVENTARIO DE LUBRICANTES Y UREA: Debe haber una hoja por cada referencia. La urea se manejará como una referencia igual a la de lubricantes. Todas la hojas de inventarios son iguales. A estas hojas viajan SEGÚN LA REFERECIA: Fecha, planilla No., cantidad de nidades vendidas a SALIDAS y Valor de la venta SIN IVA.
+3 - CONTROL CAJA: A este módulo viajan Los totales de los medios de pago DE CADA PLANILLA que están en RESUMEN DE LO RECIBIDO EN ESTE TURNO (G54) de  todas las planillas: Fecha, No. De planilla y valor; , en el caso de VARIOS viajaan las 6 lineas con Concepto y valor de c/u; Las ventas de Urea y lubricantes antes de IVA; El IVA; Los faltantes y sobrantes; El total del RESUMEN DE LO VENDIDO EN EL TURNO (fila 61 Column E) y el TOTAL RECIBIDO ES EL TURNO (fila 68, columna I) Y el VENDEDOR.
+4 - PLANILLA DE ADMINISTRACION (Cambiar nombre por RECAUDOS DE CARTERA): A este modulo viaja: RECAUDOS, ANTIIPOS Y PREPAGO POR ISLAS (k34) con  fecha, No. Planilla,nombre del cliente, valor,y la palabra EFECTIVO, RECAUDOS POR ADMINISTRACION  (K54) con fecha, No. planilla, cliente, valor y nombre del banco o caja según corresponda.
+5 - CARTERA: El saldo del cliente se aumenta tomando de cada PLANILLA DE TURNOS en  CARTERA-CREDITO DIRECTO y llevndole a cada cliente: fecha, Nuemero de la planilla, nombre del cliente y valor. Y se disminuye tomando de la planilla de turnos - RECAUDOS, ANTICIPOS Y PREPAGOS POR ISLAS y de RECAUDOS POR ADMINISTRACION para llevar : Fecha, No. de planilla, CLiente y valor.
+
+INFORMACION QUE ALIMENTA A OTROS MODULOS:
+6 - COMPRAS Y FISCALES:
+En el caso de combustibles, este módulo se utiliza para:
+        1. liquidar las facturas de compras y acumularlas. Estas facturas viajan al módulo de INVENTARIOS DE GASOLINA Y ACPM llevando: fecha, No. De factura,  cantidad de galones y valor  total de cada uno. Y tambien viajan a CONTROL CONTABLE con Fecha, No. Factura t valor total.
+         2. Consignar los galones comprados en cada factura para ACPM y GASOLINA y acumularlos y totalizarlos por mes.
+         3. Liquidar el porcentaje de MAYORISTA en forma mensual. Este valor viaja a CONTROL CONTABLE una vez al mes.
+         4. Liquidar el ANTICIPO BIMESTRAL, para lo cual se acumulan los galones comprados en forma BIMESTRL y se multiplica por el valor de intermediación, para establecer cantidad de galons y su valor en cada bimestre.
+En el caso de Urea y Lubricantes, se utiliza para:
+           1. Acumular facturas de compras por proveedor con fecha, vr. Antes de IVA e iva DESCONTADO. Esta factura viaja al MODULO DE INVENTARIOS de UREA Y LUBRICANTES de cada referencia con: Nombre de Proveedor, Fecha, No. De factura, unidades compradas y vr. Antes de IVA.
+           2. Liquidar el IVA BIMESTRAL, para lo cual acumula las compras del bimestre en vr. Sin iva e iva dscontado.
+7 - MODULO CONTROL CONTABLE:
+Es un generador de los siguientes comprobantes contables:
+      1. VENTAS DEL PERÍODO a registrar. Se estructura con la siguiente información, estableciendo el período a registrar:
+          - Del módulo No. 3 de  CONTROL CAJA se hace la sumatoria por el período a contabilizar de: 1- Consignaciones; 2- TC-QR-Neque-Daviplata; 3- Descuentos; 3- Puntos Redimidos; 5- Gasolina EDS; 6- Diferencias menores; 7- DEL MODULO DE CARTERA de toma la sumatoria de las ventas a CRÉDITO del periodo de cada cliente y se lleva: Nombre y valor de las ventas a crédito del período.
+          - De INVENTARIOS DE GASOLINA Y ACPM se hace la sumatoria del período a contabilizar de LAS VENTAS Y DEL COSTO DE VENTAS.
+          - De INVENTARIOS DE UREA Y LUBRICANTES se hace la sumatoria del período a contabilizar de LAS VENTAS Y DEL COSTO DE VENTAS.
+          - Del módulo de COMPRAS Y FISCALES de trae el valor del porcentaje de MAYORISTA.
+          - Cuando  haya CALIBRACION de los surtidores y se regrese combustible a los tanques por este u otro motivo, este hecho se debe registrar en el módulo de INVENTARIOS como un ingreso y estos valores del período se llevan a este comprobante por el precio de venta y por el precio de compra.
+      2. ABONOS A CARTERA: Este comprobante se estructura traiendo del modul 4 de PLANILLA DE ADMINISTRACIÓN, los clientes que hicieron abonos durante el período incluyendo: Nombre del cliente, valor y nombre del banco o efectivo.
+      3. COMPRAS DEL PERIODO: Se configura tomando del módulo de COMPRAS Y FISCALES en forma individual todas las facturas de compras sin iva y el IVA que tenga cada proveedor.
+
+
+__________________________________________________________________________________________________________________
+
+Aquí tienes el diseño interactivo y todos los archivos del proyecto. El widget de arriba es completamente funcional — puedes editar los campos y los totales se recalculan en tiempo real.
+
+Estructura del proyecto
+Los archivos generados están organizados así:
+database/migrations/ — Una sola migración crea las 10 tablas necesarias: turnos, ventas_surtidor, lecturas_surtidor, consignaciones, cartera_credito, medios_pago_electronicos, ventas_urea_lubricantes, recaudos_anticipos, varios, y recaudos_administracion.
+app/Http/Livewire/PlanillaTurno.php — El componente principal con toda la lógica reactiva. Usa computed properties de Laravel para calcular automáticamente todos los totales (galones CTE/ACPM, lecturas electrónicas, precios unitarios, subtotales, sobrantes/faltantes, etc.).
+resources/views/livewire/planilla-turno.blade.php — La vista Blade con wire:model.defer en todos los campos, para que el recálculo suceda al hacer submit y no en cada keystroke (mejor performance).
+resources/views/layouts/app.blade.php — Layout base con el tema oscuro industrial.
+
+Para instalar en tu proyecto Laravel
+bash# 1. Instalar Livewire si no lo tienes
+composer require livewire/livewire
+
+# 2. Copiar los archivos al proyecto
+
+# 3. Correr la migración
+php artisan migrate
+
+# 4. Registrar el componente (Laravel auto-descubre en app/Http/Livewire/)
+# No requiere registro manual con Livewire v3
+
+# 5. Agregar la ruta en routes/web.php
