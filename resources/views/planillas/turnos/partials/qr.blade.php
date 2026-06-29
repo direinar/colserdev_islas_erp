@@ -21,27 +21,47 @@
             </thead>
 
             <tbody id="qr-body">
-                @php
-                    $initialQrLabels = ['Datáfono 1'];
-                @endphp
+                @if (isset($turno) && optional($turno->qrPagos)->count())
+                    @foreach ($turno->qrPagos as $i => $q)
+                        <tr data-index="{{ $i }}">
+                            <td>
+                                <input type="text" name="qr_pagos[{{ $i }}][concepto]"
+                                    class="form-control form-control-sm border-0 bg-transparent"
+                                    value="{{ $q->concepto }}">
+                            </td>
+                            <td>
+                                <input type="text" name="qr_pagos[{{ $i }}][valor]"
+                                    class="form-control form-control-sm text-end border-0 bg-transparent qr-valor"
+                                    inputmode="decimal" value="{{ number_format($q->valor, 0, ',', '.') }}">
+                            </td>
+                            <td class="text-center">
+                                <button type="button" class="btn btn-sm btn-danger remove-row">×</button>
+                            </td>
+                        </tr>
+                    @endforeach
+                @else
+                    @php
+                        $initialQrLabels = ['Datáfono 1'];
+                    @endphp
 
-                @foreach ($initialQrLabels as $index => $label)
-                    <tr data-index="{{ $index }}">
-                        <td>
-                            <input type="text" name="qr_pagos[{{ $index }}][Datáfono]"
-                                class="form-control form-control-sm border-0 bg-transparent"
-                                value="{{ $label }}">
-                        </td>
-                        <td>
-                            <input type="text" name="qr_pagos[{{ $index }}][valor]"
-                                class="form-control form-control-sm text-end border-0 bg-transparent qr-valor"
-                                inputmode="decimal">
-                        </td>
-                        <td class="text-center">
-                            <button type="button" class="btn btn-sm btn-danger remove-row">×</button>
-                        </td>
-                    </tr>
-                @endforeach
+                    @foreach ($initialQrLabels as $index => $label)
+                        <tr data-index="{{ $index }}">
+                            <td>
+                                <input type="text" name="qr_pagos[{{ $index }}][Datáfono]"
+                                    class="form-control form-control-sm border-0 bg-transparent"
+                                    value="{{ $label }}">
+                            </td>
+                            <td>
+                                <input type="text" name="qr_pagos[{{ $index }}][valor]"
+                                    class="form-control form-control-sm text-end border-0 bg-transparent qr-valor"
+                                    inputmode="decimal">
+                            </td>
+                            <td class="text-center">
+                                <button type="button" class="btn btn-sm btn-danger remove-row">×</button>
+                            </td>
+                        </tr>
+                    @endforeach
+                @endif
             </tbody>
 
             <tfoot>

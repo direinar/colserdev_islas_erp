@@ -5,8 +5,8 @@
             <thead>
                 <tr style="background-color: #d6f7c5;">
                     <th></th>
-                    <th class="text-center">VENTA S/IAPROPIADA</th>
-                    <th class="text-center">VENTA S/SURTIDORES</th>
+                    <th class="text-center">VENTAS/IAPROPIADA</th>
+                    <th class="text-center">VENTAS/SURTIDORES</th>
                 </tr>
             </thead>
             <tbody>
@@ -20,7 +20,7 @@
                     </td>
                 </tr>
                 <tr>
-                    <td><strong>UREA Y LUBRICANTES</strong></td>
+                    <td><strong>CANASTILLA</strong></td>
                     <td class="text-end" id="resumen-lubricantes-iapropiada">
                         0
                     </td>
@@ -30,7 +30,8 @@
                 </tr>
                 <tr style="background-color: #c9f0ad; font-size: 1.05rem;">
                     <td><strong>TOTALES</strong></td>
-                    <td class="text-end"><strong id="resumen-total-iapropiada">0</strong>
+                    <td class="text-end">
+                        <strong id="resumen-total-iapropiada" class="text-primary">0</strong>
                     </td>
                     <td class="text-end"><strong id="resumen-total-surtidores">0</strong>
                     </td>

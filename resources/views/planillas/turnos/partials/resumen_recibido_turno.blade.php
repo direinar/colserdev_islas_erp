@@ -94,7 +94,8 @@
 
                 <tr style="border-top: 3px solid #333;">
                     <td class="fw-bold" style="font-size: 1.1rem;">TOTAL RECIBIDO EN ESTE TURNO</td>
-                    <td style="text-align: right; font-weight: bold; font-size: 1.1rem; color: #2563eb;">
+                    {{-- Texto en --}}
+                    <td style="text-align: right; font-size: 1.1rem; font-weight: bold;">
                         <span id="resumen-total">0</span>
                     </td>
                 </tr>

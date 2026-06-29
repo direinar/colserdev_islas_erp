@@ -15,18 +15,33 @@
             </thead>
 
             <tbody id="gasolina-eds-body">
-                @for ($i = 0; $i < 1; $i++)
-                    <tr data-index="{{ $i }}">
-                        <td>
-                            <input type="text" name="gasolina_eds[{{ $i }}][puntos]"
-                                class="form-control form-control-sm text-end border-0 bg-transparent puntos-valor"
-                                inputmode="decimal">
-                        </td>
-                        <td class="text-center">
-                            <button type="button" class="btn btn-sm btn-danger remove-row">×</button>
-                        </td>
-                    </tr>
-                @endfor
+                @if (isset($turno) && optional($turno->gasolinaEds)->count())
+                    @foreach ($turno->gasolinaEds as $i => $g)
+                        <tr data-index="{{ $i }}">
+                            <td>
+                                <input type="text" name="gasolina_eds[{{ $i }}][puntos]"
+                                    class="form-control form-control-sm text-end border-0 bg-transparent puntos-valor"
+                                    inputmode="decimal" value="{{ number_format($g->valor, 0, ',', '.') }}">
+                            </td>
+                            <td class="text-center">
+                                <button type="button" class="btn btn-sm btn-danger remove-row">×</button>
+                            </td>
+                        </tr>
+                    @endforeach
+                @else
+                    @for ($i = 0; $i < 1; $i++)
+                        <tr data-index="{{ $i }}">
+                            <td>
+                                <input type="text" name="gasolina_eds[{{ $i }}][puntos]"
+                                    class="form-control form-control-sm text-end border-0 bg-transparent puntos-valor"
+                                    inputmode="decimal">
+                            </td>
+                            <td class="text-center">
+                                <button type="button" class="btn btn-sm btn-danger remove-row">×</button>
+                            </td>
+                        </tr>
+                    @endfor
+                @endif
             </tbody>
 
             <tfoot>

@@ -13,14 +13,17 @@
 
             </li>
 
-            <li class="nav-item mb-2">
+            @if (auth()->check() && auth()->user()->isAdministrador())
+                <li class="nav-item mb-2">
 
-                <a class="nav-link" href="#">
-                    <i class="bi bi-people"></i>
-                    Usuarios
-                </a>
+                    <a class="nav-link {{ request()->routeIs('users.*') ? 'active' : '' }}"
+                        href="{{ route('users.index') }}">
+                        <i class="bi bi-people"></i>
+                        Usuarios
+                    </a>
 
-            </li>
+                </li>
+            @endif
 
             <li class="nav-item mb-2">
 

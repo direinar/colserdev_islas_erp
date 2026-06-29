@@ -1,9 +1,7 @@
 <x-erp-card title="INFORMACION DE MEDIOS DE PAGO">
 
     <div class="d-flex justify-content-end mb-2">
-        <button type="button"
-                id="add-medio-pago-row"
-                class="btn btn-sm btn-outline-primary">
+        <button type="button" id="add-medio-pago-row" class="btn btn-sm btn-outline-primary">
             + Agregar fila
         </button>
     </div>
@@ -41,66 +39,103 @@
             </thead>
 
             <tbody id="medios-pago-body">
+                @if (isset($turno) && optional($turno->mediosPago)->count())
+                    @foreach ($turno->mediosPago as $i => $m)
+                        <tr data-index="{{ $i }}">
+                            <td>
+                                <input type="text" name="medios_pago[{{ $i }}][consignacion_no]"
+                                    class="form-control form-control-sm consignacion-no-input"
+                                    value="{{ $m->consignacion_no }}">
+                            </td>
+                            <td>
+                                <input type="text" name="medios_pago[{{ $i }}][consignacion_valor]"
+                                    class="form-control form-control-sm text-end consignacion-valor-input"
+                                    inputmode="decimal"
+                                    value="{{ number_format($m->consignacion_valor, 0, ',', '.') }}">
+                            </td>
+                            <td>
+                                <input type="text" name="medios_pago[{{ $i }}][descuento]"
+                                    class="form-control form-control-sm text-end descuento-valor-input"
+                                    inputmode="decimal" value="{{ number_format($m->descuento, 0, ',', '.') }}">
+                            </td>
+                            <td>
+                                <input type="text" name="medios_pago[{{ $i }}][cartera_factura_no]"
+                                    class="form-control form-control-sm cartera-no-input"
+                                    value="{{ $m->cartera_factura_no }}">
+                            </td>
+                            <td>
+                                <select name="medios_pago[{{ $i }}][cliente_id]"
+                                    class="form-select form-select-sm cartera-cliente-select">
+                                    <option value="">Seleccione cliente</option>
+                                    @foreach ($customers ?? collect() as $customer)
+                                        <option value="{{ $customer->id }}"
+                                            @if ($m->cliente_id == $customer->id) selected @endif>{{ $customer->name }} -
+                                            {{ $customer->document }}</option>
+                                    @endforeach
+                                </select>
+                            </td>
+                            <td>
+                                <input type="text" name="medios_pago[{{ $i }}][cartera_valor]"
+                                    class="form-control form-control-sm text-end cartera-valor-input"
+                                    inputmode="decimal" value="{{ number_format($m->cartera_valor, 0, ',', '.') }}">
+                            </td>
+                            <td class="text-center">
+                                <button type="button" class="btn btn-sm btn-danger remove-row">×</button>
+                            </td>
+                        </tr>
+                    @endforeach
+                @else
+                    <tr data-index="0">
 
-                <tr data-index="0">
+                        <td>
+                            <input type="text" name="medios_pago[0][consignacion_no]"
+                                class="form-control form-control-sm consignacion-no-input">
+                        </td>
 
-                    <td>
-                        <input type="text"
-                               name="medios_pago[0][consignacion_no]"
-                               class="form-control form-control-sm consignacion-no-input">
-                    </td>
+                        <td>
+                            <input type="text" name="medios_pago[0][consignacion_valor]"
+                                class="form-control form-control-sm text-end consignacion-valor-input"
+                                inputmode="decimal">
+                        </td>
 
-                    <td>
-                        <input type="text"
-                               name="medios_pago[0][consignacion_valor]"
-                               class="form-control form-control-sm text-end consignacion-valor-input"
-                               inputmode="decimal">
-                    </td>
+                        <td>
+                            <input type="text" name="medios_pago[0][descuento]"
+                                class="form-control form-control-sm text-end descuento-valor-input" inputmode="decimal">
+                        </td>
 
-                    <td>
-                        <input type="text"
-                               name="medios_pago[0][descuento]"
-                               class="form-control form-control-sm text-end descuento-valor-input"
-                               inputmode="decimal">
-                    </td>
+                        <td>
+                            <input type="text" name="medios_pago[0][cartera_factura_no]"
+                                class="form-control form-control-sm cartera-no-input">
+                        </td>
 
-                    <td>
-                        <input type="text"
-                               name="medios_pago[0][cartera_factura_no]"
-                               class="form-control form-control-sm cartera-no-input">
-                    </td>
-
-                    <td>
-                        <select name="medios_pago[0][cliente_id]"
+                        <td>
+                            <select name="medios_pago[0][cliente_id]"
                                 class="form-select form-select-sm cartera-cliente-select">
 
-                            <option value="">Seleccione cliente</option>
+                                <option value="">Seleccione cliente</option>
 
-                            @foreach ($customers ?? collect() as $customer)
-                                <option value="{{ $customer->id }}">
-                                    {{ $customer->name }} - {{ $customer->document }}
-                                </option>
-                            @endforeach
+                                @foreach ($customers ?? collect() as $customer)
+                                    <option value="{{ $customer->id }}">
+                                        {{ $customer->name }} - {{ $customer->document }}
+                                    </option>
+                                @endforeach
 
-                        </select>
-                    </td>
+                            </select>
+                        </td>
 
-                    <td>
-                        <input type="text"
-                               name="medios_pago[0][cartera_valor]"
-                               class="form-control form-control-sm text-end cartera-valor-input"
-                               inputmode="decimal">
-                    </td>
+                        <td>
+                            <input type="text" name="medios_pago[0][cartera_valor]"
+                                class="form-control form-control-sm text-end cartera-valor-input" inputmode="decimal">
+                        </td>
 
-                    <td class="text-center">
-                        <button type="button"
-                                class="btn btn-sm btn-danger remove-row">
-                            ×
-                        </button>
-                    </td>
+                        <td class="text-center">
+                            <button type="button" class="btn btn-sm btn-danger remove-row">
+                                ×
+                            </button>
+                        </td>
 
-                </tr>
-
+                    </tr>
+                @endif
             </tbody>
 
             <tfoot>
@@ -145,86 +180,86 @@
 </x-erp-card>
 
 <script>
-document.addEventListener('DOMContentLoaded', function () {
+    document.addEventListener('DOMContentLoaded', function() {
 
-    const tbody = document.getElementById('medios-pago-body');
-    const addBtn = document.getElementById('add-medio-pago-row');
+        const tbody = document.getElementById('medios-pago-body');
+        const addBtn = document.getElementById('add-medio-pago-row');
 
-    const optionsHtml =
-        document.getElementById('clientes-options-template').innerHTML;
+        const optionsHtml =
+            document.getElementById('clientes-options-template').innerHTML;
 
-    let nextIndex = tbody.querySelectorAll('tr').length;
+        let nextIndex = tbody.querySelectorAll('tr').length;
 
-    function parseNumber(value) {
+        function parseNumber(value) {
 
-        if (!value) {
-            return 0;
+            if (!value) {
+                return 0;
+            }
+
+            value = value.toString()
+                .replace(/\./g, '')
+                .replace(/,/g, '.');
+
+            return Number(value) || 0;
         }
 
-        value = value.toString()
-            .replace(/\./g, '')
-            .replace(/,/g, '.');
+        function formatNumber(number) {
 
-        return Number(value) || 0;
-    }
+            return Number(number).toLocaleString('es-CO', {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
+            });
+        }
 
-    function formatNumber(number) {
+        function updateTotals() {
 
-        return Number(number).toLocaleString('es-CO', {
-            minimumFractionDigits: 0,
-            maximumFractionDigits: 0
-        });
-    }
+            let totalConsignaciones = 0;
+            let totalDescuentos = 0;
+            let totalCartera = 0;
 
-    function updateTotals() {
+            document.querySelectorAll('#medios-pago-body tr').forEach(row => {
 
-        let totalConsignaciones = 0;
-        let totalDescuentos = 0;
-        let totalCartera = 0;
+                totalConsignaciones += parseNumber(
+                    row.querySelector('.consignacion-valor-input')?.value
+                );
 
-        document.querySelectorAll('#medios-pago-body tr').forEach(row => {
+                totalDescuentos += parseNumber(
+                    row.querySelector('.descuento-valor-input')?.value
+                );
 
-            totalConsignaciones += parseNumber(
-                row.querySelector('.consignacion-valor-input')?.value
-            );
+                totalCartera += parseNumber(
+                    row.querySelector('.cartera-valor-input')?.value
+                );
+            });
 
-            totalDescuentos += parseNumber(
-                row.querySelector('.descuento-valor-input')?.value
-            );
+            document.getElementById('total-consignaciones').textContent =
+                formatNumber(totalConsignaciones);
 
-            totalCartera += parseNumber(
-                row.querySelector('.cartera-valor-input')?.value
-            );
-        });
+            document.getElementById('total-descuentos').textContent =
+                formatNumber(totalDescuentos);
 
-        document.getElementById('total-consignaciones').textContent =
-            formatNumber(totalConsignaciones);
+            document.getElementById('total-cartera').textContent =
+                formatNumber(totalCartera);
+        }
 
-        document.getElementById('total-descuentos').textContent =
-            formatNumber(totalDescuentos);
+        function attachEvents(row) {
 
-        document.getElementById('total-cartera').textContent =
-            formatNumber(totalCartera);
-    }
+            row.querySelectorAll(
+                '.consignacion-valor-input, .descuento-valor-input, .cartera-valor-input'
+            ).forEach(input => {
 
-    function attachEvents(row) {
+                input.addEventListener('input', updateTotals);
+                input.addEventListener('change', updateTotals);
+            });
+        }
 
-        row.querySelectorAll(
-            '.consignacion-valor-input, .descuento-valor-input, .cartera-valor-input'
-        ).forEach(input => {
+        function createRow(index) {
 
-            input.addEventListener('input', updateTotals);
-            input.addEventListener('change', updateTotals);
-        });
-    }
+            const tr = document.createElement('tr');
 
-    function createRow(index) {
+            tr.dataset.index = index;
 
-        const tr = document.createElement('tr');
-
-        tr.dataset.index = index;
-
-        tr.innerHTML = `
+            tr.innerHTML = `
             <td>
                 <input type="text"
                     name="medios_pago[${index}][consignacion_no]"
@@ -274,39 +309,39 @@ document.addEventListener('DOMContentLoaded', function () {
             </td>
         `;
 
-        return tr;
-    }
+            return tr;
+        }
 
-    attachEvents(document.querySelector('#medios-pago-body tr'));
+        attachEvents(document.querySelector('#medios-pago-body tr'));
 
-    addBtn.addEventListener('click', function () {
+        addBtn.addEventListener('click', function() {
 
-        const row = createRow(nextIndex);
+            const row = createRow(nextIndex);
 
-        tbody.appendChild(row);
+            tbody.appendChild(row);
 
-        attachEvents(row);
+            attachEvents(row);
 
-        nextIndex++;
+            nextIndex++;
+
+            updateTotals();
+        });
+
+        document.addEventListener('click', function(e) {
+
+            if (e.target.classList.contains('remove-row')) {
+
+                const rows = tbody.querySelectorAll('tr');
+
+                if (rows.length > 1) {
+
+                    e.target.closest('tr').remove();
+
+                    updateTotals();
+                }
+            }
+        });
 
         updateTotals();
     });
-
-    document.addEventListener('click', function (e) {
-
-        if (e.target.classList.contains('remove-row')) {
-
-            const rows = tbody.querySelectorAll('tr');
-
-            if (rows.length > 1) {
-
-                e.target.closest('tr').remove();
-
-                updateTotals();
-            }
-        }
-    });
-
-    updateTotals();
-});
 </script>

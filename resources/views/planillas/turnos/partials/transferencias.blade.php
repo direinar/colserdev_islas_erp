@@ -16,25 +16,48 @@
             </thead>
 
             <tbody id="transferencias-body">
-                @for ($i = 0; $i < 1; $i++)
-                    <tr data-index="{{ $i }}">
-                        <td>
-                            <input type="text" name="transferencias[{{ $i }}][valor]"
-                                class="form-control form-control-sm text-end border-0 bg-transparent transferencia-valor"
-                                inputmode="decimal">
-                        </td>
+                @if (isset($turno) && optional($turno->transferencias)->count())
+                    @foreach ($turno->transferencias as $i => $t)
+                        <tr data-index="{{ $i }}">
+                            <td>
+                                <input type="text" name="transferencias[{{ $i }}][valor]"
+                                    class="form-control form-control-sm text-end border-0 bg-transparent transferencia-valor"
+                                    inputmode="decimal" value="{{ number_format($t->valor, 0, ',', '.') }}">
+                            </td>
 
-                        <td>
-                            <input type="text" name="transferencias[{{ $i }}][puntos]"
-                                class="form-control form-control-sm text-end border-0 bg-transparent puntos-valor"
-                                inputmode="decimal">
-                        </td>
+                            <td>
+                                <input type="text" name="transferencias[{{ $i }}][puntos]"
+                                    class="form-control form-control-sm text-end border-0 bg-transparent puntos-valor"
+                                    inputmode="decimal"
+                                    value="{{ number_format($t->puntos_redimidos ?? 0, 0, ',', '.') }}">
+                            </td>
 
-                        <td class="text-center">
-                            <button type="button" class="btn btn-sm btn-danger remove-row">×</button>
-                        </td>
-                    </tr>
-                @endfor
+                            <td class="text-center">
+                                <button type="button" class="btn btn-sm btn-danger remove-row">×</button>
+                            </td>
+                        </tr>
+                    @endforeach
+                @else
+                    @for ($i = 0; $i < 1; $i++)
+                        <tr data-index="{{ $i }}">
+                            <td>
+                                <input type="text" name="transferencias[{{ $i }}][valor]"
+                                    class="form-control form-control-sm text-end border-0 bg-transparent transferencia-valor"
+                                    inputmode="decimal">
+                            </td>
+
+                            <td>
+                                <input type="text" name="transferencias[{{ $i }}][puntos]"
+                                    class="form-control form-control-sm text-end border-0 bg-transparent puntos-valor"
+                                    inputmode="decimal">
+                            </td>
+
+                            <td class="text-center">
+                                <button type="button" class="btn btn-sm btn-danger remove-row">×</button>
+                            </td>
+                        </tr>
+                    @endfor
+                @endif
             </tbody>
 
             <tfoot>

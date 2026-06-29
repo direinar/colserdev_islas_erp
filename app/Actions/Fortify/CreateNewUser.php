@@ -28,6 +28,9 @@ class CreateNewUser implements CreatesNewUsers
             'name' => $input['name'],
             'email' => $input['email'],
             'password' => $input['password'],
+            'role' => User::count() === 0
+                ? User::ROLE_ADMINISTRADOR
+                : User::ROLE_ISLERO,
         ]);
     }
 }

@@ -22,29 +22,57 @@
             </thead>
 
             <tbody id="recaudos-body">
-                @for ($i = 0; $i < 1; $i++)
-                    <tr data-index="{{ $i }}">
-                        <td>
-                            <select name="recaudos[{{ $i }}][cliente_id]"
-                                class="form-select form-select-sm border-0 bg-transparent recaudos-cliente">
-                                <option value="">Seleccione cliente</option>
-                                @foreach ($customers ?? collect() as $customer)
-                                    <option value="{{ $customer->id }}">{{ $customer->name }}</option>
-                                @endforeach
-                            </select>
-                        </td>
+                @if (isset($turno) && optional($turno->recaudos)->count())
+                    @foreach ($turno->recaudos as $i => $r)
+                        <tr data-index="{{ $i }}">
+                            <td>
+                                <select name="recaudos[{{ $i }}][cliente_id]"
+                                    class="form-select form-select-sm border-0 bg-transparent recaudos-cliente">
+                                    <option value="">Seleccione cliente</option>
+                                    @foreach ($customers ?? collect() as $customer)
+                                        <option value="{{ $customer->id }}"
+                                            @if ($r->cliente_id == $customer->id) selected @endif>{{ $customer->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </td>
 
-                        <td>
-                            <input type="text" name="recaudos[{{ $i }}][valor]"
-                                class="form-control form-control-sm text-end border-0 bg-transparent recaudo-valor"
-                                inputmode="decimal">
-                        </td>
+                            <td>
+                                <input type="text" name="recaudos[{{ $i }}][valor]"
+                                    class="form-control form-control-sm text-end border-0 bg-transparent recaudo-valor"
+                                    inputmode="decimal" value="{{ number_format($r->valor, 0, ',', '.') }}">
+                            </td>
 
-                        <td class="text-center">
-                            <button type="button" class="btn btn-sm btn-danger remove-row">×</button>
-                        </td>
-                    </tr>
-                @endfor
+                            <td class="text-center">
+                                <button type="button" class="btn btn-sm btn-danger remove-row">×</button>
+                            </td>
+                        </tr>
+                    @endforeach
+                @else
+                    @for ($i = 0; $i < 1; $i++)
+                        <tr data-index="{{ $i }}">
+                            <td>
+                                <select name="recaudos[{{ $i }}][cliente_id]"
+                                    class="form-select form-select-sm border-0 bg-transparent recaudos-cliente">
+                                    <option value="">Seleccione cliente</option>
+                                    @foreach ($customers ?? collect() as $customer)
+                                        <option value="{{ $customer->id }}">{{ $customer->name }}</option>
+                                    @endforeach
+                                </select>
+                            </td>
+
+                            <td>
+                                <input type="text" name="recaudos[{{ $i }}][valor]"
+                                    class="form-control form-control-sm text-end border-0 bg-transparent recaudo-valor"
+                                    inputmode="decimal">
+                            </td>
+
+                            <td class="text-center">
+                                <button type="button" class="btn btn-sm btn-danger remove-row">×</button>
+                            </td>
+                        </tr>
+                    @endfor
+                @endif
             </tbody>
 
             <tfoot>

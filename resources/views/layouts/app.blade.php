@@ -7,18 +7,17 @@
 
     <title>@yield('title', 'Sistema')</title>
 
-    @vite([
-        'resources/css/app.css',
-        'resources/js/app.js'
-    ])
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 
 <body>
 
+    @include('layouts.navbar')
+
     <div class="container-fluid py-2">
-
-        @yield('content')
-
+        <main>
+            @yield('content')
+        </main>
     </div>
 
 </body>

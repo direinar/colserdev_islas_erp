@@ -32,6 +32,7 @@
                     <th style="width: 140px;">VALOR TOTAL SIN IVA</th>
                     <th style="width: 120px;">IVA</th>
                     <th style="width: 140px;">TOTAL</th>
+                    <th style="width: 90px;">ACCIÓN</th>
                 </tr>
             </thead>
             <tbody>
@@ -41,7 +42,7 @@
 
                 @if ($productOptions->isEmpty())
                     <tr>
-                        <td colspan="5" class="text-center py-4">No hay productos disponibles. Agrega productos desde
+                        <td colspan="6" class="text-center py-4">No hay productos disponibles. Agrega productos desde
                             el CRUD de lubricantes.</td>
                     </tr>
                 @else
@@ -73,6 +74,9 @@
                             <td>
                                 <input type="text" name="urea_lubricantes[{{ $index }}][total]"
                                     class="form-control form-control-sm total-input" readonly />
+                            </td>
+                            <td class="text-center">
+                                <button type="button" class="btn btn-sm btn-danger remove-row">×</button>
                             </td>
                         </tr>
                     @endfor
@@ -246,6 +250,9 @@
                     <td>
                         <input type="text" name="urea_lubricantes[${index}][total]" class="form-control form-control-sm total-input" readonly />
                     </td>
+                    <td class="text-center">
+                        <button type="button" class="btn btn-sm btn-danger remove-row">×</button>
+                    </td>
                 `;
                 return tr;
             }
@@ -263,6 +270,18 @@
                         behavior: 'smooth',
                         block: 'center'
                     });
+                });
+            }
+
+            if (tbody) {
+                tbody.addEventListener('click', function(event) {
+                    if (event.target.classList.contains('remove-row')) {
+                        const row = event.target.closest('tr');
+                        if (row) {
+                            row.remove();
+                            updateTotalsFooter();
+                        }
+                    }
                 });
             }
         });

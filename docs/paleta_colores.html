@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Iniciar sesión</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --mint:      #c8edd9;
+    --mint-mid:  #a2d9bc;
+    --mint-deep: #5aad85;
+    --rose:      #f5d6db;
+    --rose-mid:  #e8aab4;
+    --lav:       #ddd6f3;
+    --lav-mid:   #b8a8e8;
+    --sky:       #cce5f5;
+    --cream:     #fdf6ee;
+    --ink:       #2a2535;
+    --ink-soft:  #4a4560;
+    --ink-mute:  #8a84a0;
+    --white:     #ffffff;
+    --radius:    20px;
+    --shadow:    0 24px 64px rgba(42,37,53,.10), 0 4px 16px rgba(42,37,53,.06);
+  }
+
+  html, body {
+    height: 100%;
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  body {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    background-color: #f0ebe3;
+    background-image:
+      radial-gradient(ellipse 70% 60% at 15% 20%, #dce8f0 0%, transparent 60%),
+      radial-gradient(ellipse 55% 50% at 85% 80%, #e8d6f0 0%, transparent 55%),
+      radial-gradient(ellipse 60% 45% at 75% 10%, #d6edd8 0%, transparent 55%),
+      radial-gradient(ellipse 45% 40% at 20% 85%, #f5d6db 0%, transparent 55%);
+    overflow: hidden;
+  }
+
+  /* Floating decorative blobs */
+  .blobs {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .blob {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(60px);
+    opacity: 0.45;
+    animation: drift 14s ease-in-out infinite alternate;
+  }
+
+  .blob-1 { width: 380px; height: 380px; background: var(--mint); top: -80px; left: -100px; animation-delay: 0s; }
+  .blob-2 { width: 300px; height: 300px; background: var(--rose); bottom: -60px; right: -80px; animation-delay: -4s; }
+  .blob-3 { width: 200px; height: 200px; background: var(--lav); top: 40%; left: 60%; animation-delay: -8s; }
+  .blob-4 { width: 160px; height: 160px; background: var(--sky); bottom: 25%; left: 5%; animation-delay: -6s; }
+
+  @keyframes drift {
+    0%   { transform: translate(0, 0) scale(1); }
+    100% { transform: translate(30px, 20px) scale(1.06); }
+  }
+
+  /* Card */
+  .card {
+    position: relative;
+    z-index: 1;
+    width: 440px;
+    background: rgba(255,255,255,0.72);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(255,255,255,0.85);
+    border-radius: 28px;
+    box-shadow: var(--shadow);
+    padding: 52px 48px 44px;
+    animation: rise .7s cubic-bezier(.22,.68,0,1.2) both;
+  }
+
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(28px) scale(.97); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  /* Top accent strip */
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 32px; right: 32px;
+    height: 3px;
+    border-radius: 0 0 4px 4px;
+    background: linear-gradient(90deg, var(--mint-mid), var(--lav-mid), var(--rose-mid));
+  }
+
+  /* Logo area */
+  .logo-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 36px;
+    animation: rise .6s .1s cubic-bezier(.22,.68,0,1.2) both;
+  }
+
+  .logo-ring {
+    width: 64px; height: 64px;
+    border-radius: 18px;
+    background: linear-gradient(135deg, var(--mint) 0%, var(--lav) 100%);
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 8px 24px rgba(90,173,133,.22);
+  }
+
+  .logo-ring svg { width: 32px; height: 32px; }
+
+  .logo-text { text-align: center; }
+  .logo-text h1 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.65rem;
+    font-weight: 600;
+    color: var(--ink);
+    letter-spacing: -.02em;
+    line-height: 1.1;
+  }
+  .logo-text p {
+    margin-top: 6px;
+    font-size: .83rem;
+    font-weight: 300;
+    color: var(--ink-mute);
+    letter-spacing: .01em;
+  }
+
+  /* Form */
+  .form { display: flex; flex-direction: column; gap: 20px; }
+
+  .field { display: flex; flex-direction: column; gap: 7px; }
+
+  .field-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  label {
+    font-size: .78rem;
+    font-weight: 500;
+    color: var(--ink-soft);
+    letter-spacing: .04em;
+    text-transform: uppercase;
+  }
+
+  .forgot {
+    font-size: .78rem;
+    font-weight: 400;
+    color: var(--mint-deep);
+    text-decoration: none;
+    letter-spacing: .01em;
+    transition: color .2s;
+  }
+  .forgot:hover { color: var(--lav-mid); }
+
+  .input-wrap {
+    position: relative;
+  }
+
+  input[type="email"],
+  input[type="password"],
+  input[type="text"] {
+    width: 100%;
+    height: 50px;
+    padding: 0 16px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: .92rem;
+    font-weight: 300;
+    color: var(--ink);
+    background: rgba(255,255,255,0.8);
+    border: 1.5px solid rgba(180,170,200,.25);
+    border-radius: 14px;
+    outline: none;
+    transition: border-color .25s, box-shadow .25s, background .25s;
+    -webkit-appearance: none;
+  }
+
+  input::placeholder { color: var(--ink-mute); font-weight: 300; }
+
+  input:focus {
+    border-color: var(--mint-mid);
+    background: rgba(255,255,255,0.95);
+    box-shadow: 0 0 0 4px rgba(162,217,188,.2);
+  }
+
+  input[type="password"] { padding-right: 48px; }
+
+  .eye-btn {
+    position: absolute;
+    right: 14px; top: 50%;
+    transform: translateY(-50%);
+    background: none; border: none;
+    cursor: pointer; padding: 4px;
+    color: var(--ink-mute);
+    display: flex; align-items: center;
+    transition: color .2s;
+  }
+  .eye-btn:hover { color: var(--ink-soft); }
+  .eye-btn svg { width: 18px; height: 18px; }
+
+  /* Remember me */
+  .remember {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    animation: rise .6s .35s cubic-bezier(.22,.68,0,1.2) both;
+  }
+
+  .remember input[type="checkbox"] { display: none; }
+
+  .check-box {
+    width: 20px; height: 20px;
+    border-radius: 7px;
+    border: 1.5px solid rgba(180,170,200,.4);
+    background: rgba(255,255,255,.8);
+    display: flex; align-items: center; justify-content: center;
+    transition: all .2s;
+    flex-shrink: 0;
+  }
+
+  .check-box svg { opacity: 0; transform: scale(.5); transition: all .2s; }
+
+  .remember input:checked ~ .check-box {
+    background: linear-gradient(135deg, var(--mint-mid), var(--lav-mid));
+    border-color: transparent;
+  }
+  .remember input:checked ~ .check-box svg { opacity: 1; transform: scale(1); }
+
+  .remember span {
+    font-size: .85rem;
+    font-weight: 400;
+    color: var(--ink-soft);
+  }
+
+  /* Divider */
+  .divider {
+    display: flex; align-items: center; gap: 12px;
+    margin: 4px 0;
+  }
+  .divider::before, .divider::after {
+    content: ''; flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(180,170,200,.3), transparent);
+  }
+  .divider span { font-size: .72rem; color: var(--ink-mute); letter-spacing: .06em; text-transform: uppercase; }
+
+  /* Submit */
+  .btn-submit {
+    width: 100%;
+    height: 52px;
+    border: none;
+    border-radius: 14px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: .92rem;
+    font-weight: 500;
+    letter-spacing: .02em;
+    color: var(--white);
+    background: linear-gradient(135deg, #5aad85 0%, #8a7ed4 100%);
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 8px 24px rgba(90,173,133,.28);
+    transition: transform .2s, box-shadow .2s;
+    animation: rise .6s .45s cubic-bezier(.22,.68,0,1.2) both;
+  }
+
+  .btn-submit::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,.15), transparent);
+    opacity: 0;
+    transition: opacity .2s;
+  }
+
+  .btn-submit:hover { transform: translateY(-2px); box-shadow: 0 12px 32px rgba(90,173,133,.36); }
+  .btn-submit:hover::before { opacity: 1; }
+  .btn-submit:active { transform: translateY(0); }
+
+  /* Footer */
+  .footer-link {
+    text-align: center;
+    font-size: .82rem;
+    color: var(--ink-mute);
+    animation: rise .6s .55s cubic-bezier(.22,.68,0,1.2) both;
+  }
+  .footer-link a {
+    color: var(--mint-deep);
+    font-weight: 500;
+    text-decoration: none;
+    transition: color .2s;
+  }
+  .footer-link a:hover { color: var(--lav-mid); }
+
+  /* Pill tags decorativas */
+  .pill-tags {
+    position: fixed;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .pill {
+    position: absolute;
+    border-radius: 999px;
+    border: 1.5px solid;
+    font-family: 'DM Sans', sans-serif;
+    font-size: .7rem;
+    font-weight: 300;
+    letter-spacing: .04em;
+    padding: 6px 14px;
+    opacity: .5;
+    animation: drift 10s ease-in-out infinite alternate;
+  }
+  .pill-1 { top: 12%; left: 6%; border-color: var(--mint-mid); color: var(--mint-deep); animation-delay: 0s; }
+  .pill-2 { top: 22%; right: 8%; border-color: var(--rose-mid); color: #c0607a; animation-delay: -3s; }
+  .pill-3 { bottom: 18%; left: 8%; border-color: var(--lav-mid); color: #7060c0; animation-delay: -6s; }
+  .pill-4 { bottom: 28%; right: 6%; border-color: var(--sky); color: #5090c0; animation-delay: -9s; }
+
+  @media (max-width: 480px) {
+    .card { width: 95vw; padding: 40px 28px 36px; }
+    .pill, .blob-3, .blob-4 { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="blobs">
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+  <div class="blob blob-3"></div>
+  <div class="blob blob-4"></div>
+</div>
+
+<div class="pill-tags">
+  <div class="pill pill-1">Seguro</div>
+  <div class="pill pill-2">Confiable</div>
+  <div class="pill pill-3">Profesional</div>
+  <div class="pill pill-4">Moderno</div>
+</div>
+
+<div class="card">
+
+  <div class="logo-wrap">
+    <div class="logo-ring">
+      <svg viewBox="0 0 50 52" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M49.626 11.564a.809.809 0 0 0-.028-.209 1.074 1.074 0 0 0-.062-.224c-.02-.047-.043-.093-.071-.138a1.14 1.14 0 0 0-.218-.268c-.02-.016-.034-.035-.053-.05L26.374.126a1.24 1.24 0 0 0-1.248 0L1.906 10.675c-.02.016-.034.034-.053.05a1.14 1.14 0 0 0-.218.268c-.028.045-.05.09-.072.138a1.074 1.074 0 0 0-.061.224.809.809 0 0 0-.028.209v28.872a1.241 1.241 0 0 0 .624 1.076l22.82 13.174c.02.011.042.018.063.028.028.013.055.027.085.038.032.012.065.019.099.028.033.01.065.02.1.025.065.011.132.016.2.016.068 0 .135-.005.2-.016.035-.005.068-.016.1-.025.034-.009.067-.016.1-.028.03-.011.057-.025.084-.038.022-.01.044-.017.064-.028l22.82-13.174c.387-.223.624-.636.624-1.076V11.564zm-24.25-9.21l20.829 12.025-9.267 5.348-20.829-12.025zm-1.25 43.887L3.297 33.816V9.766l20.83 12.025v28.45zM4.2 8.093L25.03.998l20.83 12.025-20.83 12.025zM45.963 33.816L25.133 46.24V17.79l9.267-5.348v12.626c0 .685.743 1.115 1.34.77l5.587-3.227c.37-.213.592-.604.592-1.024V9.17l4.044 2.335v22.31z" fill="white"/>
+      </svg>
+    </div>
+    <div class="logo-text">
+      <h1>Bienvenido de nuevo</h1>
+      <p>Ingresa tus credenciales para continuar</p>
+    </div>
+  </div>
+
+  <form class="form" onsubmit="return false;">
+
+    <div class="field" style="animation: rise .6s .15s cubic-bezier(.22,.68,0,1.2) both;">
+      <label for="email">Correo electrónico</label>
+      <div class="input-wrap">
+        <input type="email" id="email" placeholder="tu@correo.com" autocomplete="email">
+      </div>
+    </div>
+
+    <div class="field" style="animation: rise .6s .25s cubic-bezier(.22,.68,0,1.2) both;">
+      <div class="field-header">
+        <label for="password">Contraseña</label>
+        <a href="#" class="forgot">¿Olvidaste tu contraseña?</a>
+      </div>
+      <div class="input-wrap">
+        <input type="password" id="password" placeholder="••••••••" autocomplete="current-password">
+        <button type="button" class="eye-btn" onclick="togglePass()" aria-label="Mostrar contraseña">
+          <svg id="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+            <circle cx="12" cy="12" r="3"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <label class="remember">
+      <input type="checkbox" id="remember">
+      <div class="check-box">
+        <svg width="11" height="9" viewBox="0 0 11 9" fill="none">
+          <path d="M1 4.5L4 7.5L10 1" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <span>Recordarme en este dispositivo</span>
+    </label>
+
+    <div class="divider"><span>o</span></div>
+
+    <button type="submit" class="btn-submit">Iniciar sesión</button>
+
+    <p class="footer-link">
+      ¿No tienes cuenta?&nbsp;<a href="#">Regístrate aquí</a>
+    </p>
+
+  </form>
+</div>
+
+<script>
+  function togglePass() {
+    const input = document.getElementById('password');
+    const icon  = document.getElementById('eye-icon');
+    if (input.type === 'password') {
+      input.type = 'text';
+      icon.innerHTML = `
+        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
+        <line x1="1" y1="1" x2="23" y2="23"/>`;
+    } else {
+      input.type = 'password';
+      icon.innerHTML = `
+        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+        <circle cx="12" cy="12" r="3"/>`;
+    }
+  }
+
+  // Focus glow color por campo
+  document.getElementById('email').addEventListener('focus', () => {
+    document.getElementById('email').style.boxShadow = '0 0 0 4px rgba(162,217,188,.22)';
+  });
+  document.getElementById('password').addEventListener('focus', () => {
+    document.getElementById('password').style.boxShadow = '0 0 0 4px rgba(184,168,232,.22)';
+  });
+  ['email','password'].forEach(id => {
+    document.getElementById(id).addEventListener('blur', e => e.target.style.boxShadow = '');
+  });
+</script>
+</body>
+</html>

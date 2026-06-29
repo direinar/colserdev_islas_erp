@@ -6,7 +6,7 @@
 
     <div class="d-flex justify-content-between mb-3">
 
-        <h3>Lubricantes</h3>
+        <h3>Canastilla</h3>
 
         <a href="{{ route('lubricants.create') }}"
            class="btn btn-primary">

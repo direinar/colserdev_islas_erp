@@ -21,22 +21,42 @@
             </thead>
 
             <tbody id="varios-body">
-                @for ($i = 0; $i < 1; $i++)
-                    <tr data-index="{{ $i }}">
-                        <td>
-                            <input type="text" name="varios[{{ $i }}][concepto]"
-                                class="form-control form-control-sm border-0 bg-transparent">
-                        </td>
-                        <td>
-                            <input type="text" name="varios[{{ $i }}][valor]"
-                                class="form-control form-control-sm text-end border-0 bg-transparent varios-valor"
-                                inputmode="decimal">
-                        </td>
-                        <td class="text-center">
-                            <button type="button" class="btn btn-sm btn-danger remove-row">×</button>
-                        </td>
-                    </tr>
-                @endfor
+                @if (isset($turno) && optional($turno->varios)->count())
+                    @foreach ($turno->varios as $i => $v)
+                        <tr data-index="{{ $i }}">
+                            <td>
+                                <input type="text" name="varios[{{ $i }}][concepto]"
+                                    class="form-control form-control-sm border-0 bg-transparent"
+                                    value="{{ $v->concepto }}">
+                            </td>
+                            <td>
+                                <input type="text" name="varios[{{ $i }}][valor]"
+                                    class="form-control form-control-sm text-end border-0 bg-transparent varios-valor"
+                                    inputmode="decimal" value="{{ number_format($v->valor, 0, ',', '.') }}">
+                            </td>
+                            <td class="text-center">
+                                <button type="button" class="btn btn-sm btn-danger remove-row">×</button>
+                            </td>
+                        </tr>
+                    @endforeach
+                @else
+                    @for ($i = 0; $i < 1; $i++)
+                        <tr data-index="{{ $i }}">
+                            <td>
+                                <input type="text" name="varios[{{ $i }}][concepto]"
+                                    class="form-control form-control-sm border-0 bg-transparent">
+                            </td>
+                            <td>
+                                <input type="text" name="varios[{{ $i }}][valor]"
+                                    class="form-control form-control-sm text-end border-0 bg-transparent varios-valor"
+                                    inputmode="decimal">
+                            </td>
+                            <td class="text-center">
+                                <button type="button" class="btn btn-sm btn-danger remove-row">×</button>
+                            </td>
+                        </tr>
+                    @endfor
+                @endif
             </tbody>
 
             <tfoot>

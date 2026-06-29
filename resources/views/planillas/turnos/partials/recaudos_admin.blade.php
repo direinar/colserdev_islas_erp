@@ -17,29 +17,61 @@
             </thead>
 
             <tbody id="recaudos-admin-body">
-                <tr data-index="0">
-                    <td>
-                        <input type="text" name="recaudos_admin[0][banco]"
-                            class="form-control form-control-sm border-0 bg-transparent" placeholder="Ej: Bancolombia">
-                    </td>
-                    <td>
-                        <select name="recaudos_admin[0][responsable_id]"
-                            class="form-select form-select-sm border-0 bg-transparent recaudos-admin-responsable">
-                            <option value="">Seleccione responsable</option>
-                            @foreach ($customers ?? collect() as $customer)
-                                <option value="{{ $customer->id }}">{{ $customer->name }}</option>
-                            @endforeach
-                        </select>
-                    </td>
-                    <td>
-                        <input type="text" name="recaudos_admin[0][valor]"
-                            class="form-control form-control-sm text-end border-0 bg-transparent recaudo-admin-valor"
-                            inputmode="decimal">
-                    </td>
-                    <td class="text-center">
-                        <button type="button" class="btn btn-sm btn-danger remove-row">×</button>
-                    </td>
-                </tr>
+                @if (isset($turno) && optional($turno->recaudosAdmin)->count())
+                    @foreach ($turno->recaudosAdmin as $i => $r)
+                        <tr data-index="{{ $i }}">
+                            <td>
+                                <input type="text" name="recaudos_admin[{{ $i }}][banco]"
+                                    class="form-control form-control-sm border-0 bg-transparent"
+                                    placeholder="Ej: Bancolombia" value="{{ $r->banco }}">
+                            </td>
+                            <td>
+                                <select name="recaudos_admin[{{ $i }}][responsable_id]"
+                                    class="form-select form-select-sm border-0 bg-transparent recaudos-admin-responsable">
+                                    <option value="">Seleccione responsable</option>
+                                    @foreach ($customers ?? collect() as $customer)
+                                        <option value="{{ $customer->id }}"
+                                            @if ($r->responsable_id == $customer->id) selected @endif>{{ $customer->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </td>
+                            <td>
+                                <input type="text" name="recaudos_admin[{{ $i }}][valor]"
+                                    class="form-control form-control-sm text-end border-0 bg-transparent recaudo-admin-valor"
+                                    inputmode="decimal" value="{{ number_format($r->valor, 0, ',', '.') }}">
+                            </td>
+                            <td class="text-center">
+                                <button type="button" class="btn btn-sm btn-danger remove-row">×</button>
+                            </td>
+                        </tr>
+                    @endforeach
+                @else
+                    <tr data-index="0">
+                        <td>
+                            <input type="text" name="recaudos_admin[0][banco]"
+                                class="form-control form-control-sm border-0 bg-transparent"
+                                placeholder="Ej: Bancolombia">
+                        </td>
+                        <td>
+                            <select name="recaudos_admin[0][responsable_id]"
+                                class="form-select form-select-sm border-0 bg-transparent recaudos-admin-responsable">
+                                <option value="">Seleccione responsable</option>
+                                @foreach ($customers ?? collect() as $customer)
+                                    <option value="{{ $customer->id }}">{{ $customer->name }}</option>
+                                @endforeach
+                            </select>
+                        </td>
+                        <td>
+                            <input type="text" name="recaudos_admin[0][valor]"
+                                class="form-control form-control-sm text-end border-0 bg-transparent recaudo-admin-valor"
+                                inputmode="decimal">
+                        </td>
+                        <td class="text-center">
+                            <button type="button" class="btn btn-sm btn-danger remove-row">×</button>
+                        </td>
+                    </tr>
+                @endif
             </tbody>
 
             <tfoot>
