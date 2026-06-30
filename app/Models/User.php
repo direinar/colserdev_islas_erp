@@ -87,6 +87,50 @@ class User extends Authenticatable
         ]);
     }
 
+    public function canAccessCompras(): bool
+    {
+        return $this->hasAnyRole([
+            self::ROLE_JEFE_PATIOS,
+            self::ROLE_ADMINISTRADOR,
+        ]);
+    }
+
+    public function canAccessAnticipoBimestral(): bool
+    {
+        return $this->hasAnyRole([
+            self::ROLE_JEFE_PATIOS,
+            self::ROLE_ADMINISTRADOR,
+        ]);
+    }
+
+    public function canAccessComprasLubricantes(): bool
+    {
+        return $this->hasAnyRole([
+            self::ROLE_JEFE_PATIOS,
+            self::ROLE_ADMINISTRADOR,
+        ]);
+    }
+
+    public function canAccessComprobanteContableCompras(): bool
+    {
+        return $this->hasAnyRole([
+            self::ROLE_JEFE_PATIOS,
+            self::ROLE_ADMINISTRADOR,
+        ]);
+    }
+
+    public function canAccessProveedores(): bool
+    {
+        return $this->hasAnyRole([
+            self::ROLE_ADMINISTRADOR,
+        ]);
+    }
+
+    public function canAccessVendedores(): bool
+    {
+        return $this->canAccessProveedores();
+    }
+
     /**
      * Get the user's initials
      */

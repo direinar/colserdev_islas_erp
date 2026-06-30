@@ -107,6 +107,87 @@
                 </div>
             </div>
         @endif
+
+        @if ($user?->canAccessCompras())
+            <div class="col-lg-3 col-sm-6">
+                <div class="card h-100 border-0 pastel-card shadow-sm">
+                    <div class="card-body d-flex flex-column justify-content-between">
+                        <div>
+                            <h5 class="card-title">Compras</h5>
+                            <p class="card-text fs-1 fw-bold mb-1">0</p>
+                            <p class="text-muted">Registra facturas y distribuye costo por combustible.</p>
+                        </div>
+                        <a href="{{ route('compras.create') }}" class="btn btn-primary pastel-button mt-3 w-100">Ir a
+                            Compras</a>
+                    </div>
+                </div>
+            </div>
+        @endif
+
+        @if ($user?->canAccessAnticipoBimestral())
+            <div class="col-lg-3 col-sm-6">
+                <div class="card h-100 border-0 pastel-card shadow-sm">
+                    <div class="card-body d-flex flex-column justify-content-between">
+                        <div>
+                            <h5 class="card-title">Anticipo Bimestral</h5>
+                            <p class="card-text fs-1 fw-bold mb-1">0</p>
+                            <p class="text-muted">Administra informe bimestral de galones e intermediación.</p>
+                        </div>
+                        <a href="{{ route('anticipo-bimestral.create') }}"
+                            class="btn btn-primary pastel-button mt-3 w-100">Ir a Anticipo</a>
+                    </div>
+                </div>
+            </div>
+        @endif
+
+        @if ($user?->canAccessComprasLubricantes())
+            <div class="col-lg-3 col-sm-6">
+                <div class="card h-100 border-0 pastel-card shadow-sm">
+                    <div class="card-body d-flex flex-column justify-content-between">
+                        <div>
+                            <h5 class="card-title">Compras Lubricantes</h5>
+                            <p class="card-text fs-1 fw-bold mb-1">0</p>
+                            <p class="text-muted">Registra compras de lubricantes con IVA y total por factura.</p>
+                        </div>
+                        <a href="{{ route('compras-lubricantes.create') }}"
+                            class="btn btn-primary pastel-button mt-3 w-100">Ir a
+                            Compras Lubricantes</a>
+                    </div>
+                </div>
+            </div>
+        @endif
+
+        @if ($user?->canAccessProveedores())
+            <div class="col-lg-3 col-sm-6">
+                <div class="card h-100 border-0 pastel-card shadow-sm">
+                    <div class="card-body d-flex flex-column justify-content-between">
+                        <div>
+                            <h5 class="card-title">Proveedores</h5>
+                            <p class="card-text fs-1 fw-bold mb-1">0</p>
+                            <p class="text-muted">Gestiona proveedores para compras de lubricantes.</p>
+                        </div>
+                        <a href="{{ route('proveedores.index') }}" class="btn btn-primary pastel-button mt-3 w-100">Ir a
+                            Proveedores</a>
+                    </div>
+                </div>
+            </div>
+        @endif
+
+        @if ($user?->canAccessComprobanteContableCompras())
+            <div class="col-lg-3 col-sm-6">
+                <div class="card h-100 border-0 pastel-card shadow-sm">
+                    <div class="card-body d-flex flex-column justify-content-between">
+                        <div>
+                            <h5 class="card-title">Comprobante Contable</h5>
+                            <p class="card-text fs-1 fw-bold mb-1">0</p>
+                            <p class="text-muted">Registra comprobante contable de compras con debito y credito.</p>
+                        </div>
+                        <a href="{{ route('comprobante-contable-compras.create') }}"
+                            class="btn btn-primary pastel-button mt-3 w-100">Ir a Comprobante</a>
+                    </div>
+                </div>
+            </div>
+        @endif
     </div>
 
     <div class="row g-4">

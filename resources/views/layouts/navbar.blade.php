@@ -44,6 +44,14 @@
                             <a class="nav-link text-white {{ request()->routeIs('lubricants.*') ? 'active' : '' }}"
                                 href="{{ route('lubricants.index') }}">Lubricantes</a>
                         </li>
+                        <li class="nav-item me-3">
+                            <a class="nav-link text-white {{ request()->routeIs('lubricants.*') ? 'active' : '' }}"
+                                href="{{ route('lubricants.index') }}">Compras</a>
+                        </li>
+                        <li class="nav-item me-3">
+                            <a class="nav-link text-white {{ request()->routeIs('lubricants.*') ? 'active' : '' }}"
+                                href="{{ route('lubricants.index') }}">Anticipo</a>
+                        </li>
                     @endif
                 @endauth
             </ul>
