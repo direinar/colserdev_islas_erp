@@ -4,6 +4,7 @@
 
 @section('content')
 
+    <!-- Estilos necesarios para que las gráficas tengan el tamaño correcto -->
     <style>
         .dashboard-line-chart-wrap {
             height: 210px;
@@ -21,7 +22,7 @@
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
             <div>
                 <h1 class="h3 mb-1">Dashboard</h1>
-                <p class="mb-0">Resumen rápido de turnos, clientes, combustibles y lubricantes.</p>
+                <p class="mb-0">Resumen gráfico de turnos y ventas.</p>
             </div>
             <div>
                 <span class="badge bg-secondary text-white">Estación de Servicio</span>
@@ -29,168 +30,8 @@
         </div>
     </div>
 
-    @php $user = auth()->user(); @endphp
-
-    <div class="row g-4 mb-4">
-        @if ($user?->canAccessTurnos())
-            <div class="col-lg-3 col-sm-6">
-                <div class="card h-100 border-0 pastel-card shadow-sm">
-                    <div class="card-body d-flex flex-column justify-content-between">
-                        <div>
-                            <h5 class="card-title">Turnos</h5>
-                            <p class="card-text fs-1 fw-bold mb-1">0</p>
-                            <p class="text-muted">Ver y crear turnos rápidamente.</p>
-                        </div>
-                        <a href="{{ route('turnos.create') }}" class="btn btn-primary pastel-button mt-3 w-100">Ir a
-                            Turnos</a>
-                    </div>
-                </div>
-            </div>
-        @endif
-
-        @if ($user?->isAdministrador())
-            <div class="col-lg-3 col-sm-6">
-                <div class="card h-100 border-0 pastel-card shadow-sm">
-                    <div class="card-body d-flex flex-column justify-content-between">
-                        <div>
-                            <h5 class="card-title">Clientes</h5>
-                            <p class="card-text fs-1 fw-bold mb-1">0</p>
-                            <p class="text-muted">Gestiona los clientes de la estación.</p>
-                        </div>
-                        <a href="{{ route('customers.index') }}" class="btn btn-primary pastel-button mt-3 w-100">Ir a
-                            Clientes</a>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-lg-3 col-sm-6">
-                <div class="card h-100 border-0 pastel-card shadow-sm">
-                    <div class="card-body d-flex flex-column justify-content-between">
-                        <div>
-                            <h5 class="card-title">Combustibles</h5>
-                            <p class="card-text fs-1 fw-bold mb-1">0</p>
-                            <p class="text-muted">Consulta y actualiza precios de combustible.</p>
-                        </div>
-                        <a href="{{ route('fuel-prices.index') }}" class="btn btn-primary pastel-button mt-3 w-100">Ir a
-                            Combustibles</a>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-lg-3 col-sm-6">
-                <div class="card h-100 border-0 pastel-card shadow-sm">
-                    <div class="card-body d-flex flex-column justify-content-between">
-                        <div>
-                            <h5 class="card-title">Lubricantes</h5>
-                            <p class="card-text fs-1 fw-bold mb-1">0</p>
-                            <p class="text-muted">Revisa el inventario de lubricantes.</p>
-                        </div>
-                        <a href="{{ route('lubricants.index') }}" class="btn btn-primary pastel-button mt-3 w-100">Ir a
-                            Lubricantes</a>
-                    </div>
-                </div>
-            </div>
-        @endif
-
-        @if ($user?->canAccessCartera())
-            <div class="col-lg-3 col-sm-6">
-                <div class="card h-100 border-0 pastel-card shadow-sm">
-                    <div class="card-body d-flex flex-column justify-content-between">
-                        <div>
-                            <h5 class="card-title">Cartera</h5>
-                            <p class="card-text fs-1 fw-bold mb-1">0</p>
-                            <p class="text-muted">Gestiona la cartera de la estación.</p>
-                        </div>
-                        <a href="{{ route('cartera.index') }}" class="btn btn-primary pastel-button mt-3 w-100">Ir a
-                            Cartera</a>
-                    </div>
-                </div>
-            </div>
-        @endif
-
-        @if ($user?->canAccessCompras())
-            <div class="col-lg-3 col-sm-6">
-                <div class="card h-100 border-0 pastel-card shadow-sm">
-                    <div class="card-body d-flex flex-column justify-content-between">
-                        <div>
-                            <h5 class="card-title">Compras</h5>
-                            <p class="card-text fs-1 fw-bold mb-1">0</p>
-                            <p class="text-muted">Registra facturas y distribuye costo por combustible.</p>
-                        </div>
-                        <a href="{{ route('compras.create') }}" class="btn btn-primary pastel-button mt-3 w-100">Ir a
-                            Compras</a>
-                    </div>
-                </div>
-            </div>
-        @endif
-
-        @if ($user?->canAccessAnticipoBimestral())
-            <div class="col-lg-3 col-sm-6">
-                <div class="card h-100 border-0 pastel-card shadow-sm">
-                    <div class="card-body d-flex flex-column justify-content-between">
-                        <div>
-                            <h5 class="card-title">Anticipo Bimestral</h5>
-                            <p class="card-text fs-1 fw-bold mb-1">0</p>
-                            <p class="text-muted">Administra informe bimestral de galones e intermediación.</p>
-                        </div>
-                        <a href="{{ route('anticipo-bimestral.create') }}"
-                            class="btn btn-primary pastel-button mt-3 w-100">Ir a Anticipo</a>
-                    </div>
-                </div>
-            </div>
-        @endif
-
-        @if ($user?->canAccessComprasLubricantes())
-            <div class="col-lg-3 col-sm-6">
-                <div class="card h-100 border-0 pastel-card shadow-sm">
-                    <div class="card-body d-flex flex-column justify-content-between">
-                        <div>
-                            <h5 class="card-title">Compras Lubricantes</h5>
-                            <p class="card-text fs-1 fw-bold mb-1">0</p>
-                            <p class="text-muted">Registra compras de lubricantes con IVA y total por factura.</p>
-                        </div>
-                        <a href="{{ route('compras-lubricantes.create') }}"
-                            class="btn btn-primary pastel-button mt-3 w-100">Ir a
-                            Compras Lubricantes</a>
-                    </div>
-                </div>
-            </div>
-        @endif
-
-        @if ($user?->canAccessProveedores())
-            <div class="col-lg-3 col-sm-6">
-                <div class="card h-100 border-0 pastel-card shadow-sm">
-                    <div class="card-body d-flex flex-column justify-content-between">
-                        <div>
-                            <h5 class="card-title">Proveedores</h5>
-                            <p class="card-text fs-1 fw-bold mb-1">0</p>
-                            <p class="text-muted">Gestiona proveedores para compras de lubricantes.</p>
-                        </div>
-                        <a href="{{ route('proveedores.index') }}" class="btn btn-primary pastel-button mt-3 w-100">Ir a
-                            Proveedores</a>
-                    </div>
-                </div>
-            </div>
-        @endif
-
-        @if ($user?->canAccessComprobanteContableCompras())
-            <div class="col-lg-3 col-sm-6">
-                <div class="card h-100 border-0 pastel-card shadow-sm">
-                    <div class="card-body d-flex flex-column justify-content-between">
-                        <div>
-                            <h5 class="card-title">Comprobante Contable</h5>
-                            <p class="card-text fs-1 fw-bold mb-1">0</p>
-                            <p class="text-muted">Registra comprobante contable de compras con debito y credito.</p>
-                        </div>
-                        <a href="{{ route('comprobante-contable-compras.create') }}"
-                            class="btn btn-primary pastel-button mt-3 w-100">Ir a Comprobante</a>
-                    </div>
-                </div>
-            </div>
-        @endif
-    </div>
-
-    <div class="row g-4">
+    <!-- Contenedor de las dos gráficas -->
+    <div class="row g-4 mt-2">
         <div class="col-lg-6">
             <div class="card border-0 pastel-card shadow-sm">
                 <div class="card-header bg-white border-bottom">
@@ -217,6 +58,7 @@
         </div>
     </div>
 
+    <!-- Script de Chart.js para dibujar los gráficos -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {

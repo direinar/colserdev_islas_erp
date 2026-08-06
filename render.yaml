@@ -1,0 +1,45 @@
+services:
+  - type: web
+    name: gestion-islas
+    env: php
+    plan: free
+    buildCommand: |
+      composer install --no-dev --optimize-autoloader
+      npm install
+      npm run build
+      php artisan config:cache
+      php artisan route:cache
+      php artisan view:cache
+      php artisan storage:link
+    startCommand: php artisan serve --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: false
+      - key: APP_KEY
+        generateValue: true
+      - key: APP_URL
+        value: https://gestion-islas.onrender.com
+      - key: DB_CONNECTION
+        value: pgsql
+      - key: DB_HOST
+        value: __YOUR_NEON_HOST__
+      - key: DB_PORT
+        value: 5432
+      - key: DB_DATABASE
+        value: __YOUR_NEON_DATABASE__
+      - key: DB_USERNAME
+        value: __YOUR_NEON_USERNAME__
+      - key: DB_PASSWORD
+        value: __YOUR_NEON_PASSWORD__
+      - key: DB_SSLMODE
+        value: require
+      - key: CACHE_DRIVER
+        value: file
+      - key: QUEUE_CONNECTION
+        value: database
+      - key: SESSION_DRIVER
+        value: file
+      - key: FILESYSTEM_DISK
+        value: local
