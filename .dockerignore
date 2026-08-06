@@ -10,3 +10,5 @@ storage/framework/views/*
 .env
 .env.*
 npm-debug.log
+public/hot
+public/build

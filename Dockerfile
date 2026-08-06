@@ -19,10 +19,10 @@ RUN apt-get update && apt-get install -y \
     libpq-dev \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install \
-        gd \
-        zip \
-        pdo \
-        pdo_pgsql \
+    gd \
+    zip \
+    pdo \
+    pdo_pgsql \
     && rm -rf /var/lib/apt/lists/*
 
 # Instalar Composer
@@ -80,16 +80,16 @@ RUN apt-get update && apt-get install -y \
     libpq-dev \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install \
-        bcmath \
-        exif \
-        gd \
-        intl \
-        mbstring \
-        pcntl \
-        pdo \
-        pdo_pgsql \
-        xml \
-        zip \
+    bcmath \
+    exif \
+    gd \
+    intl \
+    mbstring \
+    pcntl \
+    pdo \
+    pdo_pgsql \
+    xml \
+    zip \
     && a2enmod rewrite \
     && rm -rf /var/lib/apt/lists/*
 
@@ -103,6 +103,9 @@ RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' \
 
 # Copiar el proyecto
 COPY . .
+
+# Asegura modo producción para Vite: evita que Laravel intente usar dev server.
+RUN rm -f public/hot
 
 # Copiar dependencias PHP
 COPY --from=vendor /app/vendor ./vendor
