@@ -3,7 +3,7 @@
 ############################################
 # Etapa 1 - Dependencias PHP
 ############################################
-FROM php:8.3-cli AS vendor
+FROM php:8.4-cli AS vendor
 
 WORKDIR /app
 
