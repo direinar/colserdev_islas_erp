@@ -24,7 +24,12 @@
                 <h1 class="h3 mb-1">Dashboard</h1>
                 <p class="mb-0">Resumen gráfico de turnos y ventas.</p>
             </div>
-            <div>
+            <div class="d-flex align-items-center gap-2">
+                @if (auth()->check() && auth()->user()->isAdministrador())
+                    <a href="{{ route('users.index') }}" class="btn btn-outline-secondary">
+                        Gestionar usuarios
+                    </a>
+                @endif
                 <span class="badge bg-secondary text-white">Estación de Servicio</span>
             </div>
         </div>

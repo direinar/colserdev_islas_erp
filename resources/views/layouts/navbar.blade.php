@@ -37,8 +37,7 @@
 
     <div class="container-fluid">
 
-        <a class="navbar-brand fw-bold text-white"
-           href="{{ route('dashboard') }}">
+        <a class="navbar-brand fw-bold text-white" href="{{ route('dashboard') }}">
             ByH Agrocomercial SAS
         </a>
 
@@ -54,19 +53,16 @@
                     {{-- Dashboard --}}
                     <li class="nav-item me-2">
                         <a class="nav-link text-white {{ request()->routeIs('dashboard') ? 'active' : '' }}"
-                           href="{{ route('dashboard') }}">
+                            href="{{ route('dashboard') }}">
                             Dashboard
                         </a>
                     </li>
 
                     {{-- OPERACIÓN --}}
-                    @if($user->canAccessTurnos())
-
+                    @if ($user->canAccessTurnos())
                         <li class="nav-item dropdown me-2">
 
-                            <a class="nav-link dropdown-toggle text-white"
-                               href="#"
-                               data-bs-toggle="dropdown">
+                            <a class="nav-link dropdown-toggle text-white" href="#" data-bs-toggle="dropdown">
 
                                 Operación
 
@@ -75,8 +71,7 @@
                             <ul class="dropdown-menu">
 
                                 <li>
-                                    <a class="dropdown-item"
-                                       href="{{ route('turnos.create') }}">
+                                    <a class="dropdown-item" href="{{ route('turnos.create') }}">
                                         Turnos
                                     </a>
                                 </li>
@@ -84,174 +79,154 @@
                             </ul>
 
                         </li>
-
                     @endif
 
 
                     {{-- COMERCIAL --}}
-                    @if(
-                        $user->canAccessCartera() ||
-                        $user->isAdministrador()
-                    )
+                    @if ($user->canAccessCartera() || $user->isAdministrador())
+                        <li class="nav-item dropdown me-2">
 
-                    <li class="nav-item dropdown me-2">
+                            <a class="nav-link dropdown-toggle text-white" href="#" data-bs-toggle="dropdown">
 
-                        <a class="nav-link dropdown-toggle text-white"
-                           href="#"
-                           data-bs-toggle="dropdown">
+                                Comercial
 
-                            Comercial
+                            </a>
 
-                        </a>
+                            <ul class="dropdown-menu">
 
-                        <ul class="dropdown-menu">
+                                @if ($user->canAccessCartera())
+                                    <li>
+                                        <a class="dropdown-item" href="{{ route('cartera.index') }}">
+                                            Cartera
+                                        </a>
+                                    </li>
+                                @endif
 
-                            @if($user->canAccessCartera())
-                                <li>
-                                    <a class="dropdown-item"
-                                       href="{{ route('cartera.index') }}">
-                                        Cartera
-                                    </a>
-                                </li>
-                            @endif
+                                @if ($user->isAdministrador())
+                                    <li>
+                                        <a class="dropdown-item" href="{{ route('customers.index') }}">
+                                            Clientes
+                                        </a>
+                                    </li>
+                                @endif
 
-                            @if($user->isAdministrador())
-                                <li>
-                                    <a class="dropdown-item"
-                                       href="{{ route('customers.index') }}">
-                                        Clientes
-                                    </a>
-                                </li>
-                            @endif
+                            </ul>
 
-                        </ul>
-
-                    </li>
-
+                        </li>
                     @endif
 
 
                     {{-- INVENTARIO --}}
-                    @if(
-                        $user->isAdministrador() ||
-                        $user->canAccessProveedores()
-                    )
+                    @if ($user->isAdministrador() || $user->canAccessProveedores())
+                        <li class="nav-item dropdown me-2">
 
-                    <li class="nav-item dropdown me-2">
+                            <a class="nav-link dropdown-toggle text-white" href="#" data-bs-toggle="dropdown">
 
-                        <a class="nav-link dropdown-toggle text-white"
-                           href="#"
-                           data-bs-toggle="dropdown">
+                                Inventario
 
-                            Inventario
+                            </a>
 
-                        </a>
+                            <ul class="dropdown-menu">
 
-                        <ul class="dropdown-menu">
+                                @if ($user->isAdministrador())
+                                    <li>
+                                        <a class="dropdown-item" href="{{ route('fuel-prices.index') }}">
+                                            Combustibles
+                                        </a>
+                                    </li>
 
-                            @if($user->isAdministrador())
+                                    <li>
+                                        <a class="dropdown-item" href="{{ route('lubricants.index') }}">
+                                            Lubricantes
+                                        </a>
+                                    </li>
+                                @endif
 
-                                <li>
-                                    <a class="dropdown-item"
-                                       href="{{ route('fuel-prices.index') }}">
-                                        Combustibles
-                                    </a>
-                                </li>
+                                @if ($user->canAccessProveedores())
+                                    <li>
+                                        <a class="dropdown-item" href="{{ route('proveedores.index') }}">
+                                            Proveedores
+                                        </a>
+                                    </li>
+                                @endif
 
-                                <li>
-                                    <a class="dropdown-item"
-                                       href="{{ route('lubricants.index') }}">
-                                        Lubricantes
-                                    </a>
-                                </li>
+                            </ul>
 
-                            @endif
-
-                            @if($user->canAccessProveedores())
-
-                                <li>
-                                    <a class="dropdown-item"
-                                       href="{{ route('proveedores.index') }}">
-                                        Proveedores
-                                    </a>
-                                </li>
-
-                            @endif
-
-                        </ul>
-
-                    </li>
-
+                        </li>
                     @endif
 
 
                     {{-- COMPRAS --}}
-                    @if(
-                        $user->canAccessCompras() ||
-                        $user->canAccessComprasLubricantes() ||
-                        $user->canAccessComprobanteContableCompras()
-                    )
+                    @if ($user->canAccessCompras() || $user->canAccessComprasLubricantes() || $user->canAccessComprobanteContableCompras())
+                        <li class="nav-item dropdown me-2">
 
-                    <li class="nav-item dropdown me-2">
+                            <a class="nav-link dropdown-toggle text-white" href="#" data-bs-toggle="dropdown">
 
-                        <a class="nav-link dropdown-toggle text-white"
-                           href="#"
-                           data-bs-toggle="dropdown">
+                                Compras
 
-                            Compras
+                            </a>
 
-                        </a>
+                            <ul class="dropdown-menu">
 
-                        <ul class="dropdown-menu">
+                                @if ($user->canAccessCompras())
+                                    <li>
+                                        <a class="dropdown-item" href="{{ route('compras.create') }}">
+                                            Compras Combustible
+                                        </a>
+                                    </li>
+                                @endif
 
-                            @if($user->canAccessCompras())
+                                @if ($user->canAccessComprasLubricantes())
+                                    <li>
+                                        <a class="dropdown-item" href="{{ route('compras-lubricantes.create') }}">
+                                            Compras Lubricantes
+                                        </a>
+                                    </li>
+                                @endif
+
+                                @if ($user->canAccessComprobanteContableCompras())
+                                    <li>
+                                        <a class="dropdown-item" href="{{ route('comprobante-contable-compras.create') }}">
+                                            Comprobante Contable
+                                        </a>
+                                    </li>
+                                @endif
+
+                            </ul>
+
+                        </li>
+                    @endif
+
+
+                    {{-- ADMINISTRACION --}}
+                    @if ($user->isAdministrador())
+                        <li class="nav-item dropdown me-2">
+
+                            <a class="nav-link dropdown-toggle text-white" href="#" data-bs-toggle="dropdown">
+
+                                Administracion
+
+                            </a>
+
+                            <ul class="dropdown-menu">
 
                                 <li>
-                                    <a class="dropdown-item"
-                                       href="{{ route('compras.create') }}">
-                                        Compras Combustible
+                                    <a class="dropdown-item" href="{{ route('users.index') }}">
+                                        Usuarios
                                     </a>
                                 </li>
 
-                            @endif
+                            </ul>
 
-                            @if($user->canAccessComprasLubricantes())
-
-                                <li>
-                                    <a class="dropdown-item"
-                                       href="{{ route('compras-lubricantes.create') }}">
-                                        Compras Lubricantes
-                                    </a>
-                                </li>
-
-                            @endif
-
-                            @if($user->canAccessComprobanteContableCompras())
-
-                                <li>
-                                    <a class="dropdown-item"
-                                       href="{{ route('comprobante-contable-compras.create') }}">
-                                        Comprobante Contable
-                                    </a>
-                                </li>
-
-                            @endif
-
-                        </ul>
-
-                    </li>
-
+                        </li>
                     @endif
 
 
                     {{-- INFORMES --}}
-                    @if($user->canAccessAnticipoBimestral())
-
+                    @if ($user->canAccessAnticipoBimestral())
                         <li class="nav-item dropdown me-2">
 
-                            <a class="nav-link dropdown-toggle text-white"
-                               href="#"
-                               data-bs-toggle="dropdown">
+                            <a class="nav-link dropdown-toggle text-white" href="#" data-bs-toggle="dropdown">
 
                                 Informes
 
@@ -260,8 +235,7 @@
                             <ul class="dropdown-menu">
 
                                 <li>
-                                    <a class="dropdown-item"
-                                       href="{{ route('anticipo-bimestral.create') }}">
+                                    <a class="dropdown-item" href="{{ route('anticipo-bimestral.create') }}">
                                         Anticipo Bimestral
                                     </a>
                                 </li>
@@ -269,7 +243,6 @@
                             </ul>
 
                         </li>
-
                     @endif
 
                 @endauth
@@ -283,9 +256,7 @@
 
                     <li class="nav-item dropdown">
 
-                        <a class="nav-link dropdown-toggle text-white"
-                           href="#"
-                           data-bs-toggle="dropdown">
+                        <a class="nav-link dropdown-toggle text-white" href="#" data-bs-toggle="dropdown">
 
                             {{ auth()->user()->name }}
 
@@ -305,8 +276,7 @@
 
                             <li>
 
-                                <form method="POST"
-                                      action="{{ route('logout') }}">
+                                <form method="POST" action="{{ route('logout') }}">
                                     @csrf
 
                                     <button class="dropdown-item text-danger">
