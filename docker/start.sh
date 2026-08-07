@@ -11,8 +11,18 @@ fi
 echo "Esperando conexión a la base de datos..."
 sleep 5
 
-echo "Ejecutando migraciones..."
-php artisan migrate --force
+# --- Migraciones / Reset de base de datos ---
+# DB_FRESH_SEED=true borra TODAS las tablas y las recrea desde cero,
+# luego carga todos los seeders. Es destructivo: solo debe activarse
+# a propósito (variable de entorno en Render) y desactivarse después
+# del deploy para que no se repita en el siguiente release.
+if [ "${DB_FRESH_SEED}" = "true" ]; then
+    echo "⚠️  DB_FRESH_SEED=true detectado: reseteando base de datos desde cero..."
+    php artisan migrate:fresh --force --seed
+else
+    echo "Ejecutando migraciones..."
+    php artisan migrate --force
+fi
 
 echo "Creando enlace de storage..."
 php artisan storage:link >/dev/null 2>&1 || true
