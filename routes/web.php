@@ -9,6 +9,9 @@ use App\Http\Controllers\FuelPriceController;
 use App\Http\Controllers\LubricantController;
 use App\Http\Controllers\TurnoController;
 use App\Http\Controllers\CarteraController;
+use App\Http\Controllers\InventarioAcpmController;
+use App\Http\Controllers\InventarioGasolinaController;
+use App\Http\Controllers\InventarioLubricanteController;
 use App\Http\Controllers\ProveedorController;
 use App\Http\Controllers\UserController;
 use App\Models\User;
@@ -60,6 +63,36 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 
     Route::middleware('role:' . User::ROLE_ADMINISTRADOR)->group(function () {
+        Route::get('/inventarios/lubricantes/create', [InventarioLubricanteController::class, 'create'])
+            ->name('inventarios-lubricantes.create');
+
+        Route::post('/inventarios/lubricantes', [InventarioLubricanteController::class, 'store'])
+            ->name('inventarios-lubricantes.store');
+
+        Route::get('/inventarios/aditivo-motos/create', [InventarioLubricanteController::class, 'createAditivoMotos'])
+            ->name('inventarios-aditivo-motos.create');
+
+        Route::post('/inventarios/aditivo-motos', [InventarioLubricanteController::class, 'storeAditivoMotos'])
+            ->name('inventarios-aditivo-motos.store');
+
+        Route::get('/inventarios/urea-automotriz/create', [InventarioLubricanteController::class, 'createUreaAutomotriz'])
+            ->name('inventarios-urea-automotriz.create');
+
+        Route::post('/inventarios/urea-automotriz', [InventarioLubricanteController::class, 'storeUreaAutomotriz'])
+            ->name('inventarios-urea-automotriz.store');
+
+        Route::get('/inventarios/acpm/create', [InventarioAcpmController::class, 'create'])
+            ->name('inventarios-acpm.create');
+
+        Route::post('/inventarios/acpm', [InventarioAcpmController::class, 'store'])
+            ->name('inventarios-acpm.store');
+
+        Route::get('/inventarios/gasolina/create', [InventarioGasolinaController::class, 'create'])
+            ->name('inventarios-gasolina.create');
+
+        Route::post('/inventarios/gasolina', [InventarioGasolinaController::class, 'store'])
+            ->name('inventarios-gasolina.store');
+
         Route::resource('fuel-prices', FuelPriceController::class);
 
         Route::resource('lubricants', LubricantController::class);

@@ -1,0 +1,45 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration {
+    public function up(): void
+    {
+        Schema::create('inventarios_lubricantes', function (Blueprint $table) {
+            $table->id();
+            $table->string('producto', 120)->default('MOBIL SUPER 20W50');
+            $table->date('fecha')->nullable();
+            $table->unsignedInteger('planilla_no')->nullable();
+            $table->string('fc_no', 80)->nullable();
+            $table->string('proveedor', 160)->nullable();
+
+            $table->decimal('entradas_unidades', 12, 3)->default(0);
+            $table->decimal('salidas_unidades', 12, 3)->default(0);
+            $table->decimal('saldo_unidades', 12, 3)->default(0);
+
+            $table->decimal('valor_entradas', 15, 2)->default(0);
+            $table->decimal('valor_salidas', 15, 2)->default(0);
+            $table->decimal('valor_saldo', 15, 2)->default(0);
+            $table->decimal('costo_promedio', 15, 4)->default(0);
+
+            $table->decimal('vr_venta', 15, 2)->default(0);
+            $table->decimal('precio_venta', 15, 2)->default(0);
+
+            $table->decimal('saldo_anterior_unidades', 12, 3)->default(0);
+            $table->decimal('saldo_anterior_valor', 15, 2)->default(0);
+            $table->decimal('saldo_anterior_promedio', 15, 4)->default(0);
+
+            $table->timestamps();
+
+            $table->index(['fecha']);
+            $table->index(['planilla_no']);
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('inventarios_lubricantes');
+    }
+};
