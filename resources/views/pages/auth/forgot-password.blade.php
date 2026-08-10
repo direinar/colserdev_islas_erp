@@ -11,11 +11,11 @@
             <!-- Email Address -->
             <flux:input
                 name="email"
-                :label="__('Email address')"
+                :label="__('Correo')"
                 type="email"
                 required
                 autofocus
-                placeholder="email@example.com"
+                placeholder="Correo electrónico"
             />
 
             <flux:button variant="primary" type="submit" class="w-full" data-test="email-password-reset-link-button">

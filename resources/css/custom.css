@@ -245,7 +245,8 @@ body ::selection {
     place-items: center;
     padding: 2rem;
     position: relative;
-    overflow: hidden;
+    overflow-x: hidden;
+    overflow-y: auto;
 }
 
 .blobs,
@@ -254,6 +255,7 @@ body ::selection {
     inset: 0;
     pointer-events: none;
     z-index: 0;
+    overflow: hidden;
 }
 
 .blob {
@@ -467,5 +469,20 @@ body ::selection {
 
     .logo-text h1 {
         font-size: 1.5rem;
+    }
+}
+
+@media (max-height: 720px) {
+    .auth-page-wrapper {
+        align-items: start;
+        padding: 1.25rem 2rem;
+    }
+
+    .auth-card {
+        padding: 32px 36px 28px;
+    }
+
+    .logo-wrap {
+        margin-bottom: 20px;
     }
 }

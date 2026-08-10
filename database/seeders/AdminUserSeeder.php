@@ -20,13 +20,7 @@ class AdminUserSeeder extends Seeder
                 'role' => User::ROLE_ADMINISTRADOR,
                 'email_verified_at' => now(),
             ]
-
-
-
-
         );
-
-        // crear otro usaurio administrador
 
         User::updateOrCreate(
             ['email' => 'carlosbeltranramos@gmail.com'],
