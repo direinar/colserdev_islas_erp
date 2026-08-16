@@ -16,7 +16,8 @@
     <div class="auth-card">
         <div class="logo-wrap">
             <div class="logo-ring">
-                <x-app-logo-icon class="size-9 fill-current text-white" />
+                <img src="{{ asset('images/logo-login-64.png') }}" alt="Logo ByH Agrocomercial SAS"
+                    class="h-10 w-10 rounded-md object-contain" loading="eager" decoding="async" />
             </div>
             <div class="logo-text">
                 <h1>ByH Agrocomercial SAS</h1>

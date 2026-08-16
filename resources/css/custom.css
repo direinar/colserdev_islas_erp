@@ -343,6 +343,12 @@ body ::selection {
     box-shadow: 0 8px 24px rgba(90, 173, 133, .22);
 }
 
+.logo-ring img {
+    width: 40px;
+    height: 40px;
+    object-fit: contain;
+}
+
 .logo-text {
     text-align: center;
 }
@@ -465,6 +471,17 @@ body ::selection {
     .auth-card {
         width: min(100%, 95vw);
         padding: 36px 24px 30px;
+    }
+
+    .logo-ring {
+        width: 56px;
+        height: 56px;
+        border-radius: 16px;
+    }
+
+    .logo-ring img {
+        width: 34px;
+        height: 34px;
     }
 
     .logo-text h1 {
