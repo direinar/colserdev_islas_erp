@@ -41,6 +41,7 @@ Home:
 /home/u578168976
 ```
 ssh -p 65002 u578168976@212.1.209.40
+cd ~/colserdev_islas_erp
 
 
 Versiones verificadas:

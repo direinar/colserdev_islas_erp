@@ -5,8 +5,9 @@
     <div class="container-fluid">
 
         {{-- Se quitó text-white para que tome el color var(--ink) de tu custom.css --}}
-        <a class="navbar-brand fw-bold" href="{{ route('dashboard') }}">
-            ByH Agrocomercial SAS
+        <a class="navbar-brand d-flex align-items-center fw-bold" href="{{ route('dashboard') }}">
+            <img src="{{ asset('images/logo-dashboard-32.png') }}" alt="Logo" class="brand-logo me-2">
+            <span class="brand-text">ByH Agrocomercial SAS</span>
         </a>
 
         <div class="d-flex align-items-center w-100">
