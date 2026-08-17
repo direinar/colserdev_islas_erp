@@ -52,7 +52,7 @@
 
             <div class="table-responsive">
                 <table class="table table-bordered table-sm mb-0" id="comprobante-table">
-                    <thead style="background-color:#fff000;">
+                    <thead style="background-color:#ccccff;">
                         <tr>
                             <th class="text-center align-middle">CUENTA</th>
                             <th class="text-center align-middle">CONCEPTO</th>

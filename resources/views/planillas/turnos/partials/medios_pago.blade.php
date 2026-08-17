@@ -9,7 +9,7 @@
     <div class="table-responsive">
         <table class="table table-bordered table-sm medios-pago-table">
 
-            <thead style="background-color:#fff000;">
+            <thead style="background-color:#ccccff;">
                 <tr>
                     <th colspan="2" class="text-center align-middle">
                         CONSIGNACIONES

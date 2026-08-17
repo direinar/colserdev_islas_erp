@@ -77,7 +77,7 @@
 
             <div class="table-responsive">
                 <table class="table table-bordered table-sm mb-0" id="cartera-table">
-                    <thead style="background-color:#fff000;">
+                    <thead style="background-color:#ccccff;">
                         <tr>
                             <th class="text-center align-middle">PLANILLAS</th>
                             <th class="text-center align-middle">FECHA</th>

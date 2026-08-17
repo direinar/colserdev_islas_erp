@@ -1,41 +1,35 @@
-// Que hace este codigo? --- IGNORE ---
-document.addEventListener('DOMContentLoaded', () => {// Cuando el DOM esté completamente cargado, se ejecuta esta función
-    const parseGalones = value => {// Esta función toma un valor de entrada y lo convierte en un número de galones, manejando formatos con puntos y comas
-        return parseFloat(// Convierte el valor a un número de punto flotante
+// Inicializa formateadores y listeners para la planilla
+function initGalones() {
+    // Evitamos errores si el DOM no está listo
+    if (!document.body) return;
+
+    const parseGalones = value => {
+        return parseFloat(
             value
-                .toString()// Convierte el valor a una cadena de texto
-                .replace(/\./g, '')// Elimina todos los puntos del valor (usados como separadores de miles)
-                .replace(',', '.')// Reemplaza la coma por un punto (usado como separador decimal)
+                .toString()
+                .replace(/\./g, '')
+                .replace(',', '.')
         );
     };
 
-    const formatGalones = number => {// Esta función formatea un número de galones para mostrarlo con tres decimales y separadores de miles según la convención colombiana
-        if (isNaN(number)) {// Si el número no es un valor numérico válido, devuelve una cadena vacía
-            return '';// Devuelve una cadena vacía si el número no es válido
-        }
-
-        return number.toLocaleString('es-CO', {// Formatea el número según la configuración regional de Colombia
-            minimumFractionDigits: 3,// Asegura que siempre se muestren al menos 3 dígitos decimales
-            maximumFractionDigits: 3// Asegura que no se muestren más de 3 dígitos decimales
+    const formatGalones = number => {
+        if (isNaN(number)) return '';
+        return number.toLocaleString('es-CO', {
+            minimumFractionDigits: 3,
+            maximumFractionDigits: 3
         });
     };
 
-    const formatMoney = number => {// Esta función formatea un número como una cantidad de dinero, sin decimales y con separadores de miles según la convención colombiana
-        if (isNaN(number)) {// Si el número no es un valor numérico válido, devuelve una cadena vacía
-            return '';// Devuelve una cadena vacía si el número no es válido
-        }
-
-        return number.toLocaleString('es-CO', {// Formatea el número según la configuración regional de Colombia
-            minimumFractionDigits: 0,// Asegura que no se muestren dígitos decimales
-            maximumFractionDigits: 0// Asegura que no se muestren dígitos decimales
+    const formatMoney = number => {
+        if (isNaN(number)) return '';
+        return number.toLocaleString('es-CO', {
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0
         });
     };
 
     const formatMoneyWithDecimals = (number, decimals = 3) => {
-        if (isNaN(number)) {
-            return '';
-        }
-
+        if (isNaN(number)) return '';
         return number.toLocaleString('es-CO', {
             minimumFractionDigits: decimals,
             maximumFractionDigits: decimals
@@ -51,56 +45,38 @@ document.addEventListener('DOMContentLoaded', () => {// Cuando el DOM esté comp
         );
     };
 
-    const updateGrandTotal = () => {// Esta función calcula la suma total de los valores en los campos con la clase 'valor-total' y actualiza el campo que muestra el total general del turno
-        const totalField = document.querySelector('.ventas-total-turno');// Selecciona el elemento que muestra el total general del turno
-
-        if (!totalField) {// Si no se encuentra el elemento para mostrar el total, la función termina sin hacer nada
-            return;// Si no se encuentra el elemento para mostrar el total, se sale de la función
-        }
-
-        let sum = 0;// Inicializa la variable para acumular la suma total
-
-        document.querySelectorAll('.valor-total').forEach(input => {// Itera sobre todos los campos con la clase 'valor-total' para calcular la suma total
-            const value = input.value// Toma el valor del campo de entrada
-                .toString()// Convierte el valor a una cadena de texto
-                .replace(/\./g, '')// Elimina todos los puntos del valor (usados como separadores de miles)
-                .replace(',', '.');// Reemplaza la coma por un punto (usado como separador decimal)
-
-            const parsed = parseFloat(value);// Convierte el valor a un número de punto flotante
-
-            if (!isNaN(parsed)) {// Si el valor convertido es un número válido, se suma al total acumulado
-                sum += parsed;// Si el valor convertido es un número válido, se agrega a la suma total
-            }
+    const updateGrandTotal = () => {
+        const totalField = document.querySelector('.ventas-total-turno');
+        if (!totalField) return;
+        let sum = 0;
+        document.querySelectorAll('.valor-total').forEach(input => {
+            const value = input.value.toString().replace(/\./g, '').replace(',', '.');
+            const parsed = parseFloat(value);
+            if (!isNaN(parsed)) sum += parsed;
         });
-
-        totalField.textContent = formatMoney(sum);// Actualiza el contenido del campo que muestra el total general con el valor formateado como dinero
+        totalField.textContent = formatMoney(sum);
     };
 
-    const updateTirillasTotals = () => {// Esta función calcula los totales de galones para corriente y ACPM, y actualiza los campos correspondientes en la sección de tirillas
-        const totalCorriente = Array.from(document.querySelectorAll('.galones-cte'))// Selecciona todos los campos de entrada con la clase 'galones-cte' y calcula la suma total de galones para corriente
-            .reduce((sum, input) => {// Utiliza el método reduce para acumular la suma total de galones para corriente
-                const value = parseGalones(input.value);// Convierte el valor del campo de entrada a un número de galones utilizando la función parseGalones
-                return sum + (isNaN(value) ? 0 : value);// Si el valor convertido no es un número válido, se suma 0; de lo contrario, se suma el valor convertido
-            }, 0);// El segundo argumento '0' es el valor inicial para la suma total de galones para corriente
+    const updateTirillasTotals = () => {
+        const totalCorriente = Array.from(document.querySelectorAll('.galones-cte'))
+            .reduce((sum, input) => {
+                const value = parseGalones(input.value);
+                return sum + (isNaN(value) ? 0 : value);
+            }, 0);
 
-        const totalAcpms = Array.from(document.querySelectorAll('.galones-acpm'))// Selecciona todos los campos de entrada con la clase 'galones-acpm' y calcula la suma total de galones para ACPM
-            .reduce((sum, input) => {// Utiliza el método reduce para acumular la suma total de galones para ACPM
-                const value = parseGalones(input.value);// Convierte el valor del campo de entrada a un número de galones utilizando la función parseGalones
-                return sum + (isNaN(value) ? 0 : value);// Si el valor convertido no es un número válido, se suma 0; de lo contrario, se suma el valor convertido
-            }, 0);// El segundo argumento '0' es el valor inicial para la suma total de galones para ACPM
+        const totalAcpms = Array.from(document.querySelectorAll('.galones-acpm'))
+            .reduce((sum, input) => {
+                const value = parseGalones(input.value);
+                return sum + (isNaN(value) ? 0 : value);
+            }, 0);
 
-        const corrienteInput = document.querySelector('.tirillas-galones-corriente');// Selecciona el campo de entrada que muestra el total de galones para corriente en la sección de tirillas
-        const acpmInput = document.querySelector('.tirillas-galones-acpm');// Selecciona el campo de entrada que muestra el total de galones para ACPM en la sección de tirillas
+        const corrienteInput = document.querySelector('.tirillas-galones-corriente');
+        const acpmInput = document.querySelector('.tirillas-galones-acpm');
         const valorCorrienteInput = document.querySelector('.tirillas-valor-corriente');
         const valorAcpmsInput = document.querySelector('.tirillas-valor-acpm');
 
-        if (corrienteInput) {// Si se encuentra el campo de entrada para corriente, actualiza su valor con el total de galones para corriente formateado
-            corrienteInput.value = formatGalones(totalCorriente);// Si el campo de entrada para corriente existe, se actualiza su valor con el total de galones para corriente formateado
-        }
-
-        if (acpmInput) {// Si se encuentra el campo de entrada para ACPM, actualiza su valor con el total de galones para ACPM formateado
-            acpmInput.value = formatGalones(totalAcpms);// Si el campo de entrada para ACPM existe, se actualiza su valor con el total de galones para ACPM formateado
-        }
+        if (corrienteInput) corrienteInput.value = formatGalones(totalCorriente);
+        if (acpmInput) acpmInput.value = formatGalones(totalAcpms);
 
         if (valorCorrienteInput) {
             const precioCorriente = parseFloat(valorCorrienteInput.dataset.precio);
@@ -134,13 +110,8 @@ document.addEventListener('DOMContentLoaded', () => {// Cuando el DOM esté comp
         const valorAcpmsInput = document.querySelector('.ventas-lectura-valor-acpm');
         const ventasTotal = document.querySelector('.ventas-total-lectura');
 
-        if (galonesCorrienteInput) {
-            galonesCorrienteInput.value = formatGalones(glsCorriente);
-        }
-
-        if (galonesAcpmsInput) {
-            galonesAcpmsInput.value = formatGalones(glsAcpms);
-        }
+        if (galonesCorrienteInput) galonesCorrienteInput.value = formatGalones(glsCorriente);
+        if (galonesAcpmsInput) galonesAcpmsInput.value = formatGalones(glsAcpms);
 
         if (valorCorrienteInput) {
             const precioCorriente = parseFloat(valorCorrienteInput.dataset.precio);
@@ -162,43 +133,39 @@ document.addEventListener('DOMContentLoaded', () => {// Cuando el DOM esté comp
         }
     };
 
-    document.querySelectorAll('.galones-input').forEach(input => {// Selecciona todos los campos de entrada con la clase 'galones-input' y les agrega eventos para formatear el valor y actualizar los totales cuando el usuario interactúa con ellos
-        const formatValue = function () {// Esta función se ejecuta cuando el campo de entrada pierde el foco, cambia su valor o se completa la edición, y formatea el valor de galones, actualiza los totales de tirillas y el total general
-            const galones = parseGalones(this.value);// Convierte el valor del campo de entrada a un número de galones utilizando la función parseGalones
-            this.value = formatGalones(galones);// Formatea el valor de galones utilizando la función formatGalones y actualiza el campo de entrada con el valor formateado
-            updateGrandTotal();// Actualiza el total general después de formatear el valor de galones
-            updateTirillasTotals();// Actualiza los totales de tirillas después de formatear el valor de galones
+    // Inputs de galones
+    document.querySelectorAll('.galones-input').forEach(input => {
+        if (input.dataset.galonesInit) return;
+        input.dataset.galonesInit = '1';
+
+        const formatValue = function () {
+            const galones = parseGalones(this.value);
+            this.value = formatGalones(galones);
+            updateGrandTotal();
+            updateTirillasTotals();
         };
 
-        input.addEventListener('blur', formatValue);// Agrega un evento para formatear el valor de galones cuando el campo de entrada pierde el foco
-        input.addEventListener('change', formatValue);// Agrega un evento para formatear el valor de galones cuando el valor del campo de entrada cambia
-        input.addEventListener('focusout', formatValue);// Agrega un evento para formatear el valor de galones cuando se completa la edición del campo de entrada
+        input.addEventListener('blur', formatValue);
+        input.addEventListener('change', formatValue);
+        input.addEventListener('focusout', formatValue);
 
-        input.addEventListener('input', function () {// Agrega un evento para actualizar el total de la fila, el total general y los totales de tirillas cada vez que el usuario ingresa un nuevo valor en el campo de entrada
-            const precio = parseFloat(this.dataset.precio);// Toma el precio del combustible desde el atributo data-precio del campo de entrada y lo convierte a un número de punto flotante
-            const galones = parseGalones(this.value);// Convierte el valor del campo de entrada a un número de galones utilizando la función parseGalones
+        input.addEventListener('input', function () {
+            const precio = parseFloat(this.dataset.precio);
+            const galones = parseGalones(this.value);
 
-            if (isNaN(galones) || isNaN(precio)) {// Si el valor de galones o el precio no son números válidos, se borra el valor total de la fila y se actualizan los totales generales y de tirillas, luego se sale de la función
-                const totalInput = this.closest('tr')?.querySelector('.valor-total');// Busca el campo de entrada que muestra el valor total en la misma fila que el campo de entrada actual
-
-                if (totalInput) {// Si se encuentra el campo de entrada para el valor total, se borra su valor
-                    totalInput.value = '';// Si el campo de entrada para el valor total existe, se borra su valor
-                }
-
-                updateGrandTotal();// Actualiza el total general después de borrar el valor total de la fila
-                updateTirillasTotals();// Actualiza los totales de tirillas después de borrar el valor total de la fila
-                return;// Si el valor de galones o el precio no son válidos, se sale de la función después de actualizar los totales
+            if (isNaN(galones) || isNaN(precio)) {
+                const totalInput = this.closest('tr')?.querySelector('.valor-total');
+                if (totalInput) totalInput.value = '';
+                updateGrandTotal();
+                updateTirillasTotals();
+                return;
             }
 
-            const total = galones * precio;// Calcula el valor total de la fila multiplicando el número de galones por el precio
-            const totalInput = this.closest('tr')?.querySelector('.valor-total');// Busca el campo de entrada que muestra el valor total en la misma fila que el campo de entrada actual
-
-            if (totalInput) {// Si se encuentra el campo de entrada para el valor total, se actualiza su valor con el total calculado formateado como dinero
-                totalInput.value = formatMoney(total);// Si el campo de entrada para el valor total existe, se actualiza su valor con el total calculado formateado como dinero
-            }
-
-            updateGrandTotal();// Actualiza el total general después de calcular el valor total de la fila
-            updateTirillasTotals();// Actualiza los totales de tirillas después de calcular el valor total de la fila
+            const total = galones * precio;
+            const totalInput = this.closest('tr')?.querySelector('.valor-total');
+            if (totalInput) totalInput.value = formatMoney(total);
+            updateGrandTotal();
+            updateTirillasTotals();
         });
     });
 
@@ -223,6 +190,9 @@ document.addEventListener('DOMContentLoaded', () => {// Cuando el DOM esté comp
 
     // Añadir listeners a filas que contienen lecturas
     document.querySelectorAll('tbody tr').forEach(row => {
+        if (row.dataset.galonesRowInit) return;
+        row.dataset.galonesRowInit = '1';
+
         const inicial = row.querySelector('.lectura-inicial');
         const final = row.querySelector('.lectura-final');
 
@@ -254,6 +224,53 @@ document.addEventListener('DOMContentLoaded', () => {// Cuando el DOM esté comp
     // Inicializar valores al cargar
     document.querySelectorAll('tbody tr').forEach(row => updateRowGls(row));
 
-    updateTirillasTotals();// Al cargar la página, se actualizan los totales de tirillas para reflejar cualquier valor preexistente en los campos de galones
+    updateTirillasTotals();
     updateVentasSegunLecturas();
-});
+}
+
+document.addEventListener('DOMContentLoaded', initGalones);
+document.addEventListener('livewire:load', initGalones);
+document.addEventListener('livewire:updated', initGalones);
+
+// Generic decimal formatter for inputs used across the planilla (money, tc, transferencias, etc.)
+function initDecimalFormatters() {
+    function parseNumber(value) {
+        if (!value) return NaN;
+        return parseFloat(String(value).replace(/\./g, '').replace(',', '.'));
+    }
+
+    function formatNumber(value, decimals) {
+        if (isNaN(value)) return '';
+        return value.toLocaleString('es-CO', {
+            minimumFractionDigits: decimals,
+            maximumFractionDigits: decimals,
+        });
+    }
+
+    document.querySelectorAll('input[inputmode="decimal"]').forEach(input => {
+        if (input.dataset.decInit) return;
+        input.dataset.decInit = '1';
+
+        const decimalsAttr = input.dataset.decimals;
+        const decimals = typeof decimalsAttr !== 'undefined' ? parseInt(decimalsAttr, 10) : (/(galon|gls|lectura|galones|galon)/i.test(input.name || input.className) ? 3 : 0);
+
+        input.addEventListener('blur', function () {
+            const v = parseNumber(this.value);
+            if (!isNaN(v)) {
+                this.value = formatNumber(v, decimals);
+            }
+        });
+
+        // sanitize paste
+        input.addEventListener('paste', function (e) {
+            e.preventDefault();
+            const paste = (e.clipboardData || window.clipboardData).getData('text') || '';
+            const clean = paste.replace(/[^\d.,-]/g, '');
+            document.execCommand('insertText', false, clean);
+        });
+    });
+}
+
+document.addEventListener('DOMContentLoaded', initDecimalFormatters);
+document.addEventListener('livewire:load', initDecimalFormatters);
+document.addEventListener('livewire:updated', initDecimalFormatters);

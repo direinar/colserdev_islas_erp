@@ -8,7 +8,7 @@
         <table class="table table-bordered table-sm mb-0 tabla-transferencias">
 
             <thead>
-                <tr style="background-color:#ffff00;">
+                <tr style="background-color:#ccccff;">
                     <th class="text-center">TRANSFERENCIAS BANCOLOMBIA</th>
                     <th class="text-center">PUNTOS REDIMIDOS</th>
                     <th class="text-center">ACCIÓN</th>

@@ -4,19 +4,7 @@
 
 @section('content')
 
-    <!-- Estilos necesarios para que las gráficas tengan el tamaño correcto -->
-    <style>
-        .dashboard-line-chart-wrap {
-            height: 210px;
-        }
-
-        .dashboard-donut-chart-wrap {
-            width: 100%;
-            max-width: 320px;
-            height: 210px;
-            margin: 0 auto;
-        }
-    </style>
+    {{-- Styles moved to resources/css/custom.css --}}
 
     <div class="pastel-header">
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">

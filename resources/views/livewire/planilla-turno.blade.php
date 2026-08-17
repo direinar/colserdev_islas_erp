@@ -34,362 +34,7 @@
     $faltanteSobranteIapropiada = $this->faltanteSobranteIapropiada;
     $faltanteSobranteLectura = $this->faltanteSobranteLectura;
     ?>
-    <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
-        :root {
-            --bg: #0e0e0e;
-            --s1: #161616;
-            --s2: #1e1e1e;
-            --s3: #262626;
-            --b1: #2a2a2a;
-            --b2: #363636;
-            --am: #f59e0b;
-            --am2: #fbbf24;
-            --amd: #6b3a05;
-            --gr: #22c55e;
-            --grd: #14532d;
-            --rd: #ef4444;
-            --rdd: #7f1d1d;
-            --bl: #3b82f6;
-            --bld: #1e3a5f;
-            --tx: #e5e5e5;
-            --td: #888;
-            --tm: #444;
-            --font: 'IBM Plex Mono', monospace;
-        }
-
-        body {
-            background: var(--bg);
-            color: var(--tx);
-            font-family: var(--font);
-            font-size: 11px;
-            min-height: 100vh;
-        }
-
-        .wrap {
-            background: var(--bg);
-            color: var(--tx);
-            font-family: var(--font);
-            padding: 12px;
-            min-height: 100vh;
-        }
-
-        .topbar {
-            background: var(--s1);
-            border-bottom: 2px solid var(--am);
-            padding: 8px 14px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 12px;
-            border-radius: 4px 4px 0 0;
-        }
-
-        .logo {
-            font-size: 14px;
-            font-weight: 700;
-            color: var(--am);
-            letter-spacing: .04em;
-        }
-
-        .logo span {
-            color: var(--td);
-            font-weight: 400;
-            margin-left: 6px;
-        }
-
-        .badge {
-            background: var(--amd);
-            color: var(--am);
-            border: 1px solid var(--am);
-            padding: 2px 8px;
-            font-size: 9px;
-            font-weight: 700;
-            letter-spacing: .1em;
-            border-radius: 3px;
-            margin-left: auto;
-        }
-
-        .card {
-            background: var(--s1);
-            border: 1px solid var(--b1);
-            border-radius: 3px;
-            margin-bottom: 10px;
-            overflow: hidden;
-        }
-
-        .ch {
-            background: var(--s2);
-            border-bottom: 1px solid var(--b1);
-            padding: 6px 12px;
-            display: flex;
-            align-items: center;
-            gap: 7px;
-        }
-
-        .dot {
-            width: 7px;
-            height: 7px;
-            border-radius: 50%;
-            background: var(--am);
-            flex-shrink: 0;
-        }
-
-        .ct {
-            font-size: 9px;
-            font-weight: 700;
-            letter-spacing: .12em;
-            text-transform: uppercase;
-            color: var(--am);
-        }
-
-        .cb {
-            padding: 10px 12px;
-        }
-
-        .two {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            margin-bottom: 10px;
-        }
-
-        .three {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            gap: 10px;
-            margin-bottom: 10px;
-        }
-
-        .fl {
-            font-size: 8px;
-            font-weight: 700;
-            letter-spacing: .14em;
-            text-transform: uppercase;
-            color: var(--td);
-            margin-bottom: 3px;
-        }
-
-        input,
-        select {
-            background: var(--s3);
-            border: 1px solid var(--b2);
-            border-radius: 3px;
-            color: var(--tx);
-            font-family: var(--font);
-            font-size: 11px;
-            padding: 4px 6px;
-            width: 100%;
-            outline: none;
-        }
-
-        input:focus,
-        select:focus {
-            border-color: var(--am);
-            background: #1a150a;
-        }
-
-        input.ro {
-            background: var(--s2);
-            color: var(--gr);
-            border-color: var(--b1);
-            cursor: default;
-        }
-
-        input.am {
-            color: var(--am2);
-            font-weight: 600;
-        }
-
-        .t {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        th {
-            background: var(--s2);
-            color: var(--td);
-            font-size: 8px;
-            font-weight: 700;
-            letter-spacing: .1em;
-            text-transform: uppercase;
-            padding: 5px 7px;
-            border: 1px solid var(--b1);
-            text-align: left;
-            white-space: nowrap;
-        }
-
-        td {
-            border: 1px solid var(--b1);
-            padding: 2px 4px;
-            vertical-align: middle;
-        }
-
-        tr:hover td {
-            background: rgba(245, 158, 11, .04);
-        }
-
-        td input {
-            border: none;
-            background: transparent;
-            border-radius: 0;
-            padding: 3px 5px;
-        }
-
-        td input:focus {
-            background: #1a150a;
-            border-radius: 3px;
-        }
-
-        .lc {
-            color: var(--td);
-            font-size: 10px;
-            padding: 3px 7px;
-            white-space: nowrap;
-        }
-
-        .tb {
-            display: inline-block;
-            padding: 1px 5px;
-            border-radius: 2px;
-            font-size: 8px;
-            font-weight: 700;
-            letter-spacing: .06em;
-        }
-
-        .cte {
-            background: var(--bld);
-            color: #93c5fd;
-        }
-
-        .acpm {
-            background: var(--grd);
-            color: #86efac;
-        }
-
-        .tot td {
-            background: var(--s2);
-            border-top: 1px solid var(--amd);
-            font-weight: 600;
-            color: var(--am2);
-            padding: 4px 7px;
-        }
-
-        .tot .lc {
-            color: var(--am);
-        }
-
-        .tot2 td {
-            background: var(--s2);
-            border-top: 2px solid var(--am);
-            font-weight: 800;
-            color: var(--am2);
-            padding: 5px 7px;
-            font-size: 13px;
-        }
-
-        .kpi {
-            background: var(--s2);
-            border: 1px solid var(--b1);
-            border-radius: 3px;
-            padding: 9px 11px;
-        }
-
-        .kl {
-            font-size: 8px;
-            font-weight: 700;
-            letter-spacing: .1em;
-            text-transform: uppercase;
-            color: var(--td);
-            margin-bottom: 3px;
-        }
-
-        .kv {
-            font-size: 15px;
-            font-weight: 700;
-            color: var(--am2);
-        }
-
-        .kv.big {
-            font-size: 20px;
-            color: var(--am);
-        }
-
-        .btn {
-            font-family: var(--font);
-            font-size: 11px;
-            font-weight: 700;
-            letter-spacing: .06em;
-            padding: 8px 20px;
-            border: none;
-            border-radius: 3px;
-            cursor: pointer;
-            text-transform: uppercase;
-            transition: all .15s;
-        }
-
-        .bp {
-            background: var(--am);
-            color: #000;
-        }
-
-        .bp:hover {
-            background: var(--am2);
-        }
-
-        .bg2 {
-            background: transparent;
-            color: var(--td);
-            border: 1px solid var(--b2);
-        }
-
-        .bg2:hover {
-            color: var(--tx);
-            border-color: var(--td);
-        }
-
-        .divider {
-            border: none;
-            border-top: 1px solid var(--b1);
-            margin: 8px 0;
-        }
-
-        .diff-p {
-            color: var(--gr);
-            font-weight: 700;
-        }
-
-        .diff-n {
-            color: var(--rd);
-            font-weight: 700;
-        }
-
-        .itot {
-            background: var(--s3);
-            border: 1px solid var(--b1);
-            border-radius: 3px;
-            color: var(--am2);
-            font-weight: 700;
-            padding: 3px 7px;
-            text-align: right;
-            white-space: nowrap;
-            display: inline-block;
-            min-width: 80px;
-        }
-
-        @media (max-width: 780px) {
-
-            .two,
-            .three {
-                grid-template-columns: 1fr;
-            }
-        }
-    </style>
+    {{-- Styles moved to resources/css/custom.css --}}
 
     <div class="wrap">
         <div class="turno-shell">
@@ -421,32 +66,25 @@
                 </div>
             </section>
 
-            <section class="card">
-                <div class="card-header">
-                    <div class="card-dot"></div>
-                    <div class="card-title">Encabezado del turno</div>
+            <x-card title="Encabezado del turno">
+                <div class="form-grid">
+                    <x-input-field class="field" :label="'Nombre del vendedor'">
+                        <input type="text" wire:model.live="nombre_vendedor" placeholder="Nombre completo">
+                    </x-input-field>
+
+                    <x-input-field class="field" :label="'Fecha'">
+                        <input type="date" wire:model.live="fecha">
+                    </x-input-field>
+
+                    <x-input-field class="field" :label="'Turno No.'">
+                        <input type="number" min="1" wire:model.live="numero_turno">
+                    </x-input-field>
+
+                    <x-input-field class="field" :label="'Revisado por'">
+                        <input type="text" wire:model.live="revisado_por" placeholder="Firma / nombre">
+                    </x-input-field>
                 </div>
-                <div class="card-body">
-                    <div class="form-grid">
-                        <div class="field">
-                            <div class="field-label">Nombre del vendedor</div>
-                            <input type="text" wire:model.live="nombre_vendedor" placeholder="Nombre completo">
-                        </div>
-                        <div class="field">
-                            <div class="field-label">Fecha</div>
-                            <input type="date" wire:model.live="fecha">
-                        </div>
-                        <div class="field">
-                            <div class="field-label">Turno No.</div>
-                            <input type="number" min="1" wire:model.live="numero_turno">
-                        </div>
-                        <div class="field">
-                            <div class="field-label">Revisado por</div>
-                            <input type="text" wire:model.live="revisado_por" placeholder="Firma / nombre">
-                        </div>
-                    </div>
-                </div>
-            </section>
+            </x-card>
 
             <section class="card">
                 <div class="card-header">
@@ -455,16 +93,15 @@
                 </div>
                 <div class="card-body">
                     <div class="form-grid" style="grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 12px;">
-                        <div class="field">
-                            <div class="field-label">Precio Corriente (CTE) / gl</div>
-                            <input type="text" inputmode="decimal" wire:model.live="precios.CTE" class="tight-input"
-                                placeholder="0,00">
-                        </div>
-                        <div class="field">
-                            <div class="field-label">Precio ACPM / gl</div>
-                            <input type="text" inputmode="decimal" wire:model.live="precios.ACPM" class="tight-input"
-                                placeholder="0,00">
-                        </div>
+                        <x-input-money class="field" :label="'Precio Corriente (CTE) / gl'">
+                            <input type="text" inputmode="decimal" data-decimals="0" wire:model.live="precios.CTE"
+                                class="tight-input" placeholder="0">
+                        </x-input-money>
+
+                        <x-input-money class="field" :label="'Precio ACPM / gl'">
+                            <input type="text" inputmode="decimal" data-decimals="0" wire:model.live="precios.ACPM"
+                                class="tight-input" placeholder="0">
+                        </x-input-money>
                     </div>
                 </div>
             </section>
@@ -719,31 +356,30 @@
                         <div class="card-body">
                             <div class="form-grid"
                                 style="grid-template-columns: repeat(3, minmax(0, 1fr)); padding-bottom: 6px;">
-                                <div class="field">
-                                    <div class="field-label">Datafono 1</div>
-                                    <input type="text" inputmode="decimal" wire:model.live="tc_datafono_1">
-                                </div>
-                                <div class="field">
-                                    <div class="field-label">Datafono 2</div>
-                                    <input type="text" inputmode="decimal" wire:model.live="tc_datafono_2">
-                                </div>
-                                <div class="field">
-                                    <div class="field-label">Datafono 3</div>
-                                    <input type="text" inputmode="decimal" wire:model.live="tc_datafono_3">
-                                </div>
-                                <div class="field">
-                                    <div class="field-label">Transferencias</div>
-                                    <input type="text" inputmode="decimal"
-                                        wire:model.live="transferencias_bancolombia">
-                                </div>
-                                <div class="field">
-                                    <div class="field-label">Gasolina EDS</div>
-                                    <input type="text" inputmode="decimal" wire:model.live="gasolina_eds">
-                                </div>
-                                <div class="field">
-                                    <div class="field-label">Puntos redimidos</div>
-                                    <input type="text" inputmode="decimal" wire:model.live="puntos_redimidos">
-                                </div>
+                                <x-input-money class="field" :label="'Datafono 1'">
+                                    <input type="text" inputmode="decimal" data-decimals="0"
+                                        wire:model.live="tc_datafono_1" class="w-full">
+                                </x-input-money>
+                                <x-input-money class="field" :label="'Datafono 2'">
+                                    <input type="text" inputmode="decimal" data-decimals="0"
+                                        wire:model.live="tc_datafono_2" class="w-full">
+                                </x-input-money>
+                                <x-input-money class="field" :label="'Datafono 3'">
+                                    <input type="text" inputmode="decimal" data-decimals="0"
+                                        wire:model.live="tc_datafono_3" class="w-full">
+                                </x-input-money>
+                                <x-input-money class="field" :label="'Transferencias'">
+                                    <input type="text" inputmode="decimal" data-decimals="0"
+                                        wire:model.live="transferencias_bancolombia" class="w-full">
+                                </x-input-money>
+                                <x-input-money class="field" :label="'Gasolina EDS'">
+                                    <input type="text" inputmode="decimal" data-decimals="0"
+                                        wire:model.live="gasolina_eds" class="w-full">
+                                </x-input-money>
+                                <x-input-money class="field" :label="'Puntos redimidos'">
+                                    <input type="text" inputmode="decimal" data-decimals="0"
+                                        wire:model.live="puntos_redimidos" class="w-full">
+                                </x-input-money>
                             </div>
                             <div class="wide-note note" style="padding: 0 16px 16px;">
                                 Los medios de pago se consolidan en el resumen de lo recibido en el turno.
@@ -1087,16 +723,14 @@
                             <div class="field-label" style="margin-bottom: 8px;">Traslado a sobrantes / faltantes
                             </div>
                             <div class="form-grid" style="grid-template-columns: 1fr 1fr; padding: 0;">
-                                <div class="field">
-                                    <div class="field-label">Sobrante</div>
-                                    <input type="text" inputmode="decimal" wire:model.live="traslado_sobrante"
-                                        placeholder="0">
-                                </div>
-                                <div class="field">
-                                    <div class="field-label">Faltante</div>
-                                    <input type="text" inputmode="decimal" wire:model.live="traslado_faltante"
-                                        placeholder="0">
-                                </div>
+                                <x-input-money class="field" :label="'Sobrante'">
+                                    <input type="text" inputmode="decimal" data-decimals="0"
+                                        wire:model.live="traslado_sobrante" placeholder="0" class="w-full">
+                                </x-input-money>
+                                <x-input-money class="field" :label="'Faltante'">
+                                    <input type="text" inputmode="decimal" data-decimals="0"
+                                        wire:model.live="traslado_faltante" placeholder="0" class="w-full">
+                                </x-input-money>
                             </div>
                             <p class="note" style="margin-top: 10px;">
                                 Este bloque se deja disponible para la confirmacion administrativa del sobrante o

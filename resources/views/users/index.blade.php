@@ -28,15 +28,7 @@
                         <td>{{ $user->email }}</td>
                         <td>{{ ucfirst(str_replace('_', ' ', $user->role)) }}</td>
                         <td>
-                            <div class="d-flex gap-2">
-                                <a href="{{ route('users.show', $user) }}" class="btn btn-info btn-sm">Ver</a>
-                                <a href="{{ route('users.edit', $user) }}" class="btn btn-warning btn-sm">Editar</a>
-                                <form action="{{ route('users.destroy', $user) }}" method="POST">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="btn btn-danger btn-sm">Eliminar</button>
-                                </form>
-                            </div>
+                            <x-action-buttons :showRoute="'users.show'" :editRoute="'users.edit'" :deleteRoute="'users.destroy'" :id="$user" />
                         </td>
                     </tr>
                 @empty

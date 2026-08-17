@@ -26,15 +26,7 @@
                         <td>{{ $customer->name }}</td>
                         <td>{{ $customer->document }}</td>
                         <td>
-                            <div class="d-flex gap-2">
-                                <a href="{{ route('customers.show', $customer) }}" class="btn btn-info btn-sm">Ver</a>
-                                <a href="{{ route('customers.edit', $customer) }}" class="btn btn-warning btn-sm">Editar</a>
-                                <form action="{{ route('customers.destroy', $customer) }}" method="POST">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="btn btn-danger btn-sm">Eliminar</button>
-                                </form>
-                            </div>
+                            <x-action-buttons :showRoute="'customers.show'" :editRoute="'customers.edit'" :deleteRoute="'customers.destroy'" :id="$customer" />
                         </td>
                     </tr>
                 @empty

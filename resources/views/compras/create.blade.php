@@ -3,15 +3,15 @@
 @section('title', 'Compras')
 
 @section('content')
-    <div class="pastel-section mb-3">
-        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
-            <div>
-                <h4 class="mb-0">Módulo de compras</h4>
+    <th class="text-center align-middle">GASOLINA</th>
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
+        <div>
+            <tr style="background-color:#ccccff;">
                 <small class="text-muted">Registre compras por factura con distribución de costo entre gasolina y
                     ACPM.</small>
-            </div>
-            <button type="submit" form="compras-form" class="btn btn-primary btn-sm">Guardar factura</button>
         </div>
+        <button type="submit" form="compras-form" class="btn btn-primary btn-sm">Guardar factura</button>
+    </div>
     </div>
 
     @if (session('success'))

@@ -161,6 +161,83 @@ body {
     border-color: rgba(17, 21, 26, 0.06) !important;
 }
 
+/* Modern, light table presentation for CRUD lists */
+.table {
+    border-collapse: separate !important;
+    border-spacing: 0 8px !important;
+}
+
+.table thead th {
+    background: transparent !important;
+    color: var(--ink-soft) !important;
+    font-weight: 600 !important;
+    text-transform: none !important;
+    border: none !important;
+}
+
+.table tbody tr {
+    background: #fff !important;
+    box-shadow: 0 6px 16px rgba(12, 14, 18, 0.04) !important;
+    border-radius: 12px;
+}
+
+/* Remove cell vertical borders so rows read as cards */
+.table td,
+.table th {
+    border-top: none !important;
+    border-bottom: none !important;
+    border-left: none !important;
+    border-right: none !important;
+    vertical-align: middle !important;
+}
+
+/* Use subtle separators between rows */
+.table tbody tr+tr {
+    margin-top: 8px;
+}
+
+/* Actions */
+.crud-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    justify-content: flex-end;
+}
+
+.btn-action {
+    padding: 6px 10px !important;
+    border-radius: 999px !important;
+    font-size: 13px !important;
+    font-weight: 700 !important;
+    text-transform: none !important;
+    box-shadow: none !important;
+}
+
+.btn-action.view {
+    background: #06b6d4;
+    color: #fff !important;
+}
+
+.btn-action.edit {
+    background: #f59e0b;
+    color: #fff !important;
+}
+
+.btn-action.delete {
+    background: #ef4444;
+    color: #fff !important;
+}
+
+/* Make status badges subtle */
+.badge-status {
+    background: rgba(34, 197, 94, 0.12);
+    color: #166534;
+    padding: 6px 10px;
+    border-radius: 999px;
+    font-weight: 700;
+    font-size: 12px;
+}
+
 /* Forms */
 .form-control,
 input.form-control,
@@ -461,4 +538,518 @@ body ::selection {
 .total-box {
     background: rgba(244, 247, 250, 0.95) !important;
     font-weight: 600;
+}
+
+/* Planilla / Livewire specific styles (moved from inline in Blade views) */
+:root {
+    --plan-bg: #0e0e0e;
+    --plan-s1: #161616;
+    --plan-s2: #1e1e1e;
+    --plan-s3: #262626;
+    --plan-b1: #2a2a2a;
+    --plan-b2: #363636;
+    --plan-amber: #ccccff;
+    /* replaced yellow with recaudos-admin purple */
+    --plan-amber-2: #e6e3ff;
+    --plan-amber-dark: #9b94d9;
+    --plan-green: #22c55e;
+    --plan-green-dark: #14532d;
+    --plan-red: #ef4444;
+    --plan-blue: #3b82f6;
+    --plan-text: #e5e5e5;
+    --plan-text-dim: #888;
+    --plan-mono: 'IBM Plex Mono', monospace;
+}
+
+.wrap {
+    background: var(--plan-bg);
+    color: var(--plan-text);
+    font-family: var(--plan-mono);
+    padding: 12px;
+    min-height: 100vh;
+}
+
+.topbar {
+    background: var(--plan-s1);
+    border-bottom: 2px solid var(--plan-amber);
+    padding: 8px 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+    border-radius: 4px 4px 0 0;
+}
+
+.logo {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--plan-amber);
+    letter-spacing: .04em
+}
+
+.badge {
+    background: var(--plan-amber-dark);
+    color: var(--plan-amber);
+    border: 1px solid var(--plan-amber);
+    padding: 2px 8px;
+    font-size: 9px;
+    font-weight: 700;
+    border-radius: 3px;
+    margin-left: auto
+}
+
+.card {
+    background: var(--plan-s1);
+    border: 1px solid var(--plan-b1);
+    border-radius: 6px;
+    margin-bottom: 10px;
+    overflow: hidden
+}
+
+.ch {
+    background: var(--plan-s2);
+    border-bottom: 1px solid var(--plan-b1);
+    padding: 6px 12px;
+    display: flex;
+    align-items: center;
+    gap: 7px
+}
+
+.dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--plan-amber);
+    flex-shrink: 0
+}
+
+.ct {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--plan-amber)
+}
+
+.cb {
+    padding: 10px 12px
+}
+
+.two {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 10px
+}
+
+.three {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 10px
+}
+
+.fl {
+    font-size: 8px;
+    font-weight: 700;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--plan-text-dim);
+    margin-bottom: 3px
+}
+
+input,
+select {
+    background: var(--plan-s3);
+    border: 1px solid var(--plan-b2);
+    border-radius: 3px;
+    color: var(--plan-text);
+    font-family: var(--plan-mono);
+    font-size: 11px;
+    padding: 4px 6px;
+    width: 100%;
+    outline: none
+}
+
+input:focus,
+select:focus {
+    border-color: var(--plan-amber);
+    background: #1a150a
+}
+
+input.ro {
+    background: var(--plan-s2);
+    color: var(--plan-green);
+    border-color: var(--plan-b1);
+    cursor: default
+}
+
+input.am {
+    color: var(--plan-amber-2);
+    font-weight: 600
+}
+
+.t {
+    width: 100%;
+    border-collapse: collapse
+}
+
+.t th {
+    background: var(--plan-s2);
+    color: var(--plan-text-dim);
+    font-size: 8px;
+    font-weight: 700;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    padding: 5px 7px;
+    border: 1px solid var(--plan-b1);
+    text-align: left;
+    white-space: nowrap
+}
+
+.t td {
+    border: 1px solid var(--plan-b1);
+    padding: 2px 4px;
+    vertical-align: middle
+}
+
+.t tr:hover td {
+    background: rgba(245, 158, 11, 0.04)
+}
+
+.t td input {
+    border: none;
+    background: transparent;
+    border-radius: 0;
+    padding: 3px 5px
+}
+
+.t td input:focus {
+    background: #1a150a;
+    border-radius: 3px
+}
+
+.lc {
+    color: var(--plan-text-dim);
+    font-size: 10px;
+    padding: 3px 7px;
+    white-space: nowrap
+}
+
+.tb {
+    display: inline-block;
+    padding: 1px 5px;
+    border-radius: 2px;
+    font-size: 8px;
+    font-weight: 700
+}
+
+.cte {
+    background: var(--plan-blue);
+    color: #93c5fd
+}
+
+.acpm {
+    background: var(--plan-green-dark);
+    color: #86efac
+}
+
+.tot td {
+    background: var(--plan-s2);
+    border-top: 1px solid var(--plan-amber-dark);
+    font-weight: 600;
+    color: var(--plan-amber-2);
+    padding: 4px 7px
+}
+
+.tot .lc {
+    color: var(--plan-amber)
+}
+
+.tot2 td {
+    background: var(--plan-s2);
+    border-top: 2px solid var(--plan-amber);
+    font-weight: 800;
+    color: var(--plan-amber-2);
+    padding: 5px 7px;
+    font-size: 13px
+}
+
+.kpi {
+    background: var(--plan-s2);
+    border: 1px solid var(--plan-b1);
+    border-radius: 3px;
+    padding: 9px 11px
+}
+
+.kl {
+    font-size: 8px;
+    font-weight: 700;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--plan-text-dim);
+    margin-bottom: 3px
+}
+
+.kv {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--plan-amber-2)
+}
+
+.kv.big {
+    font-size: 20px;
+    color: var(--plan-amber)
+}
+
+.btn {
+    font-family: var(--plan-mono);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .06em;
+    padding: 8px 20px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: all .15s
+}
+
+.bp {
+    background: var(--plan-amber);
+    color: #000
+}
+
+.bp:hover {
+    background: var(--plan-amber-2)
+}
+
+.bg2 {
+    background: transparent;
+    color: var(--plan-text-dim);
+    border: 1px solid var(--plan-b2)
+}
+
+.bg2:hover {
+    color: var(--plan-text);
+    border-color: var(--plan-text-dim)
+}
+
+.divider {
+    border: none;
+    border-top: 1px solid var(--plan-b1);
+    margin: 8px 0
+}
+
+.diff-p {
+    color: var(--plan-green);
+    font-weight: 700
+}
+
+.diff-n {
+    color: var(--plan-red);
+    font-weight: 700
+}
+
+.itot {
+    background: var(--plan-s3);
+    border: 1px solid var(--plan-b1);
+    border-radius: 3px;
+    color: var(--plan-amber-2);
+    font-weight: 700;
+    padding: 3px 7px;
+    text-align: right;
+    white-space: nowrap;
+    display: inline-block;
+    min-width: 80px
+}
+
+@media (max-width:780px) {
+
+    .two,
+    .three {
+        grid-template-columns: 1fr
+    }
+}
+
+/* small helpers used by planilla views */
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px
+}
+
+.field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px
+}
+
+.field-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--plan-text-dim);
+    text-transform: uppercase
+}
+
+.tight-input {
+    width: 100%;
+}
+
+.row-input {
+    text-align: right
+}
+
+.money {
+    text-align: right;
+    font-weight: 700
+}
+
+/* Hide native number input spinners */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+input[type="number"] {
+    -moz-appearance: textfield;
+    appearance: textfield;
+}
+
+/* Decimal inputs: tabular numbers for alignment */
+input[inputmode="decimal"] {
+    font-variant-numeric: tabular-nums;
+    font-family: 'Courier New', monospace;
+}
+
+/* Dashboard charts */
+.dashboard-line-chart-wrap {
+    height: 210px;
+}
+
+.dashboard-donut-chart-wrap {
+    width: 100%;
+    max-width: 320px;
+    height: 210px;
+    margin: 0 auto;
+}
+
+/* Lubricantes table small rules */
+.lubricantes-table input[readonly] {
+    background: transparent;
+    border: none;
+    color: inherit;
+}
+
+/* CRUD table styles */
+.crud-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #fff;
+    border-radius: 6px;
+    overflow: visible;
+    table-layout: auto;
+    /* remove outer box border so table feels lighter */
+    border: none;
+}
+
+.crud-table thead th {
+    background: transparent;
+    color: #5a4a42;
+    font-weight: 600;
+    text-transform: none;
+    letter-spacing: .02em;
+    padding: 12px 10px;
+    border-bottom: 1px solid rgba(17, 21, 26, 0.06);
+    font-size: 13px;
+    text-align: left;
+}
+
+.crud-table tbody td {
+    padding: 14px 12px;
+    vertical-align: middle;
+    /* only subtle horizontal separators */
+    border-bottom: 1px solid rgba(17, 21, 26, 0.04);
+    font-size: 14px;
+    color: var(--ink);
+}
+
+.crud-table tbody tr:hover td {
+    background: rgba(225, 16, 0, 0.02);
+    /* subtle warm hover */
+}
+
+.badge-pill {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+    color: #fff;
+}
+
+.badge-active {
+    background: #2f7a18;
+}
+
+.badge-inactive {
+    background: #c33b3b;
+}
+
+.btn-action {
+    padding: 6px 10px;
+    border-radius: 999px;
+    border: none;
+    color: #fff;
+    font-weight: 700;
+    text-transform: none;
+    font-size: 12px;
+    cursor: pointer;
+    box-shadow: none;
+    opacity: 0.95;
+}
+
+.btn-action.view {
+    background: #08a5b6;
+    color: #012;
+}
+
+.btn-action.edit {
+    background: #e3a41a;
+    color: #120900;
+}
+
+.btn-action.delete {
+    background: #e44b4b;
+}
+
+.btn-action:hover {
+    opacity: 1;
+    transform: none;
+}
+
+.btn-action.view {
+    background: #06b6d4;
+    color: #033;
+}
+
+.btn-action.edit {
+    background: #f59e0b;
+    color: #1a1200;
+}
+
+.btn-action.delete {
+    background: #ef4444;
+}
+
+.btn-action:active {
+    transform: none;
+}
+
+.crud-create-wrap {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
 }

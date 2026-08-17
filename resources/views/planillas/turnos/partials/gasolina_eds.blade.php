@@ -8,7 +8,7 @@
         <table class="table table-bordered table-sm mb-0 tabla-gasolina-eds">
 
             <thead>
-                <tr style="background-color:#ffff00;">
+                <tr style="background-color:#ccccff;">
                     <th class="text-center">GASOLINA EDS</th>
                     <th class="text-center">ACCIÓN</th>
                 </tr>

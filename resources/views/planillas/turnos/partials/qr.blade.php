@@ -8,12 +8,12 @@
         <table class="table table-bordered table-sm mb-0 tabla-qr">
 
             <thead>
-                <tr style="background-color:#ffff00;">
+                <tr style="background-color:#ccccff;">
                     <th colspan="3" class="text-center fw-bold">
                         TC, QR, NEQUI Y DAVIPLATA
                     </th>
                 </tr>
-                <tr style="background-color:#ffff00;">
+                <tr style="background-color:#ccccff;">
                     <th class="text-center">CONCEPTO</th>
                     <th class="text-center" width="120">VALOR</th>
                     <th class="text-center">ACCIÓN</th>

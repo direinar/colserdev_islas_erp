@@ -1,154 +1,110 @@
 @extends('layouts.app')
 
 @section('content')
+    <div class="container">
 
-<div class="container">
+        <div class="d-flex justify-content-between align-items-center mb-4">
 
-    <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="mb-0">
+                Precios de Combustible
+            </h2>
 
-        <h2 class="mb-0">
-            Precios de Combustible
-        </h2>
+            <a href="{{ route('fuel-prices.create') }}" class="btn btn-primary">
 
-        <a href="{{ route('fuel-prices.create') }}"
-           class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i>
+                Nuevo Registro
 
-            <i class="bi bi-plus-circle"></i>
-            Nuevo Registro
+            </a>
 
-        </a>
-
-    </div>
-
-    @if(session('success'))
-
-        <div class="alert alert-success">
-            {{ session('success') }}
         </div>
 
-    @endif
+        @if (session('success'))
+            <div class="alert alert-success">
+                {{ session('success') }}
+            </div>
+        @endif
 
-    <div class="card shadow-sm">
+        <div class="card shadow-sm">
 
-        <div class="card-body p-0">
+            <div class="card-body p-0">
 
-            <table class="table table-bordered table-hover mb-0">
+                <table class="table table-bordered table-hover mb-0">
 
-                <thead class="table-dark">
-
-                    <tr>
-
-                        <th>ID</th>
-                        <th>Nombre</th>
-                        <th>Precio</th>
-                        <th>Fecha Vigencia</th>
-                        <th>Activo</th>
-                        <th width="220">Acciones</th>
-
-                    </tr>
-
-                </thead>
-
-                <tbody>
-
-                    @forelse($fuels as $fuel)
+                    <thead class="table-dark">
 
                         <tr>
 
-                            <td>{{ $fuel->id }}</td>
-
-                            <td>
-                                {{ $fuel->name }}
-                            </td>
-
-                            <td>
-                                $ {{ number_format($fuel->price, 2, ',', '.') }}
-                            </td>
-
-                            <td>
-                                {{ $fuel->effective_date }}
-                            </td>
-
-                            <td>
-
-                                @if($fuel->active)
-
-                                    <span class="badge bg-success">
-                                        ACTIVO
-                                    </span>
-
-                                @else
-
-                                    <span class="badge bg-danger">
-                                        INACTIVO
-                                    </span>
-
-                                @endif
-
-                            </td>
-
-                            <td>
-
-                                <div class="d-flex gap-2">
-
-                                    <a href="{{ route('fuel-prices.show', $fuel) }}"
-                                       class="btn btn-info btn-sm">
-
-                                        Ver
-
-                                    </a>
-
-                                    <a href="{{ route('fuel-prices.edit', $fuel) }}"
-                                       class="btn btn-warning btn-sm">
-
-                                        Editar
-
-                                    </a>
-
-                                    <form action="{{ route('fuel-prices.destroy', $fuel) }}"
-                                          method="POST">
-
-                                        @csrf
-                                        @method('DELETE')
-
-                                        <button type="submit"
-                                                class="btn btn-danger btn-sm"
-                                                onclick="return confirm('¿Eliminar registro?')">
-
-                                            Eliminar
-
-                                        </button>
-
-                                    </form>
-
-                                </div>
-
-                            </td>
+                            <th>ID</th>
+                            <th>Nombre</th>
+                            <th>Precio</th>
+                            <th>Fecha Vigencia</th>
+                            <th>Activo</th>
+                            <th width="220">Acciones</th>
 
                         </tr>
 
-                    @empty
+                    </thead>
 
-                        <tr>
+                    <tbody>
 
-                            <td colspan="6" class="text-center">
+                        @forelse($fuels as $fuel)
+                            <tr>
 
-                                No hay registros
+                                <td>{{ $fuel->id }}</td>
 
-                            </td>
+                                <td>
+                                    {{ $fuel->name }}
+                                </td>
 
-                        </tr>
+                                <td>
+                                    $ {{ number_format($fuel->price, 2, ',', '.') }}
+                                </td>
 
-                    @endforelse
+                                <td>
+                                    {{ $fuel->effective_date }}
+                                </td>
 
-                </tbody>
+                                <td>
 
-            </table>
+                                    @if ($fuel->active)
+                                        <span class="badge bg-success">
+                                            ACTIVO
+                                        </span>
+                                    @else
+                                        <span class="badge bg-danger">
+                                            INACTIVO
+                                        </span>
+                                    @endif
+
+                                </td>
+
+                                <td>
+                                    <x-action-buttons :showRoute="'fuel-prices.show'" :editRoute="'fuel-prices.edit'" :deleteRoute="'fuel-prices.destroy'"
+                                        :id="$fuel" />
+                                </td>
+
+                            </tr>
+
+                        @empty
+
+                            <tr>
+
+                                <td colspan="6" class="text-center">
+
+                                    No hay registros
+
+                                </td>
+
+                            </tr>
+                        @endforelse
+
+                    </tbody>
+
+                </table>
+
+            </div>
 
         </div>
 
     </div>
-
-</div>
-
 @endsection
