@@ -3,19 +3,19 @@
     // Ensure computed properties are available as local variables for the template
     $precioCte = $this->precioCte;
     $precioAcpm = $this->precioAcpm;
-    
+
     $totalGalonesCte = $this->totalGalonesCte;
     $totalGalonesAcpm = $this->totalGalonesAcpm;
     $totalValorCte = $this->totalValorCte;
     $totalValorAcpm = $this->totalValorAcpm;
     $totalVentaIapropiada = $this->totalVentaIapropiada;
-    
+
     $lecturaGalonesCte = $this->lecturaGalonesCte;
     $lecturaGalonesAcpm = $this->lecturaGalonesAcpm;
     $lecturaValorCte = $this->lecturaValorCte;
     $lecturaValorAcpm = $this->lecturaValorAcpm;
     $totalVentaLectura = $this->totalVentaLectura;
-    
+
     $totalConsignaciones = $this->totalConsignaciones;
     $totalDescuentos = $this->totalDescuentos;
     $totalCartera = $this->totalCartera;

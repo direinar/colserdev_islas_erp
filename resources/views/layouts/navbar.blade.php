@@ -40,6 +40,13 @@
                                         Turnos
                                     </a>
                                 </li>
+                                @if ($user->isAdministrador())
+                                    <li>
+                                        <a class="dropdown-item" href="{{ route('turnos.pendientes') }}">
+                                            Planillas pendientes de revisión
+                                        </a>
+                                    </li>
+                                @endif
                             </ul>
                         </li>
                     @endif

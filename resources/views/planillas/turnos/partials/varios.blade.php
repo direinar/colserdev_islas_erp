@@ -32,7 +32,7 @@
                             <td>
                                 <input type="text" name="varios[{{ $i }}][valor]"
                                     class="form-control form-control-sm text-end border-0 bg-transparent varios-valor"
-                                    inputmode="decimal" value="{{ number_format($v->valor, 0, ',', '.') }}">
+                                    inputmode="decimal" value="{{ number_format($v->valor, 0, '.', ',') }}">
                             </td>
                             <td class="text-center">
                                 <button type="button" class="btn btn-sm btn-danger remove-row">×</button>

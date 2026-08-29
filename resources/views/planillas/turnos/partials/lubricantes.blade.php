@@ -1,4 +1,4 @@
-<x-erp-card title="VENTA DE URREA Y LUBRICANTES - CONTADO Y CRÉDITO">
+<x-erp-card title="VENTA DE CANASTILLA - CONTADO Y CRÉDITO">
 
     {{-- Styles moved to resources/css/custom.css --}}
 

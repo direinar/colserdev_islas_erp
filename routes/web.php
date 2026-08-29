@@ -30,6 +30,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
             ->name('turnos.store');
     });
 
+    Route::middleware('role:' . User::ROLE_ADMINISTRADOR)->group(function () {
+        Route::get('/turnos/pendientes', [TurnoController::class, 'pendientes'])
+            ->name('turnos.pendientes');
+
+        Route::post('/turnos/{turno}/revisar', [TurnoController::class, 'revisar'])
+            ->name('turnos.revisar');
+    });
+
     Route::middleware('role:' . implode(',', [User::ROLE_JEFE_PATIOS, User::ROLE_ADMINISTRADOR]))->group(function () {
         Route::get('/cartera', [CarteraController::class, 'index'])
             ->name('cartera.index');

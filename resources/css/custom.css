@@ -258,6 +258,26 @@ select.form-control,
     box-shadow: 0 0 0 0.28rem rgba(225, 16, 0, 0.12) !important;
 }
 
+/* Planilla de turnos: alinear cifras/valores a la derecha */
+.erp-input,
+.row-input,
+.cantidad-input,
+.valor-sin-iva-input,
+.iva-input,
+.total-input,
+.lectura-inicial,
+.lectura-final,
+.lectura-gls,
+.galones-input,
+.valor-total,
+.tirillas-galones-corriente,
+.tirillas-galones-acpm,
+.tirillas-valor-corriente,
+.tirillas-valor-acpm,
+input[type="number"] {
+    text-align: right !important;
+}
+
 /* Accessibility focus */
 a:focus-visible,
 button:focus-visible,
@@ -658,8 +678,8 @@ body ::selection {
     margin-bottom: 3px
 }
 
-input,
-select {
+.wrap input,
+.wrap select {
     background: var(--plan-s3);
     border: 1px solid var(--plan-b2);
     border-radius: 3px;
@@ -671,20 +691,20 @@ select {
     outline: none
 }
 
-input:focus,
-select:focus {
+.wrap input:focus,
+.wrap select:focus {
     border-color: var(--plan-amber);
     background: #1a150a
 }
 
-input.ro {
+.wrap input.ro {
     background: var(--plan-s2);
     color: var(--plan-green);
     border-color: var(--plan-b1);
     cursor: default
 }
 
-input.am {
+.wrap input.am {
     color: var(--plan-amber-2);
     font-weight: 600
 }

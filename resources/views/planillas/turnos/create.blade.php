@@ -19,9 +19,6 @@
                 <button type="submit" class="btn btn-sm btn-outline-primary">Buscar</button>
                 <a href="{{ route('turnos.create') }}" class="btn btn-sm btn-outline-secondary">Nuevo</a>
             </div>
-            <div class="col-auto">
-                <button type="submit" class="btn btn-primary btn-sm">Guardar Turno</button>
-            </div>
         </div>
     </form>
 
@@ -149,6 +146,9 @@
             </div>
         </div>
 
+        <div class="pastel-section mt-3 text-end">
+            <button type="submit" class="btn btn-primary">Guardar Turno</button>
+        </div>
 
     </form>
 @endsection

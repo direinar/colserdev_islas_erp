@@ -8,7 +8,7 @@
         <table class="table table-bordered table-sm mb-0 tabla-recaudos">
 
             <thead>
-                <tr style="background-color:#ccccff;">
+                <tr>
                     <th colspan="3" class="text-center fw-bold">
                         RECAUDOS, ANTICIPOS Y PREPAGOS POR ISLAS
                     </th>
@@ -40,7 +40,7 @@
                             <td>
                                 <input type="text" name="recaudos[{{ $i }}][valor]"
                                     class="form-control form-control-sm text-end border-0 bg-transparent recaudo-valor"
-                                    inputmode="decimal" value="{{ number_format($r->valor, 0, ',', '.') }}">
+                                    inputmode="decimal" value="{{ number_format($r->valor, 0, '.', ',') }}">
                             </td>
 
                             <td class="text-center">
@@ -105,11 +105,11 @@
 
         function parseNumber(value) {
             if (!value) return 0;
-            return Number(String(value).replace(/\./g, '').replace(/,/g, '.')) || 0;
+            return Number(String(value).replace(/,/g, '')) || 0;
         }
 
         function formatNumber(number) {
-            return Number(number).toLocaleString('es-CO', {
+            return Number(number).toLocaleString('en-US', {
                 minimumFractionDigits: 0,
                 maximumFractionDigits: 0
             });

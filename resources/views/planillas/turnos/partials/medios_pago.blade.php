@@ -51,12 +51,12 @@
                                 <input type="text" name="medios_pago[{{ $i }}][consignacion_valor]"
                                     class="form-control form-control-sm text-end consignacion-valor-input"
                                     inputmode="decimal"
-                                    value="{{ number_format($m->consignacion_valor, 0, ',', '.') }}">
+                                    value="{{ number_format($m->consignacion_valor, 0, '.', ',') }}">
                             </td>
                             <td>
                                 <input type="text" name="medios_pago[{{ $i }}][descuento]"
                                     class="form-control form-control-sm text-end descuento-valor-input"
-                                    inputmode="decimal" value="{{ number_format($m->descuento, 0, ',', '.') }}">
+                                    inputmode="decimal" value="{{ number_format($m->descuento, 0, '.', ',') }}">
                             </td>
                             <td>
                                 <input type="text" name="medios_pago[{{ $i }}][cartera_factura_no]"
@@ -77,7 +77,7 @@
                             <td>
                                 <input type="text" name="medios_pago[{{ $i }}][cartera_valor]"
                                     class="form-control form-control-sm text-end cartera-valor-input"
-                                    inputmode="decimal" value="{{ number_format($m->cartera_valor, 0, ',', '.') }}">
+                                    inputmode="decimal" value="{{ number_format($m->cartera_valor, 0, '.', ',') }}">
                             </td>
                             <td class="text-center">
                                 <button type="button" class="btn btn-sm btn-danger remove-row">×</button>

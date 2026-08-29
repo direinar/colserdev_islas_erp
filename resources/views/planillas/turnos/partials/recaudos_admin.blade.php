@@ -39,7 +39,7 @@
                             <td>
                                 <input type="text" name="recaudos_admin[{{ $i }}][valor]"
                                     class="form-control form-control-sm text-end border-0 bg-transparent recaudo-admin-valor"
-                                    inputmode="decimal" value="{{ number_format($r->valor, 0, ',', '.') }}">
+                                    inputmode="decimal" value="{{ number_format($r->valor, 0, '.', ',') }}">
                             </td>
                             <td class="text-center">
                                 <button type="button" class="btn btn-sm btn-danger remove-row">×</button>
@@ -104,11 +104,11 @@
 
         function parseNumber(value) {
             if (!value) return 0;
-            return Number(String(value).replace(/\./g, '').replace(/,/g, '.')) || 0;
+            return Number(String(value).replace(/,/g, '')) || 0;
         }
 
         function formatNumber(number) {
-            return Number(number).toLocaleString('es-CO', {
+            return Number(number).toLocaleString('en-US', {
                 minimumFractionDigits: 0,
                 maximumFractionDigits: 0
             });

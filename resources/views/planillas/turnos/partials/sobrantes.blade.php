@@ -1,7 +1,7 @@
 <x-erp-card title="SOBRANTES Y FALTANTES">
 
     <div class="table-responsive">
-        <table class="table table-bordered table-sm" style="background-color: #f7f2e7; border-color: #b8a18f;">            
+        <table class="table table-bordered table-sm" style="background-color: #f7f2e7; border-color: #b8a18f;">
             <tbody>
                 <tr>
                     <td><strong>SOBRANTE o FALTANTE SEGUN CIERRES DE IAPROPIADA</strong></td>
@@ -26,11 +26,33 @@
     <div class="row g-2 mt-3">
         <div class="col-md-6">
             <label class="form-label fw-bold">NOMBRE DEL VENDEDOR:</label>
-            <input type="text" class="form-control form-control-sm" name="nombre_vendedor" id="nombre-vendedor" />
+            <input type="text" class="form-control form-control-sm" name="nombre_vendedor" id="nombre-vendedor"
+                value="{{ old('nombre_vendedor', optional($turno ?? null)->nombre_vendedor ?? auth()->user()->name) }}"
+                readonly />
         </div>
         <div class="col-md-6">
-            <label class="form-label fw-bold">REVISADO:</label>
-            <input type="text" class="form-control form-control-sm" name="revisado_por" id="revisado" />
+            <label class="form-label fw-bold d-block">REVISADO:</label>
+            @php
+                $turnoActual = $turno ?? null;
+                $estaRevisado = (bool) optional($turnoActual)->revisado;
+            @endphp
+            @if ($estaRevisado)
+                <span class="badge bg-success">
+                    REVISADO por {{ $turnoActual->revisado_por }}
+                    @if ($turnoActual->revisado_at)
+                        el {{ $turnoActual->revisado_at->format('d/m/Y H:i') }}
+                    @endif
+                </span>
+            @else
+                <span class="badge bg-danger">PENDIENTE DE REVISIÓN</span>
+            @endif
+
+            @if ($turnoActual && !$estaRevisado && auth()->user()->isAdministrador())
+                <form method="POST" action="{{ route('turnos.revisar', $turnoActual) }}" class="mt-2">
+                    @csrf
+                    <button type="submit" class="btn btn-sm btn-outline-success">Marcar como revisado</button>
+                </form>
+            @endif
         </div>
     </div>
 

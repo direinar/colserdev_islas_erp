@@ -95,7 +95,7 @@
                 <tr style="border-top: 3px solid #333;">
                     <td class="fw-bold" style="font-size: 1.1rem;">TOTAL RECIBIDO EN ESTE TURNO</td>
                     {{-- Texto en --}}
-                    <td style="text-align: right; font-size: 1.1rem; font-weight: bold;">
+                    <td style="text-align: right; font-size: 1.1rem; font-weight: bold; color: #0d6efd;">
                         <span id="resumen-total">0</span>
                     </td>
                 </tr>
@@ -108,16 +108,58 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        function parseNumber(value) {
+            if (value === null || value === undefined) return 0;
+            let s = String(value).trim();
+            if (s === '') return 0;
+            s = s.replace(/\s+/g, '');
+
+            const hasDot = s.indexOf('.') !== -1;
+            const hasComma = s.indexOf(',') !== -1;
+
+            if (hasDot && hasComma) {
+                const lastDot = s.lastIndexOf('.');
+                const lastComma = s.lastIndexOf(',');
+                if (lastDot > lastComma) {
+                    // dot is decimal separator, remove commas (thousands)
+                    s = s.replace(/,/g, '');
+                    return Number(s) || 0;
+                } else {
+                    // comma is decimal separator, remove dots and convert comma to dot
+                    s = s.replace(/\./g, '').replace(/,/g, '.');
+                    return Number(s) || 0;
+                }
+            }
+
+            if (hasComma && !hasDot) {
+                // multiple commas likely thousands separators
+                if ((s.match(/,/g) || []).length > 1) {
+                    s = s.replace(/,/g, '');
+                    return Number(s) || 0;
+                }
+                // single comma -> decimal separator
+                s = s.replace(/,/g, '.');
+                return Number(s) || 0;
+            }
+
+            if (hasDot && !hasComma) {
+                // multiple dots likely thousands separators
+                if ((s.match(/\./g) || []).length > 1) {
+                    s = s.replace(/\./g, '');
+                    return Number(s) || 0;
+                }
+                // single dot -> decimal separator
+                return Number(s) || 0;
+            }
+
+            return Number(s) || 0;
+        }
+
         function formatNumber(number) {
-            return Number(number).toLocaleString('es-CO', {
+            return Number(number).toLocaleString('en-US', {
                 minimumFractionDigits: 0,
                 maximumFractionDigits: 0
             });
-        }
-
-        function parseNumber(value) {
-            if (!value) return 0;
-            return Number(String(value).replace(/\./g, '').replace(/,/g, '.')) || 0;
         }
 
         function updateResumen() {
@@ -222,7 +264,7 @@
         // Usar MutationObserver para detectar cuando se agregan nuevas filas dinámicamente
         const tables = document.querySelectorAll(
             '.medios-pago-table tbody, .tabla-qr tbody, .tabla-transferencias tbody, .tabla-gasolina-eds tbody, .tabla-varios tbody, .tabla-recaudos tbody'
-            );
+        );
 
         tables.forEach(table => {
             const observer = new MutationObserver(() => {

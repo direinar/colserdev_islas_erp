@@ -31,12 +31,12 @@
                                 <input type="text" name="ventas[{{ $i }}][galones]"
                                     class="form-control form-control-sm erp-input galones-input"
                                     data-precio="{{ $v->combustible === 'ACPM' ? config('combustibles.acpm') : config('combustibles.corriente') }}"
-                                    value="{{ number_format($v->galones, 3, ',', '.') }}">
+                                    value="{{ number_format($v->galones, 3, '.', ',') }}">
                             </td>
                             <td class="text-end">
                                 <input type="text" name="ventas[{{ $i }}][valor]"
                                     class="form-control form-control-sm erp-input valor-total" readonly
-                                    value="{{ number_format($v->valor, 0, ',', '.') }}">
+                                    value="{{ number_format($v->valor, 0, '.', ',') }}">
                             </td>
                         </tr>
                     @endforeach
@@ -196,13 +196,13 @@
                 {{-- <tr class="table-warning">
                     <th colspan="2">PRECIO CORRIENTE</th>
                     <th class="text-end">
-                        {{ number_format(config('combustibles.corriente'), 0, ',', '.') }}
+                        {{ number_format(config('combustibles.corriente'), 0, '.', ',') }}
                     </th>
                 </tr> --}}
                 {{-- <tr class="table-info">
                     <th colspan="2">PRECIO ACPM</th>
                     <th class="text-end">
-                        {{ number_format(config('combustibles.acpm'), 0, ',', '.') }}
+                        {{ number_format(config('combustibles.acpm'), 0, '.', ',') }}
                     </th>
                 </tr> --}}
             </tfoot>
@@ -215,14 +215,52 @@
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         function parseNumber(value) {
-            if (!value) return 0;
-            return Number(String(value).replace(/\./g, '').replace(/,/g, '.')) || 0;
+            if (value === null || value === undefined) return 0;
+            let s = String(value).trim();
+            if (s === '') return 0;
+            s = s.replace(/\s+/g, '');
+
+            const hasDot = s.indexOf('.') !== -1;
+            const hasComma = s.indexOf(',') !== -1;
+
+            if (hasDot && hasComma) {
+                const lastDot = s.lastIndexOf('.');
+                const lastComma = s.lastIndexOf(',');
+                if (lastDot > lastComma) {
+                    s = s.replace(/,/g, '');
+                    return Number(s) || 0;
+                } else {
+                    s = s.replace(/\./g, '').replace(/,/g, '.');
+                    return Number(s) || 0;
+                }
+            }
+
+            if (hasComma && !hasDot) {
+                if ((s.match(/,/g) || []).length > 1) {
+                    s = s.replace(/,/g, '');
+                    return Number(s) || 0;
+                }
+                s = s.replace(/,/g, '.');
+                return Number(s) || 0;
+            }
+
+            if (hasDot && !hasComma) {
+                if ((s.match(/\./g) || []).length > 1) {
+                    s = s.replace(/\./g, '');
+                    return Number(s) || 0;
+                }
+                return Number(s) || 0;
+            }
+
+            return Number(s) || 0;
         }
 
-        function formatNumber(value, decimals = 0) {
-            return Number(value).toLocaleString('es-CO', {
+        function formatNumber(value, decimals = 0, useThousands = true) {
+            const n = Number(value) || 0;
+            return n.toLocaleString('es-CO', {
                 minimumFractionDigits: decimals,
-                maximumFractionDigits: decimals
+                maximumFractionDigits: decimals,
+                useGrouping: useThousands
             });
         }
 
@@ -242,7 +280,7 @@
                 const galones = parseNumber(input.value);
                 const valor = parseNumber(valorInput ? valorInput.value : 0);
                 const combustible = combustibleInput ? String(combustibleInput.value).toLowerCase() :
-                '';
+                    '';
 
                 if (combustible === 'acpm') {
                     galonesAcpM += galones;
@@ -261,11 +299,11 @@
             const valorAcpMField = document.querySelector('.tirillas-valor-acpm');
             const ventasTotalTurno = document.querySelector('.ventas-total-turno');
 
-            if (galonesCorrienteField) galonesCorrienteField.value = formatNumber(galonesCorriente, 3);
-            if (galonesAcpMField) galonesAcpMField.value = formatNumber(galonesAcpM, 3);
-            if (valorCorrienteField) valorCorrienteField.value = formatNumber(valorCorriente, 0);
-            if (valorAcpMField) valorAcpMField.value = formatNumber(valorAcpM, 0);
-            if (ventasTotalTurno) ventasTotalTurno.textContent = formatNumber(totalTurno, 0);
+            if (galonesCorrienteField) galonesCorrienteField.value = formatNumber(galonesCorriente, 3, false);
+            if (galonesAcpMField) galonesAcpMField.value = formatNumber(galonesAcpM, 3, false);
+            if (valorCorrienteField) valorCorrienteField.value = formatNumber(valorCorriente, 0, true);
+            if (valorAcpMField) valorAcpMField.value = formatNumber(valorAcpM, 0, true);
+            if (ventasTotalTurno) ventasTotalTurno.textContent = formatNumber(totalTurno, 0, true);
         }
 
         updateVentasResumen();

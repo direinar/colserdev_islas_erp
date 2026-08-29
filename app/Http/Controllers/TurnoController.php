@@ -52,7 +52,6 @@ class TurnoController extends Controller
             'fecha' => ['required', 'date'],
             'numero_turno' => ['required', 'integer', 'min:1'],
             'nombre_vendedor' => ['nullable', 'string', 'max:120'],
-            'revisado_por' => ['nullable', 'string', 'max:120'],
 
             'ventas' => ['nullable', 'array'],
             'lecturas' => ['nullable', 'array'],
@@ -67,16 +66,42 @@ class TurnoController extends Controller
         ]);
 
         DB::transaction(function () use ($request) {
-            $turno = Turno::create([
+            // Si ya existe un turno para esa fecha + numero_turno, se actualiza en vez de duplicar
+            $turno = Turno::query()
+                ->where('fecha', $request->input('fecha'))
+                ->where('numero_turno', $request->input('numero_turno'))
+                ->first();
+
+            // Una planilla ya revisada solo puede volver a modificarla el administrador
+            if ($turno && $turno->revisado && ! $request->user()->isAdministrador()) {
+                abort(403, 'Esta planilla ya fue revisada. Solo un administrador puede modificarla.');
+            }
+
+            $atributos = [
                 'fecha' => $request->input('fecha'),
                 'numero_turno' => $request->input('numero_turno'),
                 'nombre_vendedor' => $request->input('nombre_vendedor'),
-                'revisado_por' => $request->input('revisado_por'),
                 'precio_corriente' => config('combustibles.corriente'),
                 'precio_acpm' => config('combustibles.acpm'),
                 'traslado_sobrante' => 0,
                 'traslado_faltante' => 0,
-            ]);
+            ];
+
+            if ($turno) {
+                $turno->update($atributos);
+                $turno->ventas()->delete();
+                $turno->surtidores()->delete();
+                $turno->lubricantes()->delete();
+                $turno->mediosPago()->delete();
+                $turno->qrPagos()->delete();
+                $turno->recaudos()->delete();
+                $turno->transferencias()->delete();
+                $turno->gasolinaEds()->delete();
+                $turno->varios()->delete();
+                $turno->recaudosAdmin()->delete();
+            } else {
+                $turno = Turno::create($atributos);
+            }
 
             $this->saveVentas($turno, $request->input('ventas', []));
             $this->saveLecturas($turno, $request->input('lecturas', []));
@@ -90,8 +115,33 @@ class TurnoController extends Controller
             $this->saveRecaudosAdmin($turno, $request->input('recaudos_admin', []));
         });
 
-        return redirect()->route('turnos.create')
+        return redirect()->route('turnos.create', [
+            'fecha' => $request->input('fecha'),
+            'numero_turno' => $request->input('numero_turno'),
+        ])
             ->with('success', 'Turno guardado correctamente.');
+    }
+
+    public function pendientes(Request $request)
+    {
+        $turnos = Turno::query()
+            ->where('revisado', false)
+            ->orderByDesc('fecha')
+            ->orderByDesc('numero_turno')
+            ->paginate(20);
+
+        return view('planillas.turnos.pendientes', compact('turnos'));
+    }
+
+    public function revisar(Request $request, Turno $turno)
+    {
+        $turno->update([
+            'revisado' => true,
+            'revisado_por' => $request->user()->name,
+            'revisado_at' => now(),
+        ]);
+
+        return back()->with('success', 'Turno #' . $turno->numero_turno . ' del ' . $turno->fecha->format('Y-m-d') . ' marcado como revisado.');
     }
 
     private function parseDecimal($value): float

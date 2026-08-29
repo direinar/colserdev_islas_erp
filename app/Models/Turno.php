@@ -10,7 +10,9 @@ class Turno extends Model
         'fecha',
         'numero_turno',
         'nombre_vendedor',
-        'revisado_por',          // tu migración usa 'revisado_por', no 'revisado'
+        'revisado_por',          // nombre del administrador que revisó la planilla
+        'revisado',
+        'revisado_at',
         'precio_corriente',
         'precio_acpm',
         'traslado_sobrante',
@@ -19,6 +21,8 @@ class Turno extends Model
 
     protected $casts = [
         'fecha'            => 'date',
+        'revisado'         => 'boolean',
+        'revisado_at'      => 'datetime',
         'precio_corriente' => 'decimal:2',
         'precio_acpm'      => 'decimal:2',
         'traslado_sobrante'=> 'decimal:2',

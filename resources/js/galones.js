@@ -4,12 +4,44 @@ function initGalones() {
     if (!document.body) return;
 
     const parseGalones = value => {
-        return parseFloat(
-            value
-                .toString()
-                .replace(/\./g, '')
-                .replace(',', '.')
-        );
+        if (value === null || value === undefined) return NaN;
+        let s = String(value).trim();
+        if (s === '') return NaN;
+        s = s.replace(/\s+/g, '');
+
+        const hasDot = s.indexOf('.') !== -1;
+        const hasComma = s.indexOf(',') !== -1;
+
+        if (hasDot && hasComma) {
+            const lastDot = s.lastIndexOf('.');
+            const lastComma = s.lastIndexOf(',');
+            if (lastDot > lastComma) {
+                s = s.replace(/,/g, '');
+                return parseFloat(s);
+            } else {
+                s = s.replace(/\./g, '').replace(/,/g, '.');
+                return parseFloat(s);
+            }
+        }
+
+        if (hasComma && !hasDot) {
+            if ((s.match(/,/g) || []).length > 1) {
+                s = s.replace(/,/g, '');
+                return parseFloat(s);
+            }
+            s = s.replace(/,/g, '.');
+            return parseFloat(s);
+        }
+
+        if (hasDot && !hasComma) {
+            if ((s.match(/\./g) || []).length > 1) {
+                s = s.replace(/\./g, '');
+                return parseFloat(s);
+            }
+            return parseFloat(s);
+        }
+
+        return parseFloat(s);
     };
 
     const formatGalones = number => {
@@ -37,12 +69,44 @@ function initGalones() {
     };
 
     const parseCurrency = value => {
-        return parseFloat(
-            value
-                .toString()
-                .replace(/\./g, '')
-                .replace(',', '.')
-        );
+        if (value === null || value === undefined) return NaN;
+        let s = String(value).trim();
+        if (s === '') return NaN;
+        s = s.replace(/\s+/g, '');
+
+        const hasDot = s.indexOf('.') !== -1;
+        const hasComma = s.indexOf(',') !== -1;
+
+        if (hasDot && hasComma) {
+            const lastDot = s.lastIndexOf('.');
+            const lastComma = s.lastIndexOf(',');
+            if (lastDot > lastComma) {
+                s = s.replace(/,/g, '');
+                return parseFloat(s);
+            } else {
+                s = s.replace(/\./g, '').replace(/,/g, '.');
+                return parseFloat(s);
+            }
+        }
+
+        if (hasComma && !hasDot) {
+            if ((s.match(/,/g) || []).length > 1) {
+                s = s.replace(/,/g, '');
+                return parseFloat(s);
+            }
+            s = s.replace(/,/g, '.');
+            return parseFloat(s);
+        }
+
+        if (hasDot && !hasComma) {
+            if ((s.match(/\./g) || []).length > 1) {
+                s = s.replace(/\./g, '');
+                return parseFloat(s);
+            }
+            return parseFloat(s);
+        }
+
+        return parseFloat(s);
     };
 
     const updateGrandTotal = () => {

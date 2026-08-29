@@ -23,13 +23,13 @@
                         </td>
                         <td><input type="text" name="lecturas[{{ $i }}][lectura_inicial]"
                                 inputmode="decimal" placeholder="0,000" class="form-control erp-input lectura-inicial"
-                                value="{{ number_format($s->lectura_inicial, 3, ',', '.') }}"></td>
+                                value="{{ number_format($s->lectura_inicial, 3, '.', ',') }}"></td>
                         <td><input type="text" name="lecturas[{{ $i }}][lectura_final]"
                                 inputmode="decimal" placeholder="0,000" class="form-control erp-input lectura-final"
-                                value="{{ number_format($s->lectura_final, 3, ',', '.') }}"></td>
+                                value="{{ number_format($s->lectura_final, 3, '.', ',') }}"></td>
                         <td><input type="text" name="lecturas[{{ $i }}][galones]" readonly
                                 class="form-control erp-input lectura-gls"
-                                value="{{ number_format($s->galones, 3, ',', '.') }}"></td>
+                                value="{{ number_format($s->galones, 3, '.', ',') }}"></td>
                     </tr>
                 @endforeach
             @else
