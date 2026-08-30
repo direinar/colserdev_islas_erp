@@ -3,7 +3,9 @@
 use App\Models\Lubricant;
 use App\Models\Turno;
 use App\Models\User;
+use Database\Seeders\TurnoVentasSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Artisan;
 
 uses(RefreshDatabase::class);
 
@@ -245,6 +247,22 @@ test('ventas galones sent with a dot decimal (blade default format) are not infl
     expect((float) $turno->ventas()->where('surtidor', 'SURTIDOR 1 CTE')->first()->galones)->toBe(4.76);
     expect((float) $turno->ventas()->where('surtidor', 'SURTIDOR 2 CTE')->first()->galones)->toBe(100.0);
     expect((float) $turno->ventas()->where('surtidor', 'SURTIDOR 1 ACPM')->first()->galones)->toBe(1.11);
+});
+
+test('turno ventas seeder loads the default surtidores for the sales form', function () {
+    Artisan::call('db:seed', ['--class' => TurnoVentasSeeder::class]);
+
+    $turno = Turno::query()->firstOrFail();
+
+    expect($turno->ventas()->count())->toBe(6)
+        ->and($turno->ventas()->pluck('surtidor')->all())->toBe([
+            'SURTIDOR 1 CTE',
+            'SURTIDOR 1 ACPM',
+            'SURTIDOR 2 CTE',
+            'SURTIDOR 2 ACPM',
+            'SURTIDOR 3 ACPM',
+            'SURTIDOR 3 CTE',
+        ]);
 });
 
 test('search datalist lists the turno numbers already registered for the queried date', function () {
