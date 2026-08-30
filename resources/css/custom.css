@@ -204,6 +204,14 @@ body {
     justify-content: flex-end;
 }
 
+.actions {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+}
+
 .btn-action {
     padding: 6px 10px !important;
     border-radius: 999px !important;
@@ -885,6 +893,14 @@ body ::selection {
 }
 
 @media (max-width:780px) {
+
+    .actions {
+        justify-content: flex-start;
+    }
+
+    .actions .btn {
+        flex: 1 1 160px;
+    }
 
     .two,
     .three {

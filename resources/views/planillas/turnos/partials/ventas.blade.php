@@ -28,8 +28,9 @@
                                 {{ $v->surtidor }}
                             </td>
                             <td class="text-end">
+                                @php $galonesClass = $v->combustible === 'ACPM' ? 'galones-acpm' : 'galones-cte'; @endphp
                                 <input type="text" name="ventas[{{ $i }}][galones]"
-                                    class="form-control form-control-sm erp-input galones-input"
+                                    class="form-control form-control-sm erp-input galones-input {{ $galonesClass }}"
                                     data-precio="{{ $v->combustible === 'ACPM' ? config('combustibles.acpm') : config('combustibles.corriente') }}"
                                     value="{{ number_format($v->galones, 3, '.', ',') }}">
                             </td>
@@ -211,106 +212,3 @@
     </div>
 
 </x-erp-card>
-
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        function parseNumber(value) {
-            if (value === null || value === undefined) return 0;
-            let s = String(value).trim();
-            if (s === '') return 0;
-            s = s.replace(/\s+/g, '');
-
-            const hasDot = s.indexOf('.') !== -1;
-            const hasComma = s.indexOf(',') !== -1;
-
-            if (hasDot && hasComma) {
-                const lastDot = s.lastIndexOf('.');
-                const lastComma = s.lastIndexOf(',');
-                if (lastDot > lastComma) {
-                    s = s.replace(/,/g, '');
-                    return Number(s) || 0;
-                } else {
-                    s = s.replace(/\./g, '').replace(/,/g, '.');
-                    return Number(s) || 0;
-                }
-            }
-
-            if (hasComma && !hasDot) {
-                if ((s.match(/,/g) || []).length > 1) {
-                    s = s.replace(/,/g, '');
-                    return Number(s) || 0;
-                }
-                s = s.replace(/,/g, '.');
-                return Number(s) || 0;
-            }
-
-            if (hasDot && !hasComma) {
-                if ((s.match(/\./g) || []).length > 1) {
-                    s = s.replace(/\./g, '');
-                    return Number(s) || 0;
-                }
-                return Number(s) || 0;
-            }
-
-            return Number(s) || 0;
-        }
-
-        function formatNumber(value, decimals = 0, useThousands = true) {
-            const n = Number(value) || 0;
-            return n.toLocaleString('es-CO', {
-                minimumFractionDigits: decimals,
-                maximumFractionDigits: decimals,
-                useGrouping: useThousands
-            });
-        }
-
-        function updateVentasResumen() {
-            let galonesCorriente = 0;
-            let galonesAcpM = 0;
-            let valorCorriente = 0;
-            let valorAcpM = 0;
-            let totalTurno = 0;
-
-            document.querySelectorAll('.galones-input').forEach(input => {
-                const tr = input.closest('tr');
-                if (!tr) return;
-
-                const combustibleInput = tr.querySelector('input[name$="[combustible]"]');
-                const valorInput = tr.querySelector('input[name$="[valor]"]');
-                const galones = parseNumber(input.value);
-                const valor = parseNumber(valorInput ? valorInput.value : 0);
-                const combustible = combustibleInput ? String(combustibleInput.value).toLowerCase() :
-                    '';
-
-                if (combustible === 'acpm') {
-                    galonesAcpM += galones;
-                    valorAcpM += valor;
-                } else {
-                    galonesCorriente += galones;
-                    valorCorriente += valor;
-                }
-
-                totalTurno += valor;
-            });
-
-            const galonesCorrienteField = document.querySelector('.tirillas-galones-corriente');
-            const galonesAcpMField = document.querySelector('.tirillas-galones-acpm');
-            const valorCorrienteField = document.querySelector('.tirillas-valor-corriente');
-            const valorAcpMField = document.querySelector('.tirillas-valor-acpm');
-            const ventasTotalTurno = document.querySelector('.ventas-total-turno');
-
-            if (galonesCorrienteField) galonesCorrienteField.value = formatNumber(galonesCorriente, 3, false);
-            if (galonesAcpMField) galonesAcpMField.value = formatNumber(galonesAcpM, 3, false);
-            if (valorCorrienteField) valorCorrienteField.value = formatNumber(valorCorriente, 0, true);
-            if (valorAcpMField) valorAcpMField.value = formatNumber(valorAcpM, 0, true);
-            if (ventasTotalTurno) ventasTotalTurno.textContent = formatNumber(totalTurno, 0, true);
-        }
-
-        updateVentasResumen();
-
-        document.querySelectorAll('.galones-input').forEach(input => {
-            input.addEventListener('input', updateVentasResumen);
-            input.addEventListener('change', updateVentasResumen);
-        });
-    });
-</script>

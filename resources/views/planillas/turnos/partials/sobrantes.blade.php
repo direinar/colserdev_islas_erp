@@ -48,10 +48,12 @@
             @endif
 
             @if ($turnoActual && !$estaRevisado && auth()->user()->isAdministrador())
-                <form method="POST" action="{{ route('turnos.revisar', $turnoActual) }}" class="mt-2">
-                    @csrf
-                    <button type="submit" class="btn btn-sm btn-outline-success">Marcar como revisado</button>
-                </form>
+                {{-- Nota: no se anida un <form> aquí; este botón envía #form-marcar-revisado,
+                     definido fuera del formulario principal de la planilla (ver create.blade.php),
+                     para evitar que el navegador cierre prematuramente ese formulario. --}}
+                <button type="submit" form="form-marcar-revisado" class="btn btn-sm btn-outline-success mt-2">
+                    Marcar como revisado
+                </button>
             @endif
         </div>
     </div>

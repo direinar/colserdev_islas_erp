@@ -182,11 +182,35 @@ class PlanillaTurno extends Component
             $this->precios['ACPM'] = (float) $ultimoTurno->precio_acpm;
         }
 
-        $lecturasAnteriores = is_array($ultimoTurno->lecturas) ? $ultimoTurno->lecturas : [];
+        $lecturasAnteriores = $ultimoTurno->surtidores
+            ->sortBy(fn ($surtidor) => $this->lecturaOrderIndex($surtidor->manguera))
+            ->values()
+            ->all();
 
         foreach ($this->lecturas as $index => $lectura) {
-            $this->lecturas[$index]['inicial'] = $this->numberValue($lecturasAnteriores[$index]['final'] ?? 0);
+            $surtidorAnterior = $lecturasAnteriores[$index] ?? null;
+            $this->lecturas[$index]['inicial'] = $this->numberValue($surtidorAnterior->lectura_final ?? 0);
         }
+    }
+
+    private function lecturaOrderIndex(string $manguera): int
+    {
+        $orden = [
+            'PLUS O1' => 0,
+            'PLUS O2' => 1,
+            'ACPM O3' => 2,
+            'ACPM O4' => 3,
+            'PLUS O5' => 4,
+            'PLUS O6' => 5,
+            'ACPM O7' => 6,
+            'ACPM O8' => 7,
+            'PLUS O9' => 8,
+            'PLUS 10' => 9,
+            'ACPM 11' => 10,
+            'ACPM 12' => 11,
+        ];
+
+        return $orden[$manguera] ?? PHP_INT_MAX;
     }
 
     private function catalogoUreaLubricantes(): array
@@ -525,7 +549,7 @@ class PlanillaTurno extends Component
         ]);
 
         DB::transaction(function (): void {
-            $turno = $this->turnoId ? Turno::query()->findOrFail($this->turnoId) : new Turno();
+            $turno = $this->turnoId ? Turno::query()->findOrFail($this->turnoId) : new Turno;
 
             $turno->fill([
                 'fecha' => $this->fecha,
@@ -567,7 +591,7 @@ class PlanillaTurno extends Component
         });
 
         $this->guardado = true;
-        $this->mensaje = 'Turno #' . $this->numero_turno . ' guardado correctamente.';
+        $this->mensaje = 'Turno #'.$this->numero_turno.' guardado correctamente.';
     }
 
     public function nuevoTurno(): void

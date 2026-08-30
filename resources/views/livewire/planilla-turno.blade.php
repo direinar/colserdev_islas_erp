@@ -53,12 +53,12 @@
                     <div class="status-pill">{{ $guardado ? 'Guardado' : 'Borrador' }}</div>
                 </div>
                 <div class="actions">
-                    <button type="button" class="btn btn-primary" wire:click="guardar" wire:loading.attr="disabled">
-                        Guardar turno
-                    </button>
                     <button type="button" class="btn btn-secondary" wire:click="nuevoTurno"
                         wire:loading.attr="disabled">
                         Nuevo turno
+                    </button>
+                    <button type="button" class="btn btn-primary" wire:click="guardar" wire:loading.attr="disabled">
+                        Guardar turno
                     </button>
                     @if ($mensaje !== '')
                         <span class="feedback">{{ $mensaje }}</span>
@@ -752,10 +752,10 @@
             </section>
 
             <div class="actions" style="padding-bottom: 18px;">
-                <button type="button" class="btn btn-primary" wire:click="guardar"
-                    wire:loading.attr="disabled">Guardar turno</button>
                 <button type="button" class="btn btn-secondary" wire:click="nuevoTurno"
                     wire:loading.attr="disabled">Nuevo turno</button>
+                <button type="button" class="btn btn-primary" wire:click="guardar"
+                    wire:loading.attr="disabled">Guardar turno</button>
             </div>
         </div>
     </div>

@@ -27,7 +27,48 @@
                     $productOptions = $lubricants ?? collect();
                 @endphp
 
-                @if ($productOptions->isEmpty())
+                @if (isset($turno) && optional($turno->lubricantes)->count())
+                    @foreach ($turno->lubricantes as $i => $l)
+                        <tr data-index="{{ $i }}">
+                            <td>
+                                <input type="number" name="urea_lubricantes[{{ $i }}][cantidad]"
+                                    min="0" step="1" class="form-control form-control-sm cantidad-input"
+                                    value="{{ $l->cantidad }}" />
+                            </td>
+                            <td>
+                                <select name="urea_lubricantes[{{ $i }}][producto]"
+                                    class="form-select form-select-sm lubricantes-producto-select">
+                                    <option value="">Seleccione producto</option>
+                                    @foreach ($productOptions as $product)
+                                        <option value="{{ $product->reference }}"
+                                            data-sale-price="{{ $product->sale_price ?? 0 }}"
+                                            data-iva="{{ $product->iva ?? 0 }}"
+                                            @if ($l->producto === $product->reference) selected @endif>{{ $product->reference }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </td>
+                            <td>
+                                <input type="text" name="urea_lubricantes[{{ $i }}][valor_sin_iva]"
+                                    class="form-control form-control-sm valor-sin-iva-input"
+                                    value="{{ number_format($l->valor_sin_iva, 0, '.', ',') }}" readonly />
+                            </td>
+                            <td>
+                                <input type="text" name="urea_lubricantes[{{ $i }}][iva]"
+                                    class="form-control form-control-sm iva-input"
+                                    value="{{ number_format($l->iva, 0, '.', ',') }}" readonly />
+                            </td>
+                            <td>
+                                <input type="text" name="urea_lubricantes[{{ $i }}][total]"
+                                    class="form-control form-control-sm total-input"
+                                    value="{{ number_format($l->total, 0, '.', ',') }}" readonly />
+                            </td>
+                            <td class="text-center">
+                                <button type="button" class="btn btn-sm btn-danger remove-row">×</button>
+                            </td>
+                        </tr>
+                    @endforeach
+                @elseif ($productOptions->isEmpty())
                     <tr>
                         <td colspan="6" class="text-center py-4">No hay productos disponibles. Agrega productos desde
                             el CRUD de lubricantes.</td>

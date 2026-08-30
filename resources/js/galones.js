@@ -3,6 +3,39 @@ function initGalones() {
     // Evitamos errores si el DOM no está listo
     if (!document.body) return;
 
+    // Bloquea letras/símbolos en los campos de valores (galones, lecturas,
+    // valores monetarios): solo dígitos, punto y coma. Delegado en document
+    // para cubrir también filas agregadas dinámicamente por JS.
+    if (!document.body.dataset.numericGuardInit) {
+        document.body.dataset.numericGuardInit = '1';
+        const isValueField = el => el.matches?.(
+            'input[inputmode="decimal"], .galones-input, .valor-total, .lectura-inicial, .lectura-final'
+        );
+
+        document.addEventListener('input', function (e) {
+            const el = e.target;
+            if (!isValueField(el)) return;
+            const cleaned = el.value.replace(/[^0-9.,]/g, '');
+            if (cleaned !== el.value) el.value = cleaned;
+        });
+
+        document.addEventListener('keypress', function (e) {
+            if (!isValueField(e.target)) return;
+            if (e.key.length === 1 && !/[0-9.,]/.test(e.key)) {
+                e.preventDefault();
+            }
+        });
+
+        document.addEventListener('paste', function (e) {
+            if (!isValueField(e.target)) return;
+            const text = (e.clipboardData || window.clipboardData).getData('text');
+            if (/[^0-9.,]/.test(text)) {
+                e.preventDefault();
+                document.execCommand('insertText', false, text.replace(/[^0-9.,]/g, ''));
+            }
+        });
+    }
+
     const parseGalones = value => {
         if (value === null || value === undefined) return NaN;
         let s = String(value).trim();
@@ -46,7 +79,12 @@ function initGalones() {
 
     const formatGalones = number => {
         if (isNaN(number)) return '';
-        return number.toLocaleString('es-CO', {
+        // Formato punto-decimal/coma-miles, igual al que Blade usa para
+        // renderizar galones guardados (number_format($v, 3, '.', ',')).
+        // Antes esta función usaba locale es-CO (coma decimal), lo que hacía
+        // que el valor recién tecleado se viera distinto al que se muestra
+        // al consultar el turno, y arriesgaba una mala interpretación al guardar.
+        return number.toLocaleString('en-US', {
             minimumFractionDigits: 3,
             maximumFractionDigits: 3
         });
@@ -99,13 +137,27 @@ function initGalones() {
         }
 
         if (hasDot && !hasComma) {
-            if ((s.match(/\./g) || []).length > 1) {
+            const parts = s.split('.');
+            const lastPart = parts[parts.length - 1];
+            const isThousandsGrouping = parts.length > 1 && parts.every(part => /^\d+$/.test(part)) && lastPart.length === 3;
+
+            if (isThousandsGrouping) {
                 s = s.replace(/\./g, '');
                 return parseFloat(s);
             }
+
             return parseFloat(s);
         }
 
+        return parseFloat(s);
+    };
+
+    // Los campos VALOR siempre son enteros (0 decimales): '.' y ',' solo son
+    // separadores de miles, nunca decimales, así que se pueden eliminar sin ambigüedad.
+    const parseMoneyInteger = value => {
+        if (value === null || value === undefined) return NaN;
+        const s = String(value).trim().replace(/[.,\s]/g, '');
+        if (s === '') return NaN;
         return parseFloat(s);
     };
 
@@ -114,8 +166,7 @@ function initGalones() {
         if (!totalField) return;
         let sum = 0;
         document.querySelectorAll('.valor-total').forEach(input => {
-            const value = input.value.toString().replace(/\./g, '').replace(',', '.');
-            const parsed = parseFloat(value);
+            const parsed = parseMoneyInteger(input.value);
             if (!isNaN(parsed)) sum += parsed;
         });
         totalField.textContent = formatMoney(sum);
@@ -145,7 +196,7 @@ function initGalones() {
         if (valorCorrienteInput) {
             const precioCorriente = parseFloat(valorCorrienteInput.dataset.precio);
             const totalValorCorriente = totalCorriente * (isNaN(precioCorriente) ? 0 : precioCorriente);
-            valorCorrienteInput.value = formatMoneyWithDecimals(totalValorCorriente, 3);
+            valorCorrienteInput.value = formatMoney(totalValorCorriente);
         }
 
         if (valorAcpmsInput) {
@@ -288,6 +339,7 @@ function initGalones() {
     // Inicializar valores al cargar
     document.querySelectorAll('tbody tr').forEach(row => updateRowGls(row));
 
+    updateGrandTotal();
     updateTirillasTotals();
     updateVentasSegunLecturas();
 }

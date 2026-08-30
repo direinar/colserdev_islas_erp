@@ -3,26 +3,46 @@
 @section('content')
 
     {{-- BÚSQUEDA: cargar un turno existente por fecha + número --}}
-    <form method="GET" action="{{ route('turnos.create') }}" class="mb-3 pastel-section">
+    <form method="GET" action="{{ route('turnos.create') }}" class="mb-3 pastel-section" id="buscar-turno-form">
         <div class="row g-2 align-items-end">
             <div class="col-auto">
                 <label class="form-label small mb-0">Fecha</label>
-                <input type="date" name="fecha" class="form-control form-control-sm"
+                <input type="date" name="fecha" id="buscar-turno-fecha" class="form-control form-control-sm"
                     value="{{ request('fecha', date('Y-m-d')) }}">
             </div>
             <div class="col-auto">
                 <label class="form-label small mb-0">Turno</label>
-                <input type="number" name="numero_turno" class="form-control form-control-sm" min="1"
-                    value="{{ request('numero_turno') }}">
+                <select name="numero_turno" id="buscar-turno-numero" class="form-select form-select-sm"
+                    style="min-width: 140px" onchange="document.getElementById('buscar-turno-form').submit()">
+                    <option value="">-- Seleccione --</option>
+                    @foreach ($turnosDelDia as $numero)
+                        <option value="{{ $numero }}" @selected((string) request('numero_turno') === (string) $numero)>
+                            Turno {{ $numero }}
+                        </option>
+                    @endforeach
+                </select>
+                @if ($turnosDelDia->isEmpty())
+                    <small class="text-muted d-block">Sin turnos registrados esta fecha</small>
+                @endif
             </div>
             <div class="col-auto">
                 <button type="submit" class="btn btn-sm btn-outline-primary">Buscar</button>
                 <a href="{{ route('turnos.create') }}" class="btn btn-sm btn-outline-secondary">Nuevo</a>
+                @if ($puedeGuardar ?? true)
+                    <button type="submit" form="turno-form" class="btn btn-sm btn-primary">Guardar</button>
+                @endif
             </div>
         </div>
     </form>
 
-    <form method="POST" action="{{ route('turnos.store') }}">
+    <script>
+        // Al cambiar la fecha, recargar la búsqueda para refrescar los turnos disponibles ese día.
+        document.getElementById('buscar-turno-fecha')?.addEventListener('change', function() {
+            document.getElementById('buscar-turno-form')?.submit();
+        });
+    </script>
+
+    <form method="POST" action="{{ route('turnos.store') }}" id="turno-form">
         @csrf
 
         {{-- HEADER --}}
@@ -108,15 +128,11 @@
                 {{-- Fila inferior --}}
                 <div class="row mt-3">
 
-                    <div class="col-md-4">
-                        @include('planillas.turnos.partials.qr')
-                    </div>
-
-                    <div class="col-md-4">
+                    <div class="col-md-6">
                         @include('planillas.turnos.partials.transferencias')
                     </div>
 
-                    <div class="col-md-4">
+                    <div class="col-md-6">
                         @include('planillas.turnos.partials.recaudos')
                     </div>
 
@@ -124,11 +140,11 @@
                 {{-- Fila inferior --}}
                 <div class="row mt-3">
 
-                    <div class="col-md-4">
+                    <div class="col-md-6">
                         @include('planillas.turnos.partials.gasolina_eds')
                     </div>
 
-                    <div class="col-md-4">
+                    <div class="col-md-6">
                         @include('planillas.turnos.partials.varios')
                     </div>
 
@@ -146,9 +162,25 @@
             </div>
         </div>
 
-        <div class="pastel-section mt-3 text-end">
-            <button type="submit" class="btn btn-primary">Guardar Turno</button>
-        </div>
+        @php
+            // Coincide con la regla del servidor: un turno revisado solo lo puede
+            // seguir editando un administrador; para los demás se oculta "Guardar".
+            $turnoRevisado = isset($turno) && $turno && $turno->revisado;
+            $puedeGuardar = !$turnoRevisado || auth()->user()->isAdministrador();
+        @endphp
+
+        @if (!$puedeGuardar)
+            <div class="pastel-section mt-3 text-end">
+                <span class="badge bg-secondary">Planilla revisada: el registro está bloqueado</span>
+            </div>
+        @endif
 
     </form>
+
+    {{-- Formulario independiente (no anidado) para marcar el turno como revisado --}}
+    @if (isset($turno) && $turno && !$turno->revisado && auth()->user()->isAdministrador())
+        <form method="POST" action="{{ route('turnos.revisar', $turno) }}" id="form-marcar-revisado" class="d-none">
+            @csrf
+        </form>
+    @endif
 @endsection
