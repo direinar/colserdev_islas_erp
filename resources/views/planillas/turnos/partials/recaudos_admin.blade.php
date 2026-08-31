@@ -39,7 +39,7 @@
                             <td>
                                 <input type="text" name="recaudos_admin[{{ $i }}][valor]"
                                     class="form-control form-control-sm text-end border-0 bg-transparent recaudo-admin-valor"
-                                    inputmode="decimal" value="{{ number_format($r->valor, 0, '.', ',') }}">
+                                    inputmode="decimal" value="{{ number_format($r->valor, 0, ',', '.') }}">
                             </td>
                             <td class="text-center">
                                 <button type="button" class="btn btn-sm btn-danger remove-row">×</button>

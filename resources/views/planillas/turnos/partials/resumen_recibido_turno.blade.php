@@ -108,52 +108,10 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        function parseNumber(value) {
-            if (value === null || value === undefined) return 0;
-            let s = String(value).trim();
-            if (s === '') return 0;
-            s = s.replace(/\s+/g, '');
-
-            const hasDot = s.indexOf('.') !== -1;
-            const hasComma = s.indexOf(',') !== -1;
-
-            if (hasDot && hasComma) {
-                const lastDot = s.lastIndexOf('.');
-                const lastComma = s.lastIndexOf(',');
-                if (lastDot > lastComma) {
-                    // dot is decimal separator, remove commas (thousands)
-                    s = s.replace(/,/g, '');
-                    return Number(s) || 0;
-                } else {
-                    // comma is decimal separator, remove dots and convert comma to dot
-                    s = s.replace(/\./g, '').replace(/,/g, '.');
-                    return Number(s) || 0;
-                }
-            }
-
-            if (hasComma && !hasDot) {
-                // multiple commas likely thousands separators
-                if ((s.match(/,/g) || []).length > 1) {
-                    s = s.replace(/,/g, '');
-                    return Number(s) || 0;
-                }
-                // single comma -> decimal separator
-                s = s.replace(/,/g, '.');
-                return Number(s) || 0;
-            }
-
-            if (hasDot && !hasComma) {
-                // multiple dots likely thousands separators
-                if ((s.match(/\./g) || []).length > 1) {
-                    s = s.replace(/\./g, '');
-                    return Number(s) || 0;
-                }
-                // single dot -> decimal separator
-                return Number(s) || 0;
-            }
-
-            return Number(s) || 0;
-        }
+        const parseNumber = value => {
+            const n = window.MoneyFormat.parseMoney(value);
+            return isNaN(n) ? 0 : n;
+        };
 
         function formatNumber(number) {
             return Number(number).toLocaleString('en-US', {

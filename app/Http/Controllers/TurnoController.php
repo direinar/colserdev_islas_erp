@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Customer;
 use App\Models\Lubricant;
 use App\Models\Turno;
+use App\Support\NumberParser;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -92,7 +93,7 @@ class TurnoController extends Controller
             $atributos = [
                 'fecha' => $request->input('fecha'),
                 'numero_turno' => $request->input('numero_turno'),
-                'nombre_vendedor' => $request->input('nombre_vendedor'),
+                'nombre_vendedor' => $request->user()->name,
                 'precio_corriente' => config('combustibles.corriente'),
                 'precio_acpm' => config('combustibles.acpm'),
                 'traslado_sobrante' => 0,
@@ -125,6 +126,8 @@ class TurnoController extends Controller
             $this->saveGasolinaEds($turno, $request->input('gasolina_eds', []));
             $this->saveVarios($turno, $request->input('varios', []));
             $this->saveRecaudosAdmin($turno, $request->input('recaudos_admin', []));
+            $this->saveVentasTotales($turno);
+            $this->saveVentaLecturasTotales($turno);
         });
 
         return redirect()->route('turnos.create', [
@@ -156,51 +159,10 @@ class TurnoController extends Controller
         return back()->with('success', 'Turno #'.$turno->numero_turno.' del '.$turno->fecha->format('Y-m-d').' marcado como revisado.');
     }
 
-    /**
-     * Parse a decimal typed by the user in either format ("4,760" or "4.760")
-     * without assuming '.' is always a thousands separator — that assumption
-     * silently inflated values by 1000x whenever the browser submitted the raw
-     * value before the JS blur handler had a chance to normalize it (e.g. the
-     * user pressed Enter/submitted without blurring the field).
-     */
-    private function parseDecimal($value): float
-    {
-        if ($value === null || $value === '') {
-            return 0.0;
-        }
-
-        $clean = trim((string) $value);
-        $hasDot = str_contains($clean, '.');
-        $hasComma = str_contains($clean, ',');
-
-        if ($hasDot && $hasComma) {
-            if (strrpos($clean, '.') > strrpos($clean, ',')) {
-                // '.' is the decimal separator, ',' groups thousands.
-                $clean = str_replace(',', '', $clean);
-            } else {
-                // ',' is the decimal separator, '.' groups thousands.
-                $clean = str_replace('.', '', $clean);
-                $clean = str_replace(',', '.', $clean);
-            }
-        } elseif ($hasComma) {
-            // Multiple commas can only be thousands separators; a single
-            // comma is the decimal separator (es-CO convention).
-            $clean = substr_count($clean, ',') > 1
-                ? str_replace(',', '', $clean)
-                : str_replace(',', '.', $clean);
-        } elseif ($hasDot && substr_count($clean, '.') > 1) {
-            // Multiple dots can only be thousands separators.
-            $clean = str_replace('.', '', $clean);
-        }
-        // A single dot is treated as the decimal separator and left as-is.
-
-        return is_numeric($clean) ? (float) $clean : 0.0;
-    }
-
     private function saveVentas(Turno $turno, array $rows): void
     {
         foreach ($rows as $row) {
-            $galones = $this->parseDecimal($row['galones'] ?? null);
+            $galones = NumberParser::quantity($row['galones'] ?? null);
             $surtidor = trim($row['surtidor'] ?? '');
             $combustible = $row['combustible'] ?? null;
 
@@ -221,11 +183,32 @@ class TurnoController extends Controller
         }
     }
 
+    /**
+     * Recompute and persist the "venta en tirillas de cortes" aggregates and
+     * the grand total from the rows just saved, para que informes puedan
+     * consultarlos directamente desde turnos sin recalcular turno_ventas.
+     */
+    private function saveVentasTotales(Turno $turno): void
+    {
+        $ventas = $turno->ventas()->get();
+
+        $galonesCte = (float) $ventas->where('combustible', 'CTE')->sum('galones');
+        $galonesAcpm = (float) $ventas->where('combustible', 'ACPM')->sum('galones');
+
+        $turno->update([
+            'tirillas_galones_corriente' => $galonesCte,
+            'tirillas_galones_acpm' => $galonesAcpm,
+            'tirillas_valor_corriente' => $galonesCte * $turno->precio_corriente,
+            'tirillas_valor_acpm' => $galonesAcpm * $turno->precio_acpm,
+            'total_ventas' => (float) $ventas->sum('valor'),
+        ]);
+    }
+
     private function saveLecturas(Turno $turno, array $rows): void
     {
         foreach ($rows as $row) {
-            $inicial = $this->parseDecimal($row['lectura_inicial'] ?? null);
-            $final = $this->parseDecimal($row['lectura_final'] ?? null);
+            $inicial = NumberParser::quantity($row['lectura_inicial'] ?? null);
+            $final = NumberParser::quantity($row['lectura_final'] ?? null);
             $galones = max(0, $final - $inicial);
             $manguera = trim($row['manguera'] ?? '');
             $combustible = $row['combustible'] ?? null;
@@ -244,14 +227,37 @@ class TurnoController extends Controller
         }
     }
 
+    /**
+     * Recompute and persist the "venta según lecturas" aggregates (galones y
+     * valor por CORRIENTE/ACPM y total) desde turno_surtidores, para que
+     * informes puedan consultarlos directamente desde el turno.
+     */
+    private function saveVentaLecturasTotales(Turno $turno): void
+    {
+        $surtidores = $turno->surtidores()->get();
+
+        $galonesCorriente = (float) $surtidores->where('combustible', 'corriente')->sum('galones');
+        $galonesAcpm = (float) $surtidores->where('combustible', 'acpm')->sum('galones');
+        $valorCorriente = $galonesCorriente * $turno->precio_corriente;
+        $valorAcpm = $galonesAcpm * $turno->precio_acpm;
+
+        $turno->update([
+            'lecturas_galones_corriente' => $galonesCorriente,
+            'lecturas_galones_acpm' => $galonesAcpm,
+            'lecturas_valor_corriente' => $valorCorriente,
+            'lecturas_valor_acpm' => $valorAcpm,
+            'total_venta_lecturas' => $valorCorriente + $valorAcpm,
+        ]);
+    }
+
     private function saveUreaLubricantes(Turno $turno, array $rows): void
     {
         foreach ($rows as $row) {
             $cantidad = (int) ($row['cantidad'] ?? 0);
             $producto = $row['producto'] ?? null;
-            $valorSinIva = $this->parseDecimal($row['valor_sin_iva'] ?? null);
-            $iva = $this->parseDecimal($row['iva'] ?? null);
-            $total = $this->parseDecimal($row['total'] ?? ($cantidad * ($valorSinIva + $iva)));
+            $valorSinIva = NumberParser::quantity($row['valor_sin_iva'] ?? null);
+            $iva = NumberParser::quantity($row['iva'] ?? null);
+            $total = NumberParser::quantity($row['total'] ?? ($cantidad * ($valorSinIva + $iva)));
 
             if (! $producto || $cantidad <= 0) {
                 continue;
@@ -270,9 +276,9 @@ class TurnoController extends Controller
     private function saveMediosPago(Turno $turno, array $rows): void
     {
         foreach ($rows as $row) {
-            $consignacionValor = $this->parseDecimal($row['consignacion_valor'] ?? null);
-            $descuento = $this->parseDecimal($row['descuento'] ?? null);
-            $carteraValor = $this->parseDecimal($row['cartera_valor'] ?? null);
+            $consignacionValor = NumberParser::money($row['consignacion_valor'] ?? null);
+            $descuento = NumberParser::money($row['descuento'] ?? null);
+            $carteraValor = NumberParser::money($row['cartera_valor'] ?? null);
             $clienteId = $row['cliente_id'] ?? null;
             $consignacionNo = $row['consignacion_no'] ?? null;
             $carteraFacturaNo = $row['cartera_factura_no'] ?? null;
@@ -295,7 +301,7 @@ class TurnoController extends Controller
     private function saveQrPagos(Turno $turno, array $rows): void
     {
         foreach ($rows as $row) {
-            $valor = $this->parseDecimal($row['valor'] ?? null);
+            $valor = NumberParser::money($row['valor'] ?? null);
             $concepto = null;
 
             foreach ($row as $key => $value) {
@@ -319,7 +325,7 @@ class TurnoController extends Controller
     private function saveRecaudos(Turno $turno, array $rows): void
     {
         foreach ($rows as $row) {
-            $valor = $this->parseDecimal($row['valor'] ?? null);
+            $valor = NumberParser::money($row['valor'] ?? null);
             $clienteId = $row['cliente_id'] ?? null;
 
             if ($valor <= 0) {
@@ -336,8 +342,8 @@ class TurnoController extends Controller
     private function saveTransferencias(Turno $turno, array $rows): void
     {
         foreach ($rows as $row) {
-            $valor = $this->parseDecimal($row['valor'] ?? null);
-            $puntos = $this->parseDecimal($row['puntos'] ?? null);
+            $valor = NumberParser::money($row['valor'] ?? null);
+            $puntos = NumberParser::money($row['puntos'] ?? null);
 
             if ($valor === 0 && $puntos === 0) {
                 continue;
@@ -353,7 +359,7 @@ class TurnoController extends Controller
     private function saveGasolinaEds(Turno $turno, array $rows): void
     {
         foreach ($rows as $row) {
-            $valor = $this->parseDecimal($row['puntos'] ?? null);
+            $valor = NumberParser::money($row['puntos'] ?? null);
 
             if ($valor <= 0) {
                 continue;
@@ -369,7 +375,7 @@ class TurnoController extends Controller
     {
         foreach ($rows as $row) {
             $concepto = $row['concepto'] ?? null;
-            $valor = $this->parseDecimal($row['valor'] ?? null);
+            $valor = NumberParser::money($row['valor'] ?? null);
 
             if (! $concepto || $valor <= 0) {
                 continue;
@@ -387,7 +393,7 @@ class TurnoController extends Controller
         foreach ($rows as $row) {
             $banco = $row['banco'] ?? null;
             $responsableId = $row['responsable_id'] ?? null;
-            $valor = $this->parseDecimal($row['valor'] ?? null);
+            $valor = NumberParser::money($row['valor'] ?? null);
 
             if (! $banco && ! $responsableId && $valor <= 0) {
                 continue;

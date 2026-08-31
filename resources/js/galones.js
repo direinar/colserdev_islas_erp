@@ -350,19 +350,6 @@ document.addEventListener('livewire:updated', initGalones);
 
 // Generic decimal formatter for inputs used across the planilla (money, tc, transferencias, etc.)
 function initDecimalFormatters() {
-    function parseNumber(value) {
-        if (!value) return NaN;
-        return parseFloat(String(value).replace(/\./g, '').replace(',', '.'));
-    }
-
-    function formatNumber(value, decimals) {
-        if (isNaN(value)) return '';
-        return value.toLocaleString('es-CO', {
-            minimumFractionDigits: decimals,
-            maximumFractionDigits: decimals,
-        });
-    }
-
     document.querySelectorAll('input[inputmode="decimal"]').forEach(input => {
         if (input.dataset.decInit) return;
         input.dataset.decInit = '1';
@@ -371,9 +358,9 @@ function initDecimalFormatters() {
         const decimals = typeof decimalsAttr !== 'undefined' ? parseInt(decimalsAttr, 10) : (/(galon|gls|lectura|galones|galon)/i.test(input.name || input.className) ? 3 : 0);
 
         input.addEventListener('blur', function () {
-            const v = parseNumber(this.value);
+            const v = decimals === 0 ? window.MoneyFormat.parseMoney(this.value) : window.MoneyFormat.parseQty(this.value);
             if (!isNaN(v)) {
-                this.value = formatNumber(v, decimals);
+                this.value = decimals === 0 ? window.MoneyFormat.formatMoney(v) : window.MoneyFormat.formatQty(v, decimals);
             }
         });
 

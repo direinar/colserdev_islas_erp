@@ -129,12 +129,14 @@
 
                         <td>
                             <input type="text" readonly
-                                class="form-control form-control-sm ventas-lectura-galones-corriente">
+                                class="form-control form-control-sm ventas-lectura-galones-corriente"
+                                value="{{ isset($turno) ? number_format($turno->lecturas_galones_corriente, 3, '.', ',') : '' }}">
                         </td>
 
                         <td>
                             <input type="text" readonly
-                                class="form-control form-control-sm ventas-lectura-galones-acpm">
+                                class="form-control form-control-sm ventas-lectura-galones-acpm"
+                                value="{{ isset($turno) ? number_format($turno->lecturas_galones_acpm, 3, '.', ',') : '' }}">
                         </td>
                     </tr>
 
@@ -144,13 +146,15 @@
                         <td>
                             <input type="text" readonly
                                 class="form-control form-control-sm ventas-lectura-valor-corriente"
-                                data-precio="{{ config('combustibles.corriente') }}">
+                                data-precio="{{ config('combustibles.corriente') }}"
+                                value="{{ isset($turno) ? number_format($turno->lecturas_valor_corriente, 0, ',', '.') : '' }}">
                         </td>
 
                         <td>
                             <input type="text" readonly
                                 class="form-control form-control-sm ventas-lectura-valor-acpm"
-                                data-precio="{{ config('combustibles.acpm') }}">
+                                data-precio="{{ config('combustibles.acpm') }}"
+                                value="{{ isset($turno) ? number_format($turno->lecturas_valor_acpm, 0, ',', '.') : '' }}">
                         </td>
                     </tr>
 
@@ -166,7 +170,8 @@
                     </tr>
                     <tr class="table-secondary fw-bold">
                         <td colspan="2" class="text-end">TOTAL</td>
-                        <td class="text-end ventas-total-lectura">0</td>
+                        <td class="text-end ventas-total-lectura">
+                            {{ isset($turno) ? number_format($turno->total_venta_lecturas, 0, ',', '.') : '0' }}</td>
                     </tr>
 
                 </tbody>

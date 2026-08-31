@@ -51,17 +51,17 @@
                             <td>
                                 <input type="text" name="urea_lubricantes[{{ $i }}][valor_sin_iva]"
                                     class="form-control form-control-sm valor-sin-iva-input"
-                                    value="{{ number_format($l->valor_sin_iva, 0, '.', ',') }}" readonly />
+                                    value="{{ number_format($l->valor_sin_iva, 0, ',', '.') }}" readonly />
                             </td>
                             <td>
                                 <input type="text" name="urea_lubricantes[{{ $i }}][iva]"
                                     class="form-control form-control-sm iva-input"
-                                    value="{{ number_format($l->iva, 0, '.', ',') }}" readonly />
+                                    value="{{ number_format($l->iva, 0, ',', '.') }}" readonly />
                             </td>
                             <td>
                                 <input type="text" name="urea_lubricantes[{{ $i }}][total]"
                                     class="form-control form-control-sm total-input"
-                                    value="{{ number_format($l->total, 0, '.', ',') }}" readonly />
+                                    value="{{ number_format($l->total, 0, ',', '.') }}" readonly />
                             </td>
                             <td class="text-center">
                                 <button type="button" class="btn btn-sm btn-danger remove-row">×</button>

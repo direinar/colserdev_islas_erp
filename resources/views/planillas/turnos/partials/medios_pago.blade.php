@@ -32,7 +32,7 @@
                                             name="medios_pago[{{ $i }}][consignacion_valor]"
                                             class="form-control form-control-sm text-end consignacion-valor-input"
                                             inputmode="decimal"
-                                            value="{{ number_format($m->consignacion_valor, 0, '.', ',') }}">
+                                            value="{{ number_format($m->consignacion_valor, 0, ',', '.') }}">
                                     </td>
                                     <td class="text-center">
                                         <button type="button" class="btn btn-sm btn-danger remove-row">×</button>
@@ -96,7 +96,7 @@
                                     <td>
                                         <input type="text" name="medios_pago[{{ $i }}][descuento]"
                                             class="form-control form-control-sm text-end descuento-valor-input"
-                                            inputmode="decimal" value="{{ number_format($m->descuento, 0, '.', ',') }}">
+                                            inputmode="decimal" value="{{ number_format($m->descuento, 0, ',', '.') }}">
                                     </td>
                                     <td class="text-center">
                                         <button type="button" class="btn btn-sm btn-danger remove-row">×</button>
@@ -175,7 +175,7 @@
                                         <input type="text" name="medios_pago[{{ $i }}][cartera_valor]"
                                             class="form-control form-control-sm text-end cartera-valor-input"
                                             inputmode="decimal"
-                                            value="{{ number_format($m->cartera_valor, 0, '.', ',') }}">
+                                            value="{{ number_format($m->cartera_valor, 0, ',', '.') }}">
                                     </td>
                                     <td class="text-center">
                                         <button type="button" class="btn btn-sm btn-danger remove-row">×</button>
@@ -310,15 +310,11 @@
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const ensureNumber = value => {
-            if (!value) return 0;
-            const normalized = String(value).replace(/\./g, '').replace(/,/g, '.');
-            return Number(normalized) || 0;
+            const n = window.MoneyFormat.parseMoney(value);
+            return isNaN(n) ? 0 : n;
         };
 
-        const formatNumber = number => Number(number).toLocaleString('es-CO', {
-            minimumFractionDigits: 0,
-            maximumFractionDigits: 0
-        });
+        const formatNumber = number => window.MoneyFormat.formatMoney(number);
 
         const sharedIndex = {
             value: Math.max(

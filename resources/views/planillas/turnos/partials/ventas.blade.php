@@ -37,7 +37,7 @@
                             <td class="text-end">
                                 <input type="text" name="ventas[{{ $i }}][valor]"
                                     class="form-control form-control-sm erp-input valor-total" readonly
-                                    value="{{ number_format($v->valor, 0, '.', ',') }}">
+                                    value="{{ number_format($v->valor, 0, ',', '.') }}">
                             </td>
                         </tr>
                     @endforeach
@@ -166,11 +166,13 @@
                     <th scope="row">GALONES</th>
                     <td class="text-end">
                         <input type="text" readonly
-                            class="form-control form-control-sm erp-input tirillas-galones-corriente">
+                            class="form-control form-control-sm erp-input tirillas-galones-corriente"
+                            value="{{ isset($turno) ? number_format($turno->tirillas_galones_corriente, 3, '.', ',') : '' }}">
                     </td>
                     <td class="text-end">
                         <input type="text" readonly
-                            class="form-control form-control-sm erp-input tirillas-galones-acpm">
+                            class="form-control form-control-sm erp-input tirillas-galones-acpm"
+                            value="{{ isset($turno) ? number_format($turno->tirillas_galones_acpm, 3, '.', ',') : '' }}">
                     </td>
                 </tr>
                 <tr>
@@ -178,12 +180,14 @@
                     <td class="text-end">
                         <input type="text" readonly
                             class="form-control form-control-sm erp-input tirillas-valor-corriente"
-                            data-precio="{{ config('combustibles.corriente') }}">
+                            data-precio="{{ config('combustibles.corriente') }}"
+                            value="{{ isset($turno) ? number_format($turno->tirillas_valor_corriente, 0, ',', '.') : '' }}">
                     </td>
                     <td class="text-end">
                         <input type="text" readonly
                             class="form-control form-control-sm erp-input tirillas-valor-acpm"
-                            data-precio="{{ config('combustibles.acpm') }}">
+                            data-precio="{{ config('combustibles.acpm') }}"
+                            value="{{ isset($turno) ? number_format($turno->tirillas_valor_acpm, 0, ',', '.') : '' }}">
                     </td>
                 </tr>
             </tbody>
@@ -192,7 +196,8 @@
             <tfoot>
                 <tr class="table-secondary fw-bold">
                     <td colspan="2" class="text-end">TOTAL</td>
-                    <td class="text-end ventas-total-turno">0</td>
+                    <td class="text-end ventas-total-turno">
+                        {{ isset($turno) ? number_format($turno->total_ventas, 0, ',', '.') : '0' }}</td>
                 </tr>
                 {{-- <tr class="table-warning">
                     <th colspan="2">PRECIO CORRIENTE</th>

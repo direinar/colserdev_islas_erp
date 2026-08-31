@@ -22,14 +22,14 @@
                             <td>
                                 <input type="text" name="transferencias[{{ $i }}][valor]"
                                     class="form-control form-control-sm text-end border-0 bg-transparent transferencia-valor"
-                                    inputmode="decimal" value="{{ number_format($t->valor, 0, '.', ',') }}">
+                                    inputmode="decimal" value="{{ number_format($t->valor, 0, ',', '.') }}">
                             </td>
 
                             <td>
                                 <input type="text" name="transferencias[{{ $i }}][puntos]"
                                     class="form-control form-control-sm text-end border-0 bg-transparent puntos-valor"
                                     inputmode="decimal"
-                                    value="{{ number_format($t->puntos_redimidos ?? 0, 0, '.', ',') }}">
+                                    value="{{ number_format($t->puntos_redimidos ?? 0, 0, ',', '.') }}">
                             </td>
 
                             <td class="text-center">

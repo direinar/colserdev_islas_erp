@@ -40,7 +40,7 @@
                             <td>
                                 <input type="text" name="recaudos[{{ $i }}][valor]"
                                     class="form-control form-control-sm text-end border-0 bg-transparent recaudo-valor"
-                                    inputmode="decimal" value="{{ number_format($r->valor, 0, '.', ',') }}">
+                                    inputmode="decimal" value="{{ number_format($r->valor, 0, ',', '.') }}">
                             </td>
 
                             <td class="text-center">

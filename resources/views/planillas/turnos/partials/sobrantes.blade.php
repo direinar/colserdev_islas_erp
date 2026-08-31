@@ -27,8 +27,7 @@
         <div class="col-md-6">
             <label class="form-label fw-bold">NOMBRE DEL VENDEDOR:</label>
             <input type="text" class="form-control form-control-sm" name="nombre_vendedor" id="nombre-vendedor"
-                value="{{ old('nombre_vendedor', optional($turno ?? null)->nombre_vendedor ?? auth()->user()->name) }}"
-                readonly />
+                value="{{ auth()->user()->name }}" readonly />
         </div>
         <div class="col-md-6">
             <label class="form-label fw-bold d-block">REVISADO:</label>

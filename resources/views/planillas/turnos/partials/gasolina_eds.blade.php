@@ -21,7 +21,7 @@
                             <td>
                                 <input type="text" name="gasolina_eds[{{ $i }}][puntos]"
                                     class="form-control form-control-sm text-end border-0 bg-transparent puntos-valor"
-                                    inputmode="decimal" value="{{ number_format($g->valor, 0, '.', ',') }}">
+                                    inputmode="decimal" value="{{ number_format($g->valor, 0, ',', '.') }}">
                             </td>
                             <td class="text-center">
                                 <button type="button" class="btn btn-sm btn-danger remove-row">×</button>

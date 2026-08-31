@@ -34,7 +34,7 @@ class TurnoVentasSeeder extends Seeder
         ];
 
         foreach ($rows as $row) {
-            $turno->ventas()->firstOrCreate(
+            $turno->ventas()->updateOrCreate(
                 [
                     'surtidor' => $row['surtidor'],
                 ],
@@ -45,6 +45,17 @@ class TurnoVentasSeeder extends Seeder
                 ]
             );
         }
+
+        $galonesCte = collect($rows)->where('combustible', 'CTE')->sum('galones');
+        $galonesAcpm = collect($rows)->where('combustible', 'ACPM')->sum('galones');
+
+        $turno->update([
+            'tirillas_galones_corriente' => $galonesCte,
+            'tirillas_galones_acpm' => $galonesAcpm,
+            'tirillas_valor_corriente' => $galonesCte * $turno->precio_corriente,
+            'tirillas_valor_acpm' => $galonesAcpm * $turno->precio_acpm,
+            'total_ventas' => collect($rows)->sum('valor'),
+        ]);
 
         $lecturas = [
             ['manguera' => 'PLUS 01', 'combustible' => 'corriente', 'lectura_inicial' => 13354.969, 'lectura_final' => 13395.969],
@@ -62,7 +73,7 @@ class TurnoVentasSeeder extends Seeder
         ];
 
         foreach ($lecturas as $lectura) {
-            $turno->surtidores()->firstOrCreate(
+            $turno->surtidores()->updateOrCreate(
                 [
                     'manguera' => $lectura['manguera'],
                 ],
@@ -74,5 +85,20 @@ class TurnoVentasSeeder extends Seeder
                 ]
             );
         }
+
+        $galonesLecturasCorriente = collect($lecturas)->where('combustible', 'corriente')
+            ->sum(fn ($l) => $l['lectura_final'] - $l['lectura_inicial']);
+        $galonesLecturasAcpm = collect($lecturas)->where('combustible', 'acpm')
+            ->sum(fn ($l) => $l['lectura_final'] - $l['lectura_inicial']);
+        $valorLecturasCorriente = $galonesLecturasCorriente * $turno->precio_corriente;
+        $valorLecturasAcpm = $galonesLecturasAcpm * $turno->precio_acpm;
+
+        $turno->update([
+            'lecturas_galones_corriente' => $galonesLecturasCorriente,
+            'lecturas_galones_acpm' => $galonesLecturasAcpm,
+            'lecturas_valor_corriente' => $valorLecturasCorriente,
+            'lecturas_valor_acpm' => $valorLecturasAcpm,
+            'total_venta_lecturas' => $valorLecturasCorriente + $valorLecturasAcpm,
+        ]);
     }
 }
