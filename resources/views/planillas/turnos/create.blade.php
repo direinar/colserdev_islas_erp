@@ -54,7 +54,7 @@
                 <div class="col-md-6">
 
                     <h4 class="mb-0">
-                        PLANTILLA DE TURNOS
+                        PLANILLA DE TURNOS
                     </h4>
 
                 </div>

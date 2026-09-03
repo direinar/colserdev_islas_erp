@@ -9,10 +9,12 @@ class TurnoGasolinaEds extends Model
     protected $fillable = [
         'turno_id',
         'valor',
+        'total',
     ];
 
     protected $casts = [
         'valor' => 'decimal:2',
+        'total' => 'decimal:2',
     ];
 
     public function turno()

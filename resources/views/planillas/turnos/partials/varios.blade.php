@@ -1,18 +1,16 @@
-<x-erp-card title="VARIOS">
+<x-erp-card>
 
-    <div class="d-flex justify-content-end mb-2">
-        <button type="button" id="add-varios-row" class="btn btn-sm btn-outline-primary">+ Agregar fila</button>
+    <div class="medio-pago-toolbar">
+        <div class="medio-pago-title">VARIOS</div>
+        <button type="button" id="add-varios-row" class="btn btn-sm btn-outline-primary medio-pago-add-btn">
+            + AGREGAR FILA
+        </button>
     </div>
 
     <div class="table-responsive">
         <table class="table table-bordered table-sm mb-0 tabla-varios">
 
             <thead>
-                <tr style="background-color:#ccccff;">
-                    <th class="text-center fw-bold" colspan="3">
-                        VARIOS
-                    </th>
-                </tr>
                 <tr style="background-color:#ccccff;">
                     <th class="text-center">CONCEPTO</th>
                     <th class="text-center" width="120">VALOR</th>

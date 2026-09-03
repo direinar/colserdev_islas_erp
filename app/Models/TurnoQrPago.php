@@ -10,10 +10,12 @@ class TurnoQrPago extends Model
         'turno_id',
         'concepto',
         'valor',
+        'total',
     ];
 
     protected $casts = [
         'valor' => 'decimal:2',
+        'total' => 'decimal:2',
     ];
 
     public function turno()

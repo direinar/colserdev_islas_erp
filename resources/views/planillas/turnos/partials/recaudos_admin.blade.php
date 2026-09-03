@@ -1,7 +1,10 @@
-<x-erp-card title="RECAUDOS POR ADMINISTRACIÓN">
+<x-erp-card>
 
-    <div class="d-flex justify-content-end mb-2">
-        <button type="button" id="add-recaudo-admin-row" class="btn btn-sm btn-outline-primary">+ Agregar fila</button>
+    <div class="medio-pago-toolbar">
+        <div class="medio-pago-title">RECAUDOS POR ADMINISTRACIÓN</div>
+        <button type="button" id="add-recaudo-admin-row" class="btn btn-sm btn-outline-primary medio-pago-add-btn">
+            + AGREGAR FILA
+        </button>
     </div>
 
     <div class="table-responsive">
@@ -10,7 +13,7 @@
             <thead>
                 <tr style="background-color:#ccccff;">
                     <th class="text-center fw-bold">BANCO/CAJA</th>
-                    <th class="text-center fw-bold">RESPONSABLE</th>
+                    <th class="text-center fw-bold">CLIENTE</th>
                     <th class="text-center fw-bold" width="140">VALOR</th>
                     <th class="text-center">ACCIÓN</th>
                 </tr>
@@ -26,12 +29,12 @@
                                     placeholder="Ej: Bancolombia" value="{{ $r->banco }}">
                             </td>
                             <td>
-                                <select name="recaudos_admin[{{ $i }}][responsable_id]"
+                                <select name="recaudos_admin[{{ $i }}][cliente_id]"
                                     class="form-select form-select-sm border-0 bg-transparent recaudos-admin-responsable">
-                                    <option value="">Seleccione responsable</option>
+                                    <option value="">Seleccione cliente</option>
                                     @foreach ($customers ?? collect() as $customer)
                                         <option value="{{ $customer->id }}"
-                                            @if ($r->responsable_id == $customer->id) selected @endif>{{ $customer->name }}
+                                            @if ($r->cliente_id == $customer->id) selected @endif>{{ $customer->name }}
                                         </option>
                                     @endforeach
                                 </select>
@@ -54,9 +57,9 @@
                                 placeholder="Ej: Bancolombia">
                         </td>
                         <td>
-                            <select name="recaudos_admin[0][responsable_id]"
+                            <select name="recaudos_admin[0][cliente_id]"
                                 class="form-select form-select-sm border-0 bg-transparent recaudos-admin-responsable">
-                                <option value="">Seleccione responsable</option>
+                                <option value="">Seleccione cliente</option>
                                 @foreach ($customers ?? collect() as $customer)
                                     <option value="{{ $customer->id }}">{{ $customer->name }}</option>
                                 @endforeach
@@ -88,7 +91,7 @@
 </x-erp-card>
 
 <select id="recaudos-admin-customers-template" class="d-none">
-    <option value="">Seleccione responsable</option>
+    <option value="">Seleccione cliente</option>
     @foreach ($customers ?? collect() as $customer)
         <option value="{{ $customer->id }}">{{ $customer->name }}</option>
     @endforeach
@@ -103,12 +106,12 @@
         const customersHtml = customersTemplate ? customersTemplate.innerHTML : '';
 
         function parseNumber(value) {
-            if (!value) return 0;
-            return Number(String(value).replace(/,/g, '')) || 0;
+            const number = window.MoneyFormat.parseMoney(value);
+            return Number.isNaN(number) ? 0 : number;
         }
 
         function formatNumber(number) {
-            return Number(number).toLocaleString('en-US', {
+            return Number(number).toLocaleString('es-CO', {
                 minimumFractionDigits: 0,
                 maximumFractionDigits: 0
             });

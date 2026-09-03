@@ -1,4 +1,4 @@
-<x-erp-card title="INFORMACION DE MEDIOS DE PAGO">
+<x-erp-card title="INFORMACION DE MEDIOS DE PAGO" title-class="turno-card-title">
 
     <div class="medio-pago-stack">
         <div class="medio-pago-section">

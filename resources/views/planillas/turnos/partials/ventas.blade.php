@@ -1,4 +1,4 @@
-<x-erp-card title="INFORMACION DE VENTAS DEL TURNO">
+<x-erp-card title="INFORMACION DE VENTAS DEL TURNO" title-class="turno-card-title">
 
     <div class="table-responsive">
         <table class="table table-bordered table-sm">

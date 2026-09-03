@@ -8,13 +8,13 @@ class TurnoTransferencia extends Model
 {
     protected $fillable = [
         'turno_id',
-        'valor',
         'puntos_redimidos',
+        'total_puntos',
     ];
 
     protected $casts = [
-        'valor' => 'decimal:2',
         'puntos_redimidos' => 'decimal:2',
+        'total_puntos' => 'decimal:2',
     ];
 
     public function turno()

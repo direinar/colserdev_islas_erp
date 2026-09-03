@@ -1,60 +1,53 @@
-<x-erp-card title="RESUMEN DE LO RECIBIDO EN ESTE TURNO">
+<x-erp-card title="RESUMEN DE LO RECIBIDO EN ESTE TURNO" title-class="resumen-recibido-title">
 
     <div class="table-responsive">
         <table class="table table-bordered table-sm mb-0 tabla-resumen-recibido" style="font-size: 0.95rem;">
 
             <tbody>
                 <tr>
-                    <td class="fw-bold" style="background-color: #ffffcc;">CONSIGNACIONES</td>
-                    <td style="text-align: right; background-color: #ffffcc;">
+                    <td class="fw-normal">CONSIGNACIONES</td>
+                    <td style="text-align: right;">
                         <span id="resumen-consignaciones">0</span>
                     </td>
                 </tr>
 
                 <tr>
-                    <td class="fw-bold">TC, QR, NEQUI, DAVIPLATA</td>
+                    <td class="fw-normal">PAGOS ELECTRONICOS Y TRANSFERENCIAS</td>
                     <td style="text-align: right;">
                         <span id="resumen-qr">0</span>
                     </td>
                 </tr>
 
                 <tr>
-                    <td class="fw-bold">PUNTOS REDIMIDOS</td>
+                    <td class="fw-normal">PUNTOS REDIMIDOS</td>
                     <td style="text-align: right;">
                         <span id="resumen-puntos">0</span>
                     </td>
                 </tr>
 
                 <tr>
-                    <td class="fw-bold">GASOLINA EDS</td>
+                    <td class="fw-normal">GASOLINA EDS</td>
                     <td style="text-align: right;">
                         <span id="resumen-gasolina">0</span>
                     </td>
                 </tr>
 
                 <tr>
-                    <td class="fw-bold">TRANSFERENCIAS BANCOLOMBIA</td>
-                    <td style="text-align: right;">
-                        <span id="resumen-transferencias">0</span>
-                    </td>
-                </tr>
-
-                <tr>
-                    <td class="fw-bold">DESCUENTOS</td>
+                    <td class="fw-normal">DESCUENTOS</td>
                     <td style="text-align: right;">
                         <span id="resumen-descuentos">0</span>
                     </td>
                 </tr>
 
                 <tr>
-                    <td class="fw-bold">CARTERA - crédito directo</td>
+                    <td class="fw-normal">CARTERA - crédito directo</td>
                     <td style="text-align: right;">
                         <span id="resumen-cartera">0</span>
                     </td>
                 </tr>
 
                 <tr>
-                    <td class="fw-bold">VARIOS</td>
+                    <td class="fw-normal">VARIOS</td>
                     <td style="text-align: right;">
                         <span id="resumen-varios">0</span>
                     </td>
@@ -65,14 +58,14 @@
                 </tr>
 
                 <tr>
-                    <td class="fw-bold">SOBRANTE</td>
+                    <td class="fw-normal">SOBRANTE</td>
                     <td style="text-align: right;">
                         <span id="resumen-sobrante">0</span>
                     </td>
                 </tr>
 
                 <tr>
-                    <td class="fw-bold">FALTANTE</td>
+                    <td class="fw-normal">FALTANTE</td>
                     <td style="text-align: right;">
                         <span id="resumen-faltante">0</span>
                     </td>
@@ -86,7 +79,7 @@
                 </tr>
 
                 <tr>
-                    <td class="fw-bold">RECAUDOS Y ANTICIPOS</td>
+                    <td class="fw-normal">RECAUDOS Y ANTICIPOS</td>
                     <td style="text-align: right;">
                         <span id="resumen-recaudos">0</span>
                     </td>
@@ -105,6 +98,14 @@
     </div>
 
 </x-erp-card>
+
+<style>
+    .resumen-recibido-title {
+        background-color: #d9d6f9;
+        font-size: 1.05rem;
+        font-weight: 700;
+    }
+</style>
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
@@ -149,12 +150,6 @@
                 gasolina += parseNumber(input.value);
             });
 
-            // Sumar transferencias
-            let transferencias = 0;
-            document.querySelectorAll('.tabla-transferencias .transferencia-valor').forEach(input => {
-                transferencias += parseNumber(input.value);
-            });
-
             // Sumar descuentos
             let descuentos = 0;
             document.querySelectorAll('.descuento-valor-input').forEach(input => {
@@ -196,7 +191,6 @@
             document.getElementById('resumen-qr').textContent = formatNumber(qrTotal);
             document.getElementById('resumen-puntos').textContent = formatNumber(puntos);
             document.getElementById('resumen-gasolina').textContent = formatNumber(gasolina);
-            document.getElementById('resumen-transferencias').textContent = formatNumber(transferencias);
             document.getElementById('resumen-descuentos').textContent = formatNumber(descuentos);
             document.getElementById('resumen-cartera').textContent = formatNumber(cartera);
             document.getElementById('resumen-varios').textContent = formatNumber(varios);
@@ -207,7 +201,7 @@
             document.getElementById('resumen-recaudos').textContent = formatNumber(recaudos);
 
             // Calcular subtotal
-            let subtotal = consignaciones + qrTotal + puntos + gasolina + transferencias + descuentos +
+            let subtotal = consignaciones + qrTotal + puntos + gasolina + descuentos +
                 cartera + varios + sobrante + faltante;
             document.getElementById('resumen-subtotal').textContent = formatNumber(subtotal);
 
@@ -222,7 +216,7 @@
 
         // Observar cambios en todas las tablas
         const inputSelector =
-            '.consignacion-valor-input, .descuento-valor-input, .cartera-valor-input, .tabla-qr .qr-valor, .tabla-transferencias .puntos-valor, .tabla-transferencias .transferencia-valor, .tabla-gasolina-eds .puntos-valor, .tabla-varios .varios-valor, .tabla-recaudos .recaudo-valor';
+            '.consignacion-valor-input, .descuento-valor-input, .cartera-valor-input, .tabla-qr .qr-valor, .tabla-transferencias .puntos-valor, .tabla-gasolina-eds .puntos-valor, .tabla-varios .varios-valor, .tabla-recaudos .recaudo-valor';
 
         document.querySelectorAll(inputSelector).forEach(input => {
             input.addEventListener('input', updateResumen);

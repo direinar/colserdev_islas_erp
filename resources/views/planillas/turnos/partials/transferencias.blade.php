@@ -1,7 +1,10 @@
-<x-erp-card title="TRANSFERENCIAS">
+<x-erp-card>
 
-    <div class="d-flex justify-content-end mb-2">
-        <button type="button" id="add-transferencia-row" class="btn btn-sm btn-outline-primary">+ Agregar fila</button>
+    <div class="medio-pago-toolbar">
+        <div class="medio-pago-title">PUNTOS REDIMIDOS</div>
+        <button type="button" id="add-transferencia-row" class="btn btn-sm btn-outline-primary medio-pago-add-btn">
+            + AGREGAR FILA
+        </button>
     </div>
 
     <div class="table-responsive">
@@ -9,8 +12,7 @@
 
             <thead>
                 <tr style="background-color:#ccccff;">
-                    <th class="text-center">TRANSFERENCIAS BANCOLOMBIA</th>
-                    <th class="text-center">PUNTOS REDIMIDOS</th>
+                    <th class="text-end">VALOR</th>
                     <th class="text-center">ACCIÓN</th>
                 </tr>
             </thead>
@@ -19,12 +21,6 @@
                 @if (isset($turno) && optional($turno->transferencias)->count())
                     @foreach ($turno->transferencias as $i => $t)
                         <tr data-index="{{ $i }}">
-                            <td>
-                                <input type="text" name="transferencias[{{ $i }}][valor]"
-                                    class="form-control form-control-sm text-end border-0 bg-transparent transferencia-valor"
-                                    inputmode="decimal" value="{{ number_format($t->valor, 0, ',', '.') }}">
-                            </td>
-
                             <td>
                                 <input type="text" name="transferencias[{{ $i }}][puntos]"
                                     class="form-control form-control-sm text-end border-0 bg-transparent puntos-valor"
@@ -41,12 +37,6 @@
                     @for ($i = 0; $i < 1; $i++)
                         <tr data-index="{{ $i }}">
                             <td>
-                                <input type="text" name="transferencias[{{ $i }}][valor]"
-                                    class="form-control form-control-sm text-end border-0 bg-transparent transferencia-valor"
-                                    inputmode="decimal">
-                            </td>
-
-                            <td>
                                 <input type="text" name="transferencias[{{ $i }}][puntos]"
                                     class="form-control form-control-sm text-end border-0 bg-transparent puntos-valor"
                                     inputmode="decimal">
@@ -62,9 +52,8 @@
 
             <tfoot>
                 <tr style="background-color:#bfbfbf; font-weight:bold;">
-                    <td id="total-transferencias" class="text-end">0</td>
+                    <td class="text-end">TOTAL</td>
                     <td id="total-puntos" class="text-end">0</td>
-                    <td></td>
                 </tr>
             </tfoot>
 
@@ -77,7 +66,6 @@
     document.addEventListener('DOMContentLoaded', function() {
         const tbody = document.getElementById('transferencias-body');
         const addBtn = document.getElementById('add-transferencia-row');
-        const totalValorCell = document.getElementById('total-transferencias');
         const totalPuntosCell = document.getElementById('total-puntos');
 
         function parseNumber(value) {
@@ -93,20 +81,17 @@
         }
 
         function updateTotals() {
-            let totalValor = 0;
             let totalPuntos = 0;
 
             tbody.querySelectorAll('tr').forEach(row => {
-                totalValor += parseNumber(row.querySelector('.transferencia-valor')?.value);
                 totalPuntos += parseNumber(row.querySelector('.puntos-valor')?.value);
             });
 
-            totalValorCell.textContent = formatNumber(totalValor);
             totalPuntosCell.textContent = formatNumber(totalPuntos);
         }
 
         function attachRowListeners(row) {
-            row.querySelectorAll('.transferencia-valor, .puntos-valor').forEach(input => {
+            row.querySelectorAll('.puntos-valor').forEach(input => {
                 input.addEventListener('input', updateTotals);
                 input.addEventListener('change', updateTotals);
             });
@@ -116,9 +101,6 @@
             const tr = document.createElement('tr');
             tr.dataset.index = index;
             tr.innerHTML = `
-                <td>
-                    <input type="text" name="transferencias[${index}][valor]" class="form-control form-control-sm text-end border-0 bg-transparent transferencia-valor" inputmode="decimal">
-                </td>
                 <td>
                     <input type="text" name="transferencias[${index}][puntos]" class="form-control form-control-sm text-end border-0 bg-transparent puntos-valor" inputmode="decimal">
                 </td>

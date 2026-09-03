@@ -10,10 +10,12 @@ class TurnoRecaudo extends Model
         'turno_id',
         'cliente_id',
         'valor',
+        'total',
     ];
 
     protected $casts = [
         'valor' => 'decimal:2',
+        'total' => 'decimal:2',
     ];
 
     public function turno()

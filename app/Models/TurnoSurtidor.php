@@ -14,12 +14,14 @@ class TurnoSurtidor extends Model
         'lectura_inicial',
         'lectura_final',
         'galones',
+        'total',
     ];
 
     protected $casts = [
         'lectura_inicial' => 'decimal:3',
         'lectura_final' => 'decimal:3',
         'galones' => 'decimal:3',
+        'total' => 'decimal:2',
     ];
 
     public function turno()

@@ -1,7 +1,10 @@
-<x-erp-card title="GASOLINA EDS">
+<x-erp-card>
 
-    <div class="d-flex justify-content-end mb-2">
-        <button type="button" id="add-gasolina-row" class="btn btn-sm btn-outline-primary">+ Agregar fila</button>
+    <div class="medio-pago-toolbar">
+        <div class="medio-pago-title">GASOLINA EDS</div>
+        <button type="button" id="add-gasolina-row" class="btn btn-sm btn-outline-primary medio-pago-add-btn">
+            + AGREGAR FILA
+        </button>
     </div>
 
     <div class="table-responsive">
@@ -9,7 +12,7 @@
 
             <thead>
                 <tr style="background-color:#ccccff;">
-                    <th class="text-center">GASOLINA EDS</th>
+                    <th class="text-end">VALOR</th>
                     <th class="text-center">ACCIÓN</th>
                 </tr>
             </thead>
@@ -46,8 +49,8 @@
 
             <tfoot>
                 <tr style="background-color:#bfbfbf; font-weight:bold;">
+                    <td class="text-end">TOTAL</td>
                     <td id="total-gasolina-eds" class="text-end">0</td>
-                    <td></td>
                 </tr>
             </tfoot>
 
@@ -63,12 +66,12 @@
         const totalCell = document.getElementById('total-gasolina-eds');
 
         function parseNumber(value) {
-            if (!value) return 0;
-            return Number(String(value).replace(/,/g, '')) || 0;
+            const number = window.MoneyFormat.parseMoney(value);
+            return Number.isNaN(number) ? 0 : number;
         }
 
         function formatNumber(number) {
-            return Number(number).toLocaleString('en-US', {
+            return Number(number).toLocaleString('es-CO', {
                 minimumFractionDigits: 0,
                 maximumFractionDigits: 0
             });

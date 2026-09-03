@@ -1,18 +1,16 @@
-<x-erp-card title="TC, QR, NEQUI Y DAVIPLATA">
+<x-erp-card>
 
-    <div class="d-flex justify-content-end mb-2">
-        <button type="button" id="add-qr-row" class="btn btn-sm btn-outline-primary">+ Agregar fila</button>
+    <div class="medio-pago-toolbar">
+        <div class="medio-pago-title">PAGOS ELECTRONICOS Y TRANSFERENCIAS</div>
+        <button type="button" id="add-qr-row" class="btn btn-sm btn-outline-primary medio-pago-add-btn">
+            + AGREGAR FILA
+        </button>
     </div>
 
     <div class="table-responsive">
         <table class="table table-bordered table-sm mb-0 tabla-qr">
 
             <thead>
-                <tr style="background-color:#ccccff;">
-                    <th colspan="3" class="text-center fw-bold">
-                        TC, QR, NEQUI Y DAVIPLATA
-                    </th>
-                </tr>
                 <tr style="background-color:#ccccff;">
                     <th class="text-center">CONCEPTO</th>
                     <th class="text-center" width="120">VALOR</th>
@@ -25,9 +23,14 @@
                     @foreach ($turno->qrPagos as $i => $q)
                         <tr data-index="{{ $i }}">
                             <td>
-                                <input type="text" name="qr_pagos[{{ $i }}][concepto]"
-                                    class="form-control form-control-sm border-0 bg-transparent"
-                                    value="{{ $q->concepto }}">
+                                <select name="qr_pagos[{{ $i }}][concepto]"
+                                    class="form-select form-select-sm border-0 bg-transparent">
+                                    @foreach (['TC', 'QR', 'NEQUI', 'DAVIPLATA', 'TRANSFERENCIA'] as $concepto)
+                                        <option value="{{ $concepto }}" @selected($q->concepto === $concepto)>
+                                            {{ $concepto }}
+                                        </option>
+                                    @endforeach
+                                </select>
                             </td>
                             <td>
                                 <input type="text" name="qr_pagos[{{ $i }}][valor]"
@@ -47,9 +50,15 @@
                     @foreach ($initialQrLabels as $index => $label)
                         <tr data-index="{{ $index }}">
                             <td>
-                                <input type="text" name="qr_pagos[{{ $index }}][Datáfono]"
-                                    class="form-control form-control-sm border-0 bg-transparent"
-                                    value="{{ $label }}">
+                                <select name="qr_pagos[{{ $index }}][concepto]"
+                                    class="form-select form-select-sm border-0 bg-transparent">
+                                    <option value="Concepto" selected>Seleccione concepto</option>
+                                    <option value="TC">TC</option>
+                                    <option value="QR">QR</option>
+                                    <option value="NEQUI">NEQUI</option>
+                                    <option value="DAVIPLATA">DAVIPLATA</option>
+                                    <option value="TRANSFERENCIA">TRANSFERENCIA</option>
+                                </select>
                             </td>
                             <td>
                                 <input type="text" name="qr_pagos[{{ $index }}][valor]"
@@ -84,8 +93,8 @@
         const totalCell = document.getElementById('total-qr');
 
         function parseNumber(value) {
-            if (!value) return 0;
-            return Number(String(value).replace(/,/g, '')) || 0;
+            const number = window.MoneyFormat.parseMoney(value);
+            return Number.isNaN(number) ? 0 : number;
         }
 
         function formatNumber(number) {
@@ -112,15 +121,17 @@
         }
 
         function createRow(index) {
-            // Contar el número de filas actual para generar el nombre automático
-            const rowCount = tbody.querySelectorAll('tr').length + 1;
-            const conceptName = `Datáfono ${rowCount}`;
-
             const tr = document.createElement('tr');
             tr.dataset.index = index;
             tr.innerHTML = `
                 <td>
-                    <input type="text" name="qr_pagos[${index}][Datáfono]" class="form-control form-control-sm border-0 bg-transparent" value="${conceptName}">
+                    <select name="qr_pagos[${index}][concepto]" class="form-select form-select-sm border-0 bg-transparent">
+                        <option value="TC" selected>TC</option>
+                        <option value="QR">QR</option>
+                        <option value="NEQUI">NEQUI</option>
+                        <option value="DAVIPLATA">DAVIPLATA</option>
+                        <option value="TRANSFERENCIA">TRANSFERENCIA</option>
+                    </select>
                 </td>
                 <td>
                     <input type="text" name="qr_pagos[${index}][valor]" class="form-control form-control-sm text-end border-0 bg-transparent qr-valor" inputmode="decimal">

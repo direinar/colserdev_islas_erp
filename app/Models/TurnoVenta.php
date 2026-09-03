@@ -12,11 +12,13 @@ class TurnoVenta extends Model
         'combustible',
         'galones',
         'valor',
+        'total',
     ];
 
     protected $casts = [
         'galones' => 'decimal:3',
         'valor' => 'decimal:2',
+        'total' => 'decimal:2',
     ];
 
     public function turno()

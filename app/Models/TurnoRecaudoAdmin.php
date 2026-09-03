@@ -13,10 +13,12 @@ class TurnoRecaudoAdmin extends Model
         'banco',
         'responsable_id',
         'valor',
+        'total',
     ];
 
     protected $casts = [
         'valor' => 'decimal:2',
+        'total' => 'decimal:2',
     ];
 
     public function turno()

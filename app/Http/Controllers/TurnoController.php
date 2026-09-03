@@ -165,6 +165,14 @@ class TurnoController extends Controller
 
     private function saveVentas(Turno $turno, array $rows): void
     {
+        $total = collect($rows)->sum(function (array $row): float {
+            $precio = ($row['combustible'] ?? null) === 'ACPM'
+                ? config('combustibles.acpm')
+                : config('combustibles.corriente');
+
+            return NumberParser::quantity($row['galones'] ?? null) * $precio;
+        });
+
         foreach ($rows as $row) {
             $galones = NumberParser::quantity($row['galones'] ?? null);
             $surtidor = trim($row['surtidor'] ?? '');
@@ -183,6 +191,7 @@ class TurnoController extends Controller
                 'combustible' => $combustible,
                 'galones' => $galones,
                 'valor' => $galones * $precio,
+                'total' => $total,
             ]);
         }
     }
@@ -210,6 +219,13 @@ class TurnoController extends Controller
 
     private function saveLecturas(Turno $turno, array $rows): void
     {
+        $total = collect($rows)->sum(function (array $row): float {
+            $inicial = NumberParser::quantity($row['lectura_inicial'] ?? null);
+            $final = NumberParser::quantity($row['lectura_final'] ?? null);
+
+            return max(0, $final - $inicial);
+        });
+
         foreach ($rows as $row) {
             $inicial = NumberParser::quantity($row['lectura_inicial'] ?? null);
             $final = NumberParser::quantity($row['lectura_final'] ?? null);
@@ -227,6 +243,7 @@ class TurnoController extends Controller
                 'lectura_inicial' => $inicial,
                 'lectura_final' => $final,
                 'galones' => $galones,
+                'total' => $total,
             ]);
         }
     }
@@ -332,30 +349,25 @@ class TurnoController extends Controller
 
     private function saveQrPagos(Turno $turno, array $rows): void
     {
-        foreach ($rows as $row) {
-            $valor = NumberParser::money($row['valor'] ?? null);
-            $concepto = null;
+        $values = collect($rows)->map(fn (array $row): array => [
+            'concepto' => $row['concepto'] ?? null,
+            'valor' => NumberParser::money($row['valor'] ?? null),
+        ])->filter(fn (array $row): bool => $row['concepto'] && $row['valor'] > 0)->values();
+        $total = $values->sum('valor');
 
-            foreach ($row as $key => $value) {
-                if ($key !== 'valor') {
-                    $concepto = $value;
-                    break;
-                }
-            }
-
-            if (! $concepto || $valor <= 0) {
-                continue;
-            }
-
+        foreach ($values as $row) {
             $turno->qrPagos()->create([
-                'concepto' => $concepto,
-                'valor' => $valor,
+                'concepto' => $row['concepto'],
+                'valor' => $row['valor'],
+                'total' => $total,
             ]);
         }
     }
 
     private function saveRecaudos(Turno $turno, array $rows): void
     {
+        $total = collect($rows)->sum(fn (array $row): float => NumberParser::money($row['valor'] ?? null));
+
         foreach ($rows as $row) {
             $valor = NumberParser::money($row['valor'] ?? null);
             $clienteId = $row['cliente_id'] ?? null;
@@ -367,29 +379,33 @@ class TurnoController extends Controller
             $turno->recaudos()->create([
                 'cliente_id' => $clienteId,
                 'valor' => $valor,
+                'total' => $total,
             ]);
         }
     }
 
     private function saveTransferencias(Turno $turno, array $rows): void
     {
+        $totalPuntos = collect($rows)->sum(fn (array $row): float => NumberParser::money($row['puntos'] ?? null));
+
         foreach ($rows as $row) {
-            $valor = NumberParser::money($row['valor'] ?? null);
             $puntos = NumberParser::money($row['puntos'] ?? null);
 
-            if ($valor === 0 && $puntos === 0) {
+            if ($puntos === 0) {
                 continue;
             }
 
             $turno->transferencias()->create([
-                'valor' => $valor,
                 'puntos_redimidos' => $puntos,
+                'total_puntos' => $totalPuntos,
             ]);
         }
     }
 
     private function saveGasolinaEds(Turno $turno, array $rows): void
     {
+        $total = collect($rows)->sum(fn (array $row): float => NumberParser::money($row['puntos'] ?? null));
+
         foreach ($rows as $row) {
             $valor = NumberParser::money($row['puntos'] ?? null);
 
@@ -399,12 +415,15 @@ class TurnoController extends Controller
 
             $turno->gasolinaEds()->create([
                 'valor' => $valor,
+                'total' => $total,
             ]);
         }
     }
 
     private function saveVarios(Turno $turno, array $rows): void
     {
+        $total = collect($rows)->sum(fn (array $row): float => NumberParser::money($row['valor'] ?? null));
+
         foreach ($rows as $row) {
             $concepto = $row['concepto'] ?? null;
             $valor = NumberParser::money($row['valor'] ?? null);
@@ -416,12 +435,15 @@ class TurnoController extends Controller
             $turno->varios()->create([
                 'concepto' => $concepto,
                 'valor' => $valor,
+                'total' => $total,
             ]);
         }
     }
 
     private function saveRecaudosAdmin(Turno $turno, array $rows): void
     {
+        $total = collect($rows)->sum(fn (array $row): float => NumberParser::money($row['valor'] ?? null));
+
         foreach ($rows as $row) {
             $banco = $row['banco'] ?? null;
             $responsableId = $row['responsable_id'] ?? null;
@@ -435,6 +457,7 @@ class TurnoController extends Controller
                 'banco' => $banco,
                 'responsable_id' => $responsableId,
                 'valor' => $valor,
+                'total' => $total,
             ]);
         }
     }

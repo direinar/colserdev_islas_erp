@@ -1,19 +1,16 @@
-<x-erp-card title="RECAUDOS, ANTICIPOS Y PREPAGOS POR ISLAS">
+<x-erp-card>
 
-    <div class="d-flex justify-content-end mb-2">
-        <button type="button" id="add-recaudo-row" class="btn btn-sm btn-outline-primary">+ Agregar fila</button>
+    <div class="medio-pago-toolbar">
+        <div class="medio-pago-title">RECAUDOS Y ANTICIPOS POR ISLAS</div>
+        <button type="button" id="add-recaudo-row" class="btn btn-sm btn-outline-primary medio-pago-add-btn">
+            + AGREGAR FILA
+        </button>
     </div>
 
     <div class="table-responsive">
         <table class="table table-bordered table-sm mb-0 tabla-recaudos">
 
             <thead>
-                <tr>
-                    <th colspan="3" class="text-center fw-bold">
-                        RECAUDOS, ANTICIPOS Y PREPAGOS POR ISLAS
-                    </th>
-                </tr>
-
                 <tr style="background-color:#ccccff;">
                     <th class="text-center">CLIENTE</th>
                     <th class="text-center" width="120">VALOR</th>
@@ -104,12 +101,12 @@
         const customersHtml = customersTemplate ? customersTemplate.innerHTML : '';
 
         function parseNumber(value) {
-            if (!value) return 0;
-            return Number(String(value).replace(/,/g, '')) || 0;
+            const number = window.MoneyFormat.parseMoney(value);
+            return Number.isNaN(number) ? 0 : number;
         }
 
         function formatNumber(number) {
-            return Number(number).toLocaleString('en-US', {
+            return Number(number).toLocaleString('es-CO', {
                 minimumFractionDigits: 0,
                 maximumFractionDigits: 0
             });
