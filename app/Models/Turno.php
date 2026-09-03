@@ -15,8 +15,6 @@ class Turno extends Model
         'revisado_at',
         'precio_corriente',
         'precio_acpm',
-        'traslado_sobrante',
-        'traslado_faltante',
         'tirillas_galones_corriente',
         'tirillas_galones_acpm',
         'tirillas_valor_corriente',
@@ -35,8 +33,6 @@ class Turno extends Model
         'revisado_at' => 'datetime',
         'precio_corriente' => 'decimal:2',
         'precio_acpm' => 'decimal:2',
-        'traslado_sobrante' => 'decimal:2',
-        'traslado_faltante' => 'decimal:2',
         'tirillas_galones_corriente' => 'decimal:3',
         'tirillas_galones_acpm' => 'decimal:3',
         'tirillas_valor_corriente' => 'decimal:2',
@@ -68,6 +64,21 @@ class Turno extends Model
     public function mediosPago()
     {
         return $this->hasMany(TurnoMedioPago::class);
+    }
+
+    public function consignaciones()
+    {
+        return $this->hasMany(TurnoConsignacion::class);
+    }
+
+    public function descuentos()
+    {
+        return $this->hasMany(TurnoDescuento::class);
+    }
+
+    public function cartera()
+    {
+        return $this->hasMany(TurnoCartera::class);
     }
 
     public function qrPagos()

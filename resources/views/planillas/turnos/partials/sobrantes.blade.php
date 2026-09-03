@@ -11,16 +11,14 @@
                     <td><strong>SOBRANTE o FALTANTE x LECTURA SURTIDORES</strong></td>
                     <td class="text-end fw-bold text-danger" id="sobrante-lectura-surtidores">0</td>
                 </tr>
-                <tr>
-                    <td><strong>TRASLADO A SOBRANTE</strong></td>
-                    <td class="text-end fw-bold" id="traslado-sobrante">0</td>
-                </tr>
-                <tr>
-                    <td><strong>TRASLADO A FALTANTE</strong></td>
-                    <td class="text-end fw-bold" id="traslado-faltante">0</td>
-                </tr>
             </tbody>
         </table>
+    </div>
+
+    <div class="text-end mt-2">
+        <button type="button" id="trasladar-sobrante-btn" class="btn btn-sm btn-primary">
+            TRASLADAR
+        </button>
     </div>
 
     <div class="row g-2 mt-3">
@@ -64,6 +62,8 @@
             const totalRecibidoCell = document.getElementById('resumen-total');
             const totalVentasIapropiadaCell = document.getElementById('resumen-total-iapropiada');
             const totalSurtidoresCell = document.getElementById('resumen-total-surtidores');
+            const trasladarButton = document.getElementById('trasladar-sobrante-btn');
+            let trasladoAplicado = false;
 
             function parseNumber(value) {
                 if (!value) return 0;
@@ -78,13 +78,14 @@
             }
 
             function updateSobrante() {
-                const totalRecibido = totalRecibidoCell ? parseNumber(totalRecibidoCell.textContent) : 0;
+                const totalRecibido = window.turnoResumenTotalBase ?? (totalRecibidoCell ? parseNumber(
+                    totalRecibidoCell.textContent) : 0);
                 const totalVentasIapropiada = totalVentasIapropiadaCell ? parseNumber(totalVentasIapropiadaCell
                     .textContent) : 0;
                 const totalSurtidores = totalSurtidoresCell ? parseNumber(totalSurtidoresCell.textContent) : 0;
 
-                const sobranteIapropiada = totalRecibido - totalVentasIapropiada;
-                const sobranteSurtidores = totalRecibido - totalSurtidores;
+                const sobranteIapropiada = trasladoAplicado ? 0 : totalRecibido - totalVentasIapropiada;
+                const sobranteSurtidores = trasladoAplicado ? 0 : totalRecibido - totalSurtidores;
 
                 if (sobranteCell) {
                     sobranteCell.textContent = formatNumber(sobranteIapropiada);
@@ -95,7 +96,34 @@
                     sobranteSurtidoresCell.textContent = formatNumber(sobranteSurtidores);
                     sobranteSurtidoresCell.classList.toggle('text-danger', sobranteSurtidores < 0);
                 }
+
+                if (trasladarButton) {
+                    trasladarButton.disabled = sobranteIapropiada === 0 ||
+                        trasladarButton.dataset.transferredValue === String(sobranteIapropiada);
+                    trasladarButton.dataset.currentValue = String(sobranteIapropiada);
+                }
             }
+
+            trasladarButton?.addEventListener('click', function() {
+                const value = Number(this.dataset.currentValue || 0);
+                if (!value) return;
+
+                window.turnoTraslado = window.turnoTraslado || {
+                    sobrante: 0,
+                    faltante: 0
+                };
+
+                if (value < 0) {
+                    window.turnoTraslado.faltante += Math.abs(value);
+                } else {
+                    window.turnoTraslado.sobrante -= value;
+                }
+
+                trasladoAplicado = true;
+                this.dataset.transferredValue = String(value);
+                document.dispatchEvent(new CustomEvent('turno:traslado-aplicado'));
+                updateSobrante();
+            });
 
             const observer = new MutationObserver(updateSobrante);
 

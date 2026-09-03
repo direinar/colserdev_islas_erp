@@ -41,7 +41,7 @@ class TurnoController extends Controller
         if ($searchFecha && $searchNumero) {
             // 'fecha' se guarda con hora (cast date -> datetime ISO), por lo que se
             // compara solo la parte de fecha para evitar fallos de coincidencia exacta.
-            $turno = Turno::with(['ventas', 'surtidores', 'lubricantes', 'mediosPago', 'qrPagos', 'recaudos', 'transferencias', 'gasolinaEds', 'varios', 'recaudosAdmin'])
+            $turno = Turno::with(['ventas', 'surtidores', 'lubricantes', 'consignaciones', 'descuentos', 'cartera', 'qrPagos', 'recaudos', 'transferencias', 'gasolinaEds', 'varios', 'recaudosAdmin'])
                 ->whereDate('fecha', $searchFecha)
                 ->where('numero_turno', $searchNumero)
                 ->first();
@@ -66,7 +66,9 @@ class TurnoController extends Controller
             'ventas' => ['nullable', 'array'],
             'lecturas' => ['nullable', 'array'],
             'urea_lubricantes' => ['nullable', 'array'],
-            'medios_pago' => ['nullable', 'array'],
+            'consignaciones' => ['nullable', 'array'],
+            'descuentos' => ['nullable', 'array'],
+            'cartera' => ['nullable', 'array'],
             'qr_pagos' => ['nullable', 'array'],
             'recaudos' => ['nullable', 'array'],
             'transferencias' => ['nullable', 'array'],
@@ -96,8 +98,6 @@ class TurnoController extends Controller
                 'nombre_vendedor' => $request->user()->name,
                 'precio_corriente' => config('combustibles.corriente'),
                 'precio_acpm' => config('combustibles.acpm'),
-                'traslado_sobrante' => 0,
-                'traslado_faltante' => 0,
             ];
 
             if ($turno) {
@@ -105,7 +105,9 @@ class TurnoController extends Controller
                 $turno->ventas()->delete();
                 $turno->surtidores()->delete();
                 $turno->lubricantes()->delete();
-                $turno->mediosPago()->delete();
+                $turno->consignaciones()->delete();
+                $turno->descuentos()->delete();
+                $turno->cartera()->delete();
                 $turno->qrPagos()->delete();
                 $turno->recaudos()->delete();
                 $turno->transferencias()->delete();
@@ -119,7 +121,9 @@ class TurnoController extends Controller
             $this->saveVentas($turno, $request->input('ventas', []));
             $this->saveLecturas($turno, $request->input('lecturas', []));
             $this->saveUreaLubricantes($turno, $request->input('urea_lubricantes', []));
-            $this->saveMediosPago($turno, $request->input('medios_pago', []));
+            $this->saveConsignaciones($turno, $request->input('consignaciones', []));
+            $this->saveDescuentos($turno, $request->input('descuentos', []));
+            $this->saveCartera($turno, $request->input('cartera', []));
             $this->saveQrPagos($turno, $request->input('qr_pagos', []));
             $this->saveRecaudos($turno, $request->input('recaudos', []));
             $this->saveTransferencias($turno, $request->input('transferencias', []));
@@ -273,27 +277,55 @@ class TurnoController extends Controller
         }
     }
 
-    private function saveMediosPago(Turno $turno, array $rows): void
+    private function saveConsignaciones(Turno $turno, array $rows): void
     {
-        foreach ($rows as $row) {
-            $consignacionValor = NumberParser::money($row['consignacion_valor'] ?? null);
-            $descuento = NumberParser::money($row['descuento'] ?? null);
-            $carteraValor = NumberParser::money($row['cartera_valor'] ?? null);
-            $clienteId = $row['cliente_id'] ?? null;
-            $consignacionNo = $row['consignacion_no'] ?? null;
-            $carteraFacturaNo = $row['cartera_factura_no'] ?? null;
+        $values = collect($rows)->map(fn (array $row): array => [
+            'consignacion_no' => $row['consignacion_no'] ?? null,
+            'valor' => NumberParser::money($row['consignacion_valor'] ?? null),
+        ])->filter(fn (array $row): bool => $row['valor'] !== 0.0 || $row['consignacion_no'])->values();
+        $total = $values->sum('valor');
 
-            if ($consignacionValor === 0 && $carteraValor === 0 && ! $consignacionNo && ! $carteraFacturaNo) {
-                continue;
-            }
+        foreach ($values as $row) {
+            $turno->consignaciones()->create([
+                'consignacion_no' => $row['consignacion_no'],
+                'valor' => $row['valor'],
+                'total' => $total,
+            ]);
+        }
+    }
 
-            $turno->mediosPago()->create([
-                'consignacion_no' => $consignacionNo,
-                'consignacion_valor' => $consignacionValor,
-                'descuento' => $descuento,
-                'cartera_factura_no' => $carteraFacturaNo,
-                'cliente_id' => $clienteId,
-                'cartera_valor' => $carteraValor,
+    private function saveDescuentos(Turno $turno, array $rows): void
+    {
+        $values = collect($rows)->map(fn (array $row): array => [
+            'descuento_no' => $row['descuento_no'] ?? null,
+            'valor' => NumberParser::money($row['descuento'] ?? null),
+        ])->filter(fn (array $row): bool => $row['valor'] !== 0.0 || $row['descuento_no'])->values();
+        $total = $values->sum('valor');
+
+        foreach ($values as $row) {
+            $turno->descuentos()->create([
+                'descuento_no' => $row['descuento_no'],
+                'valor' => $row['valor'],
+                'total' => $total,
+            ]);
+        }
+    }
+
+    private function saveCartera(Turno $turno, array $rows): void
+    {
+        $values = collect($rows)->map(fn (array $row): array => [
+            'factura_no' => $row['cartera_factura_no'] ?? null,
+            'cliente_id' => $row['cliente_id'] ?? null,
+            'valor' => NumberParser::money($row['cartera_valor'] ?? null),
+        ])->filter(fn (array $row): bool => $row['valor'] !== 0.0 || $row['factura_no'] || $row['cliente_id'])->values();
+        $total = $values->sum('valor');
+
+        foreach ($values as $row) {
+            $turno->cartera()->create([
+                'factura_no' => $row['factura_no'],
+                'cliente_id' => $row['cliente_id'],
+                'valor' => $row['valor'],
+                'total' => $total,
             ]);
         }
     }

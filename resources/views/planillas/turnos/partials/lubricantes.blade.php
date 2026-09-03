@@ -10,9 +10,9 @@
 
         <table class="table table-bordered table-sm lubricantes-table">
             <thead class="bg-yellow">
-                <tr>
-                    <th colspan="5" class="text-center">VENTAS SEGÚN CIERRES DE IAPROPIADA</th>
-                </tr>
+                {{-- <tr>
+                    <th colspan="5" class="text-center">VENTAS SEGÚN CIERRES DE IAPROPIADAxxx</th>
+                </tr> --}}
                 <tr>
                     <th style="width: 90px;">CANTIDAD</th>
                     <th>PRODUCTO</th>

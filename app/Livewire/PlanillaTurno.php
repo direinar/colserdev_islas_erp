@@ -51,10 +51,6 @@ class PlanillaTurno extends Component
 
     public array $recaudos_administracion = [];
 
-    public float $traslado_sobrante = 0;
-
-    public float $traslado_faltante = 0;
-
     public bool $guardado = false;
 
     public string $mensaje = '';
@@ -268,7 +264,7 @@ class PlanillaTurno extends Component
 
     public function updated(string $name, mixed $value): void
     {
-        if (preg_match('/^(tc_datafono_1|tc_datafono_2|tc_datafono_3|transferencias_bancolombia|gasolina_eds|puntos_redimidos|traslado_sobrante|traslado_faltante)$/', $name) === 1) {
+        if (preg_match('/^(tc_datafono_1|tc_datafono_2|tc_datafono_3|transferencias_bancolombia|gasolina_eds|puntos_redimidos)$/', $name) === 1) {
             data_set($this, $name, $this->numberValue($value));
 
             return;
@@ -572,8 +568,6 @@ class PlanillaTurno extends Component
                 'recaudos_anticipos' => $this->snapshotRows($this->recaudos_anticipos, ['cliente', 'valor']),
                 'varios' => $this->snapshotRows($this->varios, ['concepto', 'valor']),
                 'recaudos_administracion' => $this->snapshotRows($this->recaudos_administracion, ['banco_caja', 'cliente', 'valor']),
-                'traslado_sobrante' => $this->traslado_sobrante,
-                'traslado_faltante' => $this->traslado_faltante,
                 'total_venta_iapropiada' => $this->totalVentaIapropiada,
                 'total_venta_lectura' => $this->totalVentaLectura,
                 'total_urea_sin_iva' => $this->totalUreaSinIva,

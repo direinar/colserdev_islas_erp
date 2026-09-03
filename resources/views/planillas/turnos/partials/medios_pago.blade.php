@@ -19,20 +19,20 @@
                         </tr>
                     </thead>
                     <tbody id="consignaciones-body">
-                        @if (isset($turno) && optional($turno->mediosPago)->count())
-                            @foreach ($turno->mediosPago as $i => $m)
+                        @if (isset($turno) && optional($turno->consignaciones)->count())
+                            @foreach ($turno->consignaciones as $i => $m)
                                 <tr data-index="{{ $i }}">
                                     <td>
-                                        <input type="text" name="medios_pago[{{ $i }}][consignacion_no]"
+                                        <input type="text"
+                                            name="consignaciones[{{ $i }}][consignacion_no]"
                                             class="form-control form-control-sm consignacion-no-input"
                                             value="{{ $m->consignacion_no }}">
                                     </td>
                                     <td>
                                         <input type="text"
-                                            name="medios_pago[{{ $i }}][consignacion_valor]"
+                                            name="consignaciones[{{ $i }}][consignacion_valor]"
                                             class="form-control form-control-sm text-end consignacion-valor-input"
-                                            inputmode="decimal"
-                                            value="{{ number_format($m->consignacion_valor, 0, ',', '.') }}">
+                                            inputmode="decimal" value="{{ number_format($m->valor, 0, ',', '.') }}">
                                     </td>
                                     <td class="text-center">
                                         <button type="button" class="btn btn-sm btn-danger remove-row">×</button>
@@ -42,11 +42,11 @@
                         @else
                             <tr data-index="0">
                                 <td>
-                                    <input type="text" name="medios_pago[0][consignacion_no]"
+                                    <input type="text" name="consignaciones[0][consignacion_no]"
                                         class="form-control form-control-sm consignacion-no-input">
                                 </td>
                                 <td>
-                                    <input type="text" name="medios_pago[0][consignacion_valor]"
+                                    <input type="text" name="consignaciones[0][consignacion_valor]"
                                         class="form-control form-control-sm text-end consignacion-valor-input"
                                         inputmode="decimal">
                                 </td>
@@ -79,24 +79,18 @@
                 <table class="table table-bordered table-sm mb-0 medio-pago-table">
                     <thead>
                         <tr>
-                            <th class="text-center">No.</th>
                             <th class="text-center">VALOR</th>
                             <th class="text-center">ACCIÓN</th>
                         </tr>
                     </thead>
                     <tbody id="descuentos-body">
-                        @if (isset($turno) && optional($turno->mediosPago)->count())
-                            @foreach ($turno->mediosPago as $i => $m)
+                        @if (isset($turno) && optional($turno->descuentos)->count())
+                            @foreach ($turno->descuentos as $i => $m)
                                 <tr data-index="{{ $i }}">
                                     <td>
-                                        <input type="text" name="medios_pago[{{ $i }}][descuento_no]"
-                                            class="form-control form-control-sm descuento-no-input"
-                                            value="{{ $i + 1 }}">
-                                    </td>
-                                    <td>
-                                        <input type="text" name="medios_pago[{{ $i }}][descuento]"
+                                        <input type="text" name="descuentos[{{ $i }}][descuento]"
                                             class="form-control form-control-sm text-end descuento-valor-input"
-                                            inputmode="decimal" value="{{ number_format($m->descuento, 0, ',', '.') }}">
+                                            inputmode="decimal" value="{{ number_format($m->valor, 0, ',', '.') }}">
                                     </td>
                                     <td class="text-center">
                                         <button type="button" class="btn btn-sm btn-danger remove-row">×</button>
@@ -106,11 +100,7 @@
                         @else
                             <tr data-index="0">
                                 <td>
-                                    <input type="text" name="medios_pago[0][descuento_no]"
-                                        class="form-control form-control-sm descuento-no-input" value="1">
-                                </td>
-                                <td>
-                                    <input type="text" name="medios_pago[0][descuento]"
+                                    <input type="text" name="descuentos[0][descuento]"
                                         class="form-control form-control-sm text-end descuento-valor-input"
                                         inputmode="decimal">
                                 </td>
@@ -124,7 +114,6 @@
                         <tr class="medio-pago-total-row">
                             <td class="text-end">TOTAL</td>
                             <td id="total-descuentos" class="text-end">0</td>
-                            <td></td>
                         </tr>
                     </tfoot>
                 </table>
@@ -150,17 +139,16 @@
                         </tr>
                     </thead>
                     <tbody id="cartera-body">
-                        @if (isset($turno) && optional($turno->mediosPago)->count())
-                            @foreach ($turno->mediosPago as $i => $m)
+                        @if (isset($turno) && optional($turno->cartera)->count())
+                            @foreach ($turno->cartera as $i => $m)
                                 <tr data-index="{{ $i }}">
                                     <td>
-                                        <input type="text"
-                                            name="medios_pago[{{ $i }}][cartera_factura_no]"
+                                        <input type="text" name="cartera[{{ $i }}][cartera_factura_no]"
                                             class="form-control form-control-sm cartera-no-input"
-                                            value="{{ $m->cartera_factura_no }}">
+                                            value="{{ $m->factura_no }}">
                                     </td>
                                     <td>
-                                        <select name="medios_pago[{{ $i }}][cliente_id]"
+                                        <select name="cartera[{{ $i }}][cliente_id]"
                                             class="form-select form-select-sm cartera-cliente-select">
                                             <option value="">Seleccione cliente</option>
                                             @foreach ($customers ?? collect() as $customer)
@@ -172,10 +160,9 @@
                                         </select>
                                     </td>
                                     <td>
-                                        <input type="text" name="medios_pago[{{ $i }}][cartera_valor]"
+                                        <input type="text" name="cartera[{{ $i }}][cartera_valor]"
                                             class="form-control form-control-sm text-end cartera-valor-input"
-                                            inputmode="decimal"
-                                            value="{{ number_format($m->cartera_valor, 0, ',', '.') }}">
+                                            inputmode="decimal" value="{{ number_format($m->valor, 0, ',', '.') }}">
                                     </td>
                                     <td class="text-center">
                                         <button type="button" class="btn btn-sm btn-danger remove-row">×</button>
@@ -185,11 +172,11 @@
                         @else
                             <tr data-index="0">
                                 <td>
-                                    <input type="text" name="medios_pago[0][cartera_factura_no]"
+                                    <input type="text" name="cartera[0][cartera_factura_no]"
                                         class="form-control form-control-sm cartera-no-input">
                                 </td>
                                 <td>
-                                    <select name="medios_pago[0][cliente_id]"
+                                    <select name="cartera[0][cliente_id]"
                                         class="form-select form-select-sm cartera-cliente-select">
                                         <option value="">Seleccione cliente</option>
                                         @foreach ($customers ?? collect() as $customer)
@@ -200,7 +187,7 @@
                                     </select>
                                 </td>
                                 <td>
-                                    <input type="text" name="medios_pago[0][cartera_valor]"
+                                    <input type="text" name="cartera[0][cartera_valor]"
                                         class="form-control form-control-sm text-end cartera-valor-input"
                                         inputmode="decimal">
                                 </td>
@@ -393,8 +380,8 @@
                 const tr = document.createElement('tr');
                 tr.dataset.index = index;
                 tr.innerHTML = `
-                    <td><input type="text" name="medios_pago[${index}][consignacion_no]" class="form-control form-control-sm consignacion-no-input"></td>
-                    <td><input type="text" name="medios_pago[${index}][consignacion_valor]" class="form-control form-control-sm text-end consignacion-valor-input" inputmode="decimal"></td>
+                    <td><input type="text" name="consignaciones[${index}][consignacion_no]" class="form-control form-control-sm consignacion-no-input"></td>
+                    <td><input type="text" name="consignaciones[${index}][consignacion_valor]" class="form-control form-control-sm text-end consignacion-valor-input" inputmode="decimal"></td>
                     <td class="text-center"><button type="button" class="btn btn-sm btn-danger remove-row">×</button></td>
                 `;
                 return tr;
@@ -410,8 +397,7 @@
                 const tr = document.createElement('tr');
                 tr.dataset.index = index;
                 tr.innerHTML = `
-                    <td><input type="text" name="medios_pago[${index}][descuento_no]" class="form-control form-control-sm descuento-no-input" value="${index + 1}"></td>
-                    <td><input type="text" name="medios_pago[${index}][descuento]" class="form-control form-control-sm text-end descuento-valor-input" inputmode="decimal"></td>
+                    <td><input type="text" name="descuentos[${index}][descuento]" class="form-control form-control-sm text-end descuento-valor-input" inputmode="decimal"></td>
                     <td class="text-center"><button type="button" class="btn btn-sm btn-danger remove-row">×</button></td>
                 `;
                 return tr;
@@ -427,14 +413,14 @@
                 const tr = document.createElement('tr');
                 tr.dataset.index = index;
                 tr.innerHTML = `
-                    <td><input type="text" name="medios_pago[${index}][cartera_factura_no]" class="form-control form-control-sm cartera-no-input"></td>
+                    <td><input type="text" name="cartera[${index}][cartera_factura_no]" class="form-control form-control-sm cartera-no-input"></td>
                     <td>
-                        <select name="medios_pago[${index}][cliente_id]" class="form-select form-select-sm cartera-cliente-select">
+                        <select name="cartera[${index}][cliente_id]" class="form-select form-select-sm cartera-cliente-select">
                             <option value="">Seleccione cliente</option>
                             ${clientesOptions}
                         </select>
                     </td>
-                    <td><input type="text" name="medios_pago[${index}][cartera_valor]" class="form-control form-control-sm text-end cartera-valor-input" inputmode="decimal"></td>
+                    <td><input type="text" name="cartera[${index}][cartera_valor]" class="form-control form-control-sm text-end cartera-valor-input" inputmode="decimal"></td>
                     <td class="text-center"><button type="button" class="btn btn-sm btn-danger remove-row">×</button></td>
                 `;
                 return tr;

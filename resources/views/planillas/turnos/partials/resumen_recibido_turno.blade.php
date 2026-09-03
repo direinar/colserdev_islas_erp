@@ -121,6 +121,10 @@
         }
 
         function updateResumen() {
+            const traslado = window.turnoTraslado || {
+                sobrante: 0,
+                faltante: 0
+            };
             // Sumar desde medios_pago (consignaciones)
             let consignaciones = 0;
             document.querySelectorAll('.consignacion-valor-input').forEach(input => {
@@ -196,6 +200,8 @@
             document.getElementById('resumen-descuentos').textContent = formatNumber(descuentos);
             document.getElementById('resumen-cartera').textContent = formatNumber(cartera);
             document.getElementById('resumen-varios').textContent = formatNumber(varios);
+            sobrante += traslado.sobrante;
+            faltante += traslado.faltante;
             document.getElementById('resumen-sobrante').textContent = formatNumber(sobrante);
             document.getElementById('resumen-faltante').textContent = formatNumber(faltante);
             document.getElementById('resumen-recaudos').textContent = formatNumber(recaudos);
@@ -206,9 +212,13 @@
             document.getElementById('resumen-subtotal').textContent = formatNumber(subtotal);
 
             // Total = subtotal + recaudos
-            let total = subtotal - recaudos;
+            const totalBase = subtotal - recaudos;
+            window.turnoResumenTotalBase = totalBase;
+            let total = totalBase + traslado.sobrante + traslado.faltante;
             document.getElementById('resumen-total').textContent = formatNumber(total);
         }
+
+        document.addEventListener('turno:traslado-aplicado', updateResumen);
 
         // Observar cambios en todas las tablas
         const inputSelector =

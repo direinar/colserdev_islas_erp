@@ -224,6 +224,38 @@ test('medios de pago renders as three independent tables with add row actions', 
     $response->assertSee('remove-row', false);
 });
 
+test('independent payment tables persist rows and their totals', function () {
+    $today = now()->toDateString();
+    $admin = User::factory()->create(['role' => User::ROLE_ADMINISTRADOR]);
+
+    $response = $this->actingAs($admin)->post(route('turnos.store'), [
+        'fecha' => $today,
+        'numero_turno' => 1,
+        'consignaciones' => [
+            ['consignacion_no' => 'C-1', 'consignacion_valor' => '100.000'],
+            ['consignacion_no' => 'C-2', 'consignacion_valor' => '50.000'],
+        ],
+        'descuentos' => [
+            ['descuento_no' => '1', 'descuento' => '20.000'],
+            ['descuento_no' => '2', 'descuento' => '5.000'],
+        ],
+        'cartera' => [
+            ['cartera_factura_no' => 'F-1', 'cartera_valor' => '300.000'],
+            ['cartera_factura_no' => 'F-2', 'cartera_valor' => '25.000'],
+        ],
+    ]);
+
+    $response->assertRedirect();
+    $turno = Turno::firstOrFail();
+
+    expect($turno->consignaciones)->toHaveCount(2)
+        ->and($turno->consignaciones->sum(fn ($row) => (float) $row->total))->toBe(300000.0)
+        ->and($turno->descuentos)->toHaveCount(2)
+        ->and($turno->descuentos->sum(fn ($row) => (float) $row->total))->toBe(50000.0)
+        ->and($turno->cartera)->toHaveCount(2)
+        ->and($turno->cartera->sum(fn ($row) => (float) $row->total))->toBe(650000.0);
+});
+
 test('ventas galones sent with a dot decimal (blade default format) are not inflated 1000x on save', function () {
     $today = now()->toDateString();
 

@@ -3,19 +3,19 @@
     // Ensure computed properties are available as local variables for the template
     $precioCte = $this->precioCte;
     $precioAcpm = $this->precioAcpm;
-
+    
     $totalGalonesCte = $this->totalGalonesCte;
     $totalGalonesAcpm = $this->totalGalonesAcpm;
     $totalValorCte = $this->totalValorCte;
     $totalValorAcpm = $this->totalValorAcpm;
     $totalVentaIapropiada = $this->totalVentaIapropiada;
-
+    
     $lecturaGalonesCte = $this->lecturaGalonesCte;
     $lecturaGalonesAcpm = $this->lecturaGalonesAcpm;
     $lecturaValorCte = $this->lecturaValorCte;
     $lecturaValorAcpm = $this->lecturaValorAcpm;
     $totalVentaLectura = $this->totalVentaLectura;
-
+    
     $totalConsignaciones = $this->totalConsignaciones;
     $totalDescuentos = $this->totalDescuentos;
     $totalCartera = $this->totalCartera;
@@ -719,25 +719,6 @@
                     </div>
 
                     <div class="grid-two">
-                        <div>
-                            <div class="field-label" style="margin-bottom: 8px;">Traslado a sobrantes / faltantes
-                            </div>
-                            <div class="form-grid" style="grid-template-columns: 1fr 1fr; padding: 0;">
-                                <x-input-money class="field" :label="'Sobrante'">
-                                    <input type="text" inputmode="decimal" data-decimals="0"
-                                        wire:model.live="traslado_sobrante" placeholder="0" class="w-full">
-                                </x-input-money>
-                                <x-input-money class="field" :label="'Faltante'">
-                                    <input type="text" inputmode="decimal" data-decimals="0"
-                                        wire:model.live="traslado_faltante" placeholder="0" class="w-full">
-                                </x-input-money>
-                            </div>
-                            <p class="note" style="margin-top: 10px;">
-                                Este bloque se deja disponible para la confirmacion administrativa del sobrante o
-                                faltante.
-                            </p>
-                        </div>
-
                         <div>
                             <div class="field-label" style="margin-bottom: 8px;">Notas operativas</div>
                             <p class="note">
