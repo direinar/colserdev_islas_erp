@@ -143,6 +143,15 @@ body {
     box-shadow: 0 8px 20px rgba(12, 14, 18, 0.06) !important;
 }
 
+.remove-row {
+    display: block;
+    margin-left: auto;
+}
+
+.ventas-header th {
+    background-color: #c9f0ad !important;
+}
+
 /* Tables */
 .table thead th {
     background: rgba(225, 16, 0, 0.06) !important;

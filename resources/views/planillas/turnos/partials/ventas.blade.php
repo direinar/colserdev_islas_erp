@@ -4,17 +4,19 @@
         <table class="table table-bordered table-sm">
 
             <!-- Encabezado principal -->
-            <thead class="bg-yellow">
-                <tr>
-                    <th colspan="3" class="text-center">VENTAS SEGÚN CIERRES DE IAPPROPIADA</th>
+            <thead class="ventas-header">
+                <tr class="ventas-title-row bg-green-100">
+                    <th colspan="3" class="text-center font-bold">
+                        VENTAS SEGÚN CIERRES DE IAPPROPIADA
+                    </th>
                 </tr>
-                <tr>
+
+                <tr class="bg-green-100">
                     <th>SURTIDOR</th>
                     <th class="text-end">GALONES</th>
                     <th class="text-end">VALOR</th>
                 </tr>
             </thead>
-
             <!-- Sección: Ventas por surtidor -->
             <tbody>
                 @if (isset($turno) && optional($turno->ventas)->count())
@@ -143,49 +145,55 @@
 
             <!-- Sección: Venta en tirillas -->
             <thead class="bg-light">
-
                 <tr>
-
-                    <th class="text-center">
-                        VENTA EN TIRILLAS DE CORTES
+                    <th class="text-left whitespace-nowrap">
+                        VENTA SEGUN CORTES
                     </th>
 
-                    <th class="text-center">
+                    <th class="text-center whitespace-nowrap">
                         CORRIENTE
                     </th>
 
-                    <th class="text-center">
+                    <th class="text-center whitespace-nowrap">
                         ACPM
                     </th>
-
                 </tr>
-
             </thead>
+
             <tbody>
                 <tr>
-                    <th scope="row">GALONES</th>
-                    <td class="text-end">
+                    <th scope="row" class="text-left">
+                        GALONES
+                    </th>
+
+                    <td>
                         <input type="text" readonly
-                            class="form-control form-control-sm erp-input tirillas-galones-corriente"
+                            class="form-control form-control-sm erp-input tirillas-galones-corriente text-end"
                             value="{{ isset($turno) ? number_format($turno->tirillas_galones_corriente, 3, '.', ',') : '' }}">
                     </td>
-                    <td class="text-end">
+
+                    <td>
                         <input type="text" readonly
-                            class="form-control form-control-sm erp-input tirillas-galones-acpm"
+                            class="form-control form-control-sm erp-input tirillas-galones-acpm text-end"
                             value="{{ isset($turno) ? number_format($turno->tirillas_galones_acpm, 3, '.', ',') : '' }}">
                     </td>
                 </tr>
+
                 <tr>
-                    <th scope="row">VALOR</th>
-                    <td class="text-end">
+                    <th scope="row" class="text-left">
+                        VALOR
+                    </th>
+
+                    <td>
                         <input type="text" readonly
-                            class="form-control form-control-sm erp-input tirillas-valor-corriente"
+                            class="form-control form-control-sm erp-input tirillas-valor-corriente text-end"
                             data-precio="{{ config('combustibles.corriente') }}"
                             value="{{ isset($turno) ? number_format($turno->tirillas_valor_corriente, 0, ',', '.') : '' }}">
                     </td>
-                    <td class="text-end">
+
+                    <td>
                         <input type="text" readonly
-                            class="form-control form-control-sm erp-input tirillas-valor-acpm"
+                            class="form-control form-control-sm erp-input tirillas-valor-acpm text-end"
                             data-precio="{{ config('combustibles.acpm') }}"
                             value="{{ isset($turno) ? number_format($turno->tirillas_valor_acpm, 0, ',', '.') : '' }}">
                     </td>
@@ -195,8 +203,8 @@
             <!-- Total general + precios -->
             <tfoot>
                 <tr class="table-secondary fw-bold">
-                    <td colspan="2" class="text-end">TOTAL</td>
-                    <td class="text-end ventas-total-turno">
+                    <td colspan="2" class="text-end" style="text-align: right;">TOTAL</td>
+                    <td class="text-end ventas-total-turno" style="text-align: right;">
                         {{ isset($turno) ? number_format($turno->total_ventas, 0, ',', '.') : '0' }}</td>
                 </tr>
                 {{-- <tr class="table-warning">

@@ -1,90 +1,106 @@
-<x-erp-card title="LECTURA ELECTRÓNICA">
+<x-erp-card title="LECTURA ELECTRÓNICA" title-class="lectura-electronica-title">
 
-    <table class="table table-bordered table-erp">
+    <style>
+        .ventas-lecturas-table th {
+            font-size: clamp(0.65rem, 1.6vw, 0.95rem);
+            white-space: normal;
+            word-break: normal;
+            overflow-wrap: break-word;
+            padding-left: 0.25rem;
+            padding-right: 0.25rem;
+        }
+    </style>
 
-        <thead class="bg-blue">
-            <tr>
-                <th>MANGUERA</th>
-                <th>INICIAL</th>
-                <th>FINAL</th>
-                <th>GLS</th>
-            </tr>
-        </thead>
-        <tbody>
-            @if (isset($turno) && optional($turno->surtidores)->count())
-                @php
-                    $lecturaInicialBloqueada = $turno->numero_turno > 1;
-                @endphp
-                @foreach ($turno->surtidores as $i => $s)
-                    <tr data-combustible="{{ $s->combustible }}">
-                        <td>
-                            <input type="hidden" name="lecturas[{{ $i }}][manguera]"
-                                value="{{ $s->manguera }}">
-                            <input type="hidden" name="lecturas[{{ $i }}][combustible]"
-                                value="{{ $s->combustible }}">
-                            {{ $s->manguera }}
-                        </td>
-                        <td><input type="text" name="lecturas[{{ $i }}][lectura_inicial]"
-                                inputmode="decimal" placeholder="0,000" class="form-control erp-input lectura-inicial"
-                                value="{{ number_format($s->lectura_inicial, 3, '.', ',') }}" @readonly($lecturaInicialBloqueada)></td>
-                        <td><input type="text" name="lecturas[{{ $i }}][lectura_final]"
-                                inputmode="decimal" placeholder="0,000" class="form-control erp-input lectura-final"
-                                value="{{ number_format($s->lectura_final, 3, '.', ',') }}"></td>
-                        <td><input type="text" name="lecturas[{{ $i }}][galones]" readonly
-                                class="form-control erp-input lectura-gls"
-                                value="{{ number_format($s->galones, 3, '.', ',') }}"></td>
-                    </tr>
-                @endforeach
-            @else
-                @php
-                    // Mapear surtidores anteriores por manguera para acceso rápido
-                    $surtidoresMap = collect(optional($previousTurno)->surtidores ?? [])->keyBy('manguera');
-                    $lecturaInicialBloqueada = ($nextNumber ?? 1) > 1;
+    <div class="table-responsive">
+        <table class="table table-bordered table-erp">
 
-                    // Configuración de mangueras en orden
-                    $mangueras = [
-                        ['idx' => 0, 'name' => 'PLUS 01', 'combustible' => 'corriente'],
-                        ['idx' => 1, 'name' => 'PLUS 02', 'combustible' => 'corriente'],
-                        ['idx' => 2, 'name' => 'ACPM 03', 'combustible' => 'acpm'],
-                        ['idx' => 3, 'name' => 'ACPM 04', 'combustible' => 'acpm'],
-                        ['idx' => 4, 'name' => 'PLUS 05', 'combustible' => 'corriente'],
-                        ['idx' => 5, 'name' => 'PLUS 06', 'combustible' => 'corriente'],
-                        ['idx' => 6, 'name' => 'ACPM 07', 'combustible' => 'acpm'],
-                        ['idx' => 7, 'name' => 'ACPM 08', 'combustible' => 'acpm'],
-                        ['idx' => 8, 'name' => 'PLUS 09', 'combustible' => 'corriente'],
-                        ['idx' => 9, 'name' => 'PLUS 10', 'combustible' => 'corriente'],
-                        ['idx' => 10, 'name' => 'ACPM 11', 'combustible' => 'acpm'],
-                        ['idx' => 11, 'name' => 'ACPM 12', 'combustible' => 'acpm'],
-                    ];
-                @endphp
-                @foreach ($mangueras as $manguera)
+            <thead style="background-color: #b5fdd2;">
+                <tr>
+                    <th>MANGUERA</th>
+                    <th>INICIAL</th>
+                    <th>FINAL</th>
+                    <th>GLS</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (isset($turno) && optional($turno->surtidores)->count())
                     @php
-                        $dataType = $manguera['combustible'] === 'acpm' ? 'acpm' : 'corriente';
-                        $surtidorAnterior = $surtidoresMap->get($manguera['name']);
-                        $lecturainicial = $surtidorAnterior
-                            ? number_format($surtidorAnterior->lectura_final, 3, '.', ',')
-                            : '';
+                        $lecturaInicialBloqueada = $turno->numero_turno > 1;
                     @endphp
-                    <tr data-combustible="{{ $dataType }}">
-                        <td>
-                            {{ $manguera['name'] }}
-                            <input type="hidden" name="lecturas[{{ $manguera['idx'] }}][manguera]"
-                                value="{{ $manguera['name'] }}">
-                            <input type="hidden" name="lecturas[{{ $manguera['idx'] }}][combustible]"
-                                value="{{ $dataType }}">
-                        </td>
-                        <td><input type="text" name="lecturas[{{ $manguera['idx'] }}][lectura_inicial]"
-                                inputmode="decimal" placeholder="0,000" class="form-control erp-input lectura-inicial"
-                                value="{{ $lecturainicial }}" @readonly($lecturaInicialBloqueada)></td>
-                        <td><input type="text" name="lecturas[{{ $manguera['idx'] }}][lectura_final]"
-                                inputmode="decimal" placeholder="0,000" class="form-control erp-input lectura-final">
-                        </td>
-                        <td><input type="text" name="lecturas[{{ $manguera['idx'] }}][galones]" readonly
-                                class="form-control erp-input lectura-gls"></td>
-                    </tr>
-                @endforeach
-                <!-- Total general + precios -->
-                {{-- <tfoot>
+                    @foreach ($turno->surtidores as $i => $s)
+                        <tr data-combustible="{{ $s->combustible }}">
+                            <td>
+                                <input type="hidden" name="lecturas[{{ $i }}][manguera]"
+                                    value="{{ $s->manguera }}">
+                                <input type="hidden" name="lecturas[{{ $i }}][combustible]"
+                                    value="{{ $s->combustible }}">
+                                {{ $s->manguera }}
+                            </td>
+                            <td><input type="text" name="lecturas[{{ $i }}][lectura_inicial]"
+                                    inputmode="decimal" placeholder="0,000"
+                                    class="form-control erp-input lectura-inicial"
+                                    value="{{ number_format($s->lectura_inicial, 3, '.', ',') }}" @readonly($lecturaInicialBloqueada)>
+                            </td>
+                            <td><input type="text" name="lecturas[{{ $i }}][lectura_final]"
+                                    inputmode="decimal" placeholder="0,000" class="form-control erp-input lectura-final"
+                                    value="{{ number_format($s->lectura_final, 3, '.', ',') }}"></td>
+                            <td><input type="text" name="lecturas[{{ $i }}][galones]" readonly
+                                    class="form-control erp-input lectura-gls"
+                                    value="{{ number_format($s->galones, 3, '.', ',') }}"></td>
+                        </tr>
+                    @endforeach
+                @else
+                    @php
+                        // Mapear surtidores anteriores por manguera para acceso rápido
+                        $surtidoresMap = collect(optional($previousTurno)->surtidores ?? [])->keyBy('manguera');
+                        $lecturaInicialBloqueada = ($nextNumber ?? 1) > 1;
+
+                        // Configuración de mangueras en orden
+                        $mangueras = [
+                            ['idx' => 0, 'name' => 'PLUS 01', 'combustible' => 'corriente'],
+                            ['idx' => 1, 'name' => 'PLUS 02', 'combustible' => 'corriente'],
+                            ['idx' => 2, 'name' => 'ACPM 03', 'combustible' => 'acpm'],
+                            ['idx' => 3, 'name' => 'ACPM 04', 'combustible' => 'acpm'],
+                            ['idx' => 4, 'name' => 'PLUS 05', 'combustible' => 'corriente'],
+                            ['idx' => 5, 'name' => 'PLUS 06', 'combustible' => 'corriente'],
+                            ['idx' => 6, 'name' => 'ACPM 07', 'combustible' => 'acpm'],
+                            ['idx' => 7, 'name' => 'ACPM 08', 'combustible' => 'acpm'],
+                            ['idx' => 8, 'name' => 'PLUS 09', 'combustible' => 'corriente'],
+                            ['idx' => 9, 'name' => 'PLUS 10', 'combustible' => 'corriente'],
+                            ['idx' => 10, 'name' => 'ACPM 11', 'combustible' => 'acpm'],
+                            ['idx' => 11, 'name' => 'ACPM 12', 'combustible' => 'acpm'],
+                        ];
+                    @endphp
+                    @foreach ($mangueras as $manguera)
+                        @php
+                            $dataType = $manguera['combustible'] === 'acpm' ? 'acpm' : 'corriente';
+                            $surtidorAnterior = $surtidoresMap->get($manguera['name']);
+                            $lecturainicial = $surtidorAnterior
+                                ? number_format($surtidorAnterior->lectura_final, 3, '.', ',')
+                                : '';
+                        @endphp
+                        <tr data-combustible="{{ $dataType }}">
+                            <td>
+                                {{ $manguera['name'] }}
+                                <input type="hidden" name="lecturas[{{ $manguera['idx'] }}][manguera]"
+                                    value="{{ $manguera['name'] }}">
+                                <input type="hidden" name="lecturas[{{ $manguera['idx'] }}][combustible]"
+                                    value="{{ $dataType }}">
+                            </td>
+                            <td><input type="text" name="lecturas[{{ $manguera['idx'] }}][lectura_inicial]"
+                                    inputmode="decimal" placeholder="0,000"
+                                    class="form-control erp-input lectura-inicial" value="{{ $lecturainicial }}"
+                                    @readonly($lecturaInicialBloqueada)></td>
+                            <td><input type="text" name="lecturas[{{ $manguera['idx'] }}][lectura_final]"
+                                    inputmode="decimal" placeholder="0,000"
+                                    class="form-control erp-input lectura-final">
+                            </td>
+                            <td><input type="text" name="lecturas[{{ $manguera['idx'] }}][galones]" readonly
+                                    class="form-control erp-input lectura-gls"></td>
+                        </tr>
+                    @endforeach
+                    <!-- Total general + precios -->
+                    {{-- <tfoot>
             <tr class="table-secondary fw-bold">
                 <td colspan="3" class="text-end">TOTAL</td>
                 <td class="text-end ventas-total">0</td>
@@ -102,84 +118,114 @@
                 </th>
             </tr>
         </tfoot> --}}
-            @endif
+                @endif
 
-            <table class="table table-bordered w-100">
+                <table class="table table-bordered w-100 ventas-lecturas-table" style="table-layout: fixed;">
 
-                <thead class="table-light">
-                    <tr>
-                        <th class="text-center col-4">
-                            VENTA SEGÚN LECTURAS
-                        </th>
+                    <colgroup>
+                        <col style="width: 44%;">
+                        <col style="width: 28%;">
+                        <col style="width: 28%;">
+                    </colgroup>
 
-                        <th class="text-center col-4">
-                            CORRIENTE
-                        </th>
+                    <thead class="table-light">
+                        <tr>
+                            <th class="text-center">
+                                VENTA SEGÚN LECTURAS
+                            </th>
 
-                        <th class="text-center col-4">
-                            ACPM
-                        </th>
-                    </tr>
-                </thead>
+                            <th class="text-center">
+                                CORRIENTE
+                            </th>
 
-                <tbody>
+                            <th class="text-center">
+                                ACPM
+                            </th>
+                        </tr>
+                    </thead>
 
-                    <tr>
-                        <th scope="row">GALONES</th>
+                    <tbody>
 
-                        <td>
-                            <input type="text" readonly
-                                class="form-control form-control-sm ventas-lectura-galones-corriente"
-                                value="{{ isset($turno) ? number_format($turno->lecturas_galones_corriente, 3, '.', ',') : '' }}">
-                        </td>
+                        <tr>
+                            <th scope="row">GALONES</th>
 
-                        <td>
-                            <input type="text" readonly
-                                class="form-control form-control-sm ventas-lectura-galones-acpm"
-                                value="{{ isset($turno) ? number_format($turno->lecturas_galones_acpm, 3, '.', ',') : '' }}">
-                        </td>
-                    </tr>
+                            <td>
+                                <input type="text" readonly
+                                    class="form-control form-control-sm ventas-lectura-galones-corriente text-end"
+                                    value="{{ isset($turno) ? number_format($turno->lecturas_galones_corriente, 3, '.', ',') : '' }}">
+                            </td>
 
-                    <tr>
-                        <th scope="row">VALOR</th>
+                            <td>
+                                <input type="text" readonly
+                                    class="form-control form-control-sm ventas-lectura-galones-acpm text-end"
+                                    value="{{ isset($turno) ? number_format($turno->lecturas_galones_acpm, 3, '.', ',') : '' }}">
+                            </td>
+                        </tr>
 
-                        <td>
-                            <input type="text" readonly
-                                class="form-control form-control-sm ventas-lectura-valor-corriente"
-                                data-precio="{{ config('combustibles.corriente') }}"
-                                value="{{ isset($turno) ? number_format($turno->lecturas_valor_corriente, 0, ',', '.') : '' }}">
-                        </td>
+                        <tr>
+                            <th scope="row">VALOR</th>
 
-                        <td>
-                            <input type="text" readonly
-                                class="form-control form-control-sm ventas-lectura-valor-acpm"
-                                data-precio="{{ config('combustibles.acpm') }}"
-                                value="{{ isset($turno) ? number_format($turno->lecturas_valor_acpm, 0, ',', '.') : '' }}">
-                        </td>
-                    </tr>
+                            <td>
+                                <input type="text" readonly
+                                    class="form-control form-control-sm ventas-lectura-valor-corriente text-end"
+                                    data-precio="{{ config('combustibles.corriente') }}"
+                                    value="{{ isset($turno) ? number_format($turno->lecturas_valor_corriente, 0, ',', '.') : '' }}">
+                            </td>
 
-                    <tr>
-                        <th scope="row">PRECIOS</th>
+                            <td>
+                                <input type="text" readonly
+                                    class="form-control form-control-sm ventas-lectura-valor-acpm text-end"
+                                    data-precio="{{ config('combustibles.acpm') }}"
+                                    value="{{ isset($turno) ? number_format($turno->lecturas_valor_acpm, 0, ',', '.') : '' }}">
+                            </td>
+                        </tr>
 
-                        <th class="text-end">
-                            {{ number_format(config('combustibles.corriente'), 0, ',', '.') }}
-                        </th>
-                        <th class="text-end">
-                            {{ number_format(config('combustibles.acpm'), 0, ',', '.') }}
-                        </th>
-                    </tr>
-                    <tr class="table-secondary fw-bold">
-                        <td colspan="2" class="text-end">TOTAL</td>
-                        <td class="text-end ventas-total-lectura">
-                            {{ isset($turno) ? number_format($turno->total_venta_lecturas, 0, ',', '.') : '0' }}</td>
-                    </tr>
+                        <tr class="table-secondary fw-bold">
+                            <td colspan="2" class="text-end">TOTAL</td>
+                            <td class="text-end ventas-total-lectura">
+                                {{ isset($turno) ? number_format($turno->total_venta_lecturas, 0, ',', '.') : '0' }}
+                            </td>
+                        </tr>
 
-                </tbody>
+                    </tbody>
 
-            </table>
+                </table>
 
-        </tbody>
+                @php
+                    $precioCorriente =
+                        \App\Models\FuelPrice::where('name', 'Gasolina')
+                            ->where('active', true)
+                            ->orderByDesc('effective_date')
+                            ->value('price') ?? config('combustibles.corriente');
+                    $precioAcpm =
+                        \App\Models\FuelPrice::where('name', 'ACPM')
+                            ->where('active', true)
+                            ->orderByDesc('effective_date')
+                            ->value('price') ?? config('combustibles.acpm');
+                @endphp
 
-    </table>
+                <div class="row g-2 mt-2">
+                    <div class="col-6">
+                        <div class="card text-center">
+                            <div class="card-header py-1 fw-bold">PRECIO CORRIENTE</div>
+                            <div class="card-body py-2">
+                                {{ number_format($precioCorriente, 0, ',', '.') }}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="card text-center">
+                            <div class="card-header py-1 fw-bold">PRECIO ACPM</div>
+                            <div class="card-body py-2">
+                                {{ number_format($precioAcpm, 0, ',', '.') }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </tbody>
+
+        </table>
+    </div>
 
 </x-erp-card>

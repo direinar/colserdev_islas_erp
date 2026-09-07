@@ -9,11 +9,15 @@
 
     <div class="table-responsive">
         <table class="table table-bordered table-sm mb-0 tabla-transferencias">
+            <colgroup>
+                <col style="width: 80%;">
+                <col style="width: 20%;">
+            </colgroup>
 
             <thead>
                 <tr style="background-color:#ccccff;">
                     <th class="text-end">VALOR</th>
-                    <th class="text-center">ACCIÓN</th>
+                    <th class="text-end">ACCIÓN</th>
                 </tr>
             </thead>
 
@@ -28,7 +32,7 @@
                                     value="{{ number_format($t->puntos_redimidos ?? 0, 0, ',', '.') }}">
                             </td>
 
-                            <td class="text-center">
+                            <td class="text-end">
                                 <button type="button" class="btn btn-sm btn-danger remove-row">×</button>
                             </td>
                         </tr>
@@ -42,7 +46,7 @@
                                     inputmode="decimal">
                             </td>
 
-                            <td class="text-center">
+                            <td class="text-end">
                                 <button type="button" class="btn btn-sm btn-danger remove-row">×</button>
                             </td>
                         </tr>
@@ -52,8 +56,8 @@
 
             <tfoot>
                 <tr style="background-color:#bfbfbf; font-weight:bold;">
-                    <td class="text-end">TOTAL</td>
-                    <td id="total-puntos" class="text-end">0</td>
+                    <td class="text-end">TOTAL <span id="total-puntos">0</span></td>
+                    <td></td>
                 </tr>
             </tfoot>
 

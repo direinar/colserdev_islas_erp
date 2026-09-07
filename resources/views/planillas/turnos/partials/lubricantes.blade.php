@@ -1,25 +1,63 @@
-<x-erp-card title="VENTA DE CANASTILLA - CONTADO Y CRÉDITO">
+<x-erp-card>
 
     {{-- Styles moved to resources/css/custom.css --}}
 
-    <div class="d-flex justify-content-end mb-2">
-        <button type="button" id="add-lubricante-row" class="btn btn-sm btn-outline-primary">+ Agregar fila</button>
+    <style>
+        .canastilla-toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 12px 14px;
+            background: #b5fdd2;
+            border-bottom: 1px solid #d0d0d0;
+            min-height: 48px;
+        }
+
+        .canastilla-title {
+            font-size: 15px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.02em;
+            color: #1d1d1d;
+        }
+
+        .canastilla-add-btn {
+            background: #f3f3f3 !important;
+            color: #d93a2f !important;
+            border-color: #d9d9d9 !important;
+            font-weight: 700 !important;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            padding: 7px 14px !important;
+        }
+
+        .canastilla-add-btn:hover {
+            background: #fff !important;
+            border-color: #cfcfcf !important;
+        }
+    </style>
+
+    <div class="canastilla-toolbar">
+        <div class="canastilla-title">VENTA DE CANASTILLA - CONTADO Y CRÉDITO</div>
+        <button type="button" id="add-lubricante-row" class="btn btn-sm btn-outline-primary canastilla-add-btn">+
+            AGREGAR FILA</button>
     </div>
 
     <div class="table-responsive">
 
         <table class="table table-bordered table-sm lubricantes-table">
-            <thead class="bg-yellow">
+            <thead style="background-color: #b5fdd2;">
                 {{-- <tr>
-                    <th colspan="5" class="text-center">VENTAS SEGÚN CIERRES DE IAPROPIADAxxx</th>
+                    <th colspan="5" class="text-center">VENTAS SEGÚN CIERRES DE IAPROPIADA</th>
                 </tr> --}}
                 <tr>
                     <th style="width: 90px;">CANTIDAD</th>
                     <th>PRODUCTO</th>
-                    <th style="width: 140px;">VALOR TOTAL SIN IVA</th>
-                    <th style="width: 120px;">IVA</th>
-                    <th style="width: 140px;">TOTAL</th>
-                    <th style="width: 90px;">ACCIÓN</th>
+                    <th class="text-end" style="width: 140px;">VR. SIN IVA</th>
+                    <th class="text-end" style="width: 120px;">IVA</th>
+                    <th class="text-end" style="width: 140px;">TOTAL</th>
+                    <th class="text-center" style="width: 90px;">ACCIÓN</th>
                 </tr>
             </thead>
             <tbody>
@@ -113,9 +151,10 @@
             <tfoot>
                 <tr style="background-color: #c9f0ad; font-size: 1.05rem;">
                     <td colspan="2" class="text-center"><strong>TOTAL VENTA</strong></td>
-                    <td class="text-start"><strong id="total-valor-sin-iva">0</strong></td>
-                    <td class="text-start"><strong id="total-iva">0</strong></td>
-                    <td class="text-start"><strong id="total-total">0</strong></td>
+                    <td class="text-end" style="text-align: right;"><strong id="total-valor-sin-iva">0</strong></td>
+                    <td class="text-end" style="text-align: right;"><strong id="total-iva">0</strong></td>
+                    <td class="text-end" style="text-align: right;"><strong id="total-total">0</strong></td>
+                    <td></td>
                 </tr>
             </tfoot>
         </table>

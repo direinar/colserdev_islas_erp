@@ -1,4 +1,4 @@
-<x-erp-card title="SOBRANTES Y FALTANTES">
+<x-erp-card title="SOBRANTES Y FALTANTES" title-class="lectura-electronica-title">
 
     <div class="table-responsive">
         <table class="table table-bordered table-sm" style="background-color: #f7f2e7; border-color: #b8a18f;">
@@ -15,7 +15,11 @@
         </table>
     </div>
 
-    <div class="text-end mt-2">
+    <div class="d-flex align-items-end gap-2 mt-2">
+        <div class="flex-grow-1">
+            <label class="form-label fw-bold" for="observaciones">OBSERVACIONES</label>
+            <textarea class="form-control form-control-sm" name="observaciones" id="observaciones" rows="2">{{ old('observaciones', optional($turno ?? null)->observaciones) }}</textarea>
+        </div>
         <button type="button" id="trasladar-sobrante-btn" class="btn btn-sm btn-primary">
             TRASLADAR
         </button>

@@ -5,6 +5,10 @@
         font-size: 1.25rem;
         font-weight: 700;
     }
+
+    .lectura-electronica-title {
+        background-color: #b5fdd2;
+    }
 </style>
 
 <div class="card erp-card mb-3">

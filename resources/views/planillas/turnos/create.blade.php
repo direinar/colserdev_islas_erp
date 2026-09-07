@@ -32,6 +32,12 @@
                     <button type="submit" form="turno-form" class="btn btn-sm btn-primary">Guardar</button>
                 @endif
             </div>
+            <div class="col-auto ms-auto">
+                <form method="POST" action="{{ route('logout') }}" class="m-0">
+                    @csrf
+                    <button type="submit" class="btn btn-sm btn-outline-danger">Cerrar sesión</button>
+                </form>
+            </div>
         </div>
     </form>
 

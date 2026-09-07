@@ -1,12 +1,12 @@
-<x-erp-card title="RESUMEN DE LO VENDIDO EN ESTE TURNO">
+<x-erp-card title="RESUMEN DE LO VENDIDO EN ESTE TURNO" title-class="lectura-electronica-title">
 
     <div class="table-responsive">
         <table class="table table-bordered table-sm" style="background-color: #e8f8e7; border-color: #9cbf8f;">
             <thead>
-                <tr style="background-color: #d6f7c5;">
+                <tr style="background-color: #b5fdd2;">
                     <th></th>
-                    <th class="text-center">VENTAS/IAPROPIADA</th>
-                    <th class="text-center">VENTAS/SURTIDORES</th>
+                    <th class="text-end">VENTAS/IAPROPIADA</th>
+                    <th class="text-end">VENTAS/SURTIDORES</th>
                 </tr>
             </thead>
             <tbody>

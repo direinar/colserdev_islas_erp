@@ -9,6 +9,10 @@
 
     <div class="table-responsive">
         <table class="table table-bordered table-sm mb-0 tabla-gasolina-eds">
+            <colgroup>
+                <col style="width: 80%;">
+                <col style="width: 20%;">
+            </colgroup>
 
             <thead>
                 <tr style="background-color:#ccccff;">
@@ -49,8 +53,8 @@
 
             <tfoot>
                 <tr style="background-color:#bfbfbf; font-weight:bold;">
-                    <td class="text-end">TOTAL</td>
-                    <td id="total-gasolina-eds" class="text-end">0</td>
+                    <td class="text-end">TOTAL <span id="total-gasolina-eds">0</span></td>
+                    <td></td>
                 </tr>
             </tfoot>
 

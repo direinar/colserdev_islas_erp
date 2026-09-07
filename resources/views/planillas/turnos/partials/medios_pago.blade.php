@@ -112,8 +112,8 @@
                     </tbody>
                     <tfoot>
                         <tr class="medio-pago-total-row">
-                            <td class="text-end">TOTAL</td>
-                            <td id="total-descuentos" class="text-end">0</td>
+                            <td class="text-end">TOTAL <span id="total-descuentos">0</span></td>
+                            <td></td>
                         </tr>
                     </tfoot>
                 </table>
