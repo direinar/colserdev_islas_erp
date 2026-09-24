@@ -166,14 +166,16 @@
 
         @php
             // Un turno guardado ya tiene su precio ligado (snapshot); uno nuevo
-            // usa el precio vigente para hoy según la tabla de precios.
+            // usa el precio vigente para hoy según la tabla de precios. Sin fallback a
+            // config(): si no hay un registro de FuelPrice vigente, el precio es 0 para
+            // forzar a que se registre el precio real en Precios de Combustible.
             $fechaPrecio = isset($turno) ? $turno->fecha : now();
             $precioCorriente = isset($turno)
                 ? $turno->precio_corriente
-                : \App\Models\FuelPrice::activePriceOn('Gasolina', $fechaPrecio) ?? config('combustibles.corriente');
+                : (float) \App\Models\FuelPrice::activePriceOn('Gasolina', $fechaPrecio);
             $precioAcpm = isset($turno)
                 ? $turno->precio_acpm
-                : \App\Models\FuelPrice::activePriceOn('ACPM', $fechaPrecio) ?? config('combustibles.acpm');
+                : (float) \App\Models\FuelPrice::activePriceOn('ACPM', $fechaPrecio);
         @endphp
 
         <div class="row">

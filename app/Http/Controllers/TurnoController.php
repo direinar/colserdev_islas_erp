@@ -112,10 +112,10 @@ class TurnoController extends Controller
                 'fecha' => $request->input('fecha'),
                 'numero_turno' => $request->input('numero_turno'),
                 'nombre_vendedor' => $request->user()->name,
-                'precio_corriente' => FuelPrice::activePriceOn('Gasolina', $request->input('fecha'))
-                    ?? config('combustibles.corriente'),
-                'precio_acpm' => FuelPrice::activePriceOn('ACPM', $request->input('fecha'))
-                    ?? config('combustibles.acpm'),
+                // Sin fallback a config(): el precio debe salir de un registro vigente
+                // en Precios de Combustible; si no existe, queda en 0.
+                'precio_corriente' => (float) FuelPrice::activePriceOn('Gasolina', $request->input('fecha')),
+                'precio_acpm' => (float) FuelPrice::activePriceOn('ACPM', $request->input('fecha')),
             ];
 
             if ($turno) {
@@ -189,10 +189,10 @@ class TurnoController extends Controller
 
     private function saveVentas(Turno $turno, array $rows): void
     {
-        $total = collect($rows)->sum(function (array $row): float {
+        $total = collect($rows)->sum(function (array $row) use ($turno): float {
             $precio = ($row['combustible'] ?? null) === 'ACPM'
-                ? config('combustibles.acpm')
-                : config('combustibles.corriente');
+                ? $turno->precio_acpm
+                : $turno->precio_corriente;
 
             return NumberParser::quantity($row['galones'] ?? null) * $precio;
         });
@@ -207,8 +207,8 @@ class TurnoController extends Controller
             }
 
             $precio = $combustible === 'ACPM'
-                ? config('combustibles.acpm')
-                : config('combustibles.corriente');
+                ? $turno->precio_acpm
+                : $turno->precio_corriente;
 
             $turno->ventas()->create([
                 'surtidor' => $surtidor,

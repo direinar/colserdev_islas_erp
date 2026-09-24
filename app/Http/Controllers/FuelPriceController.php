@@ -31,7 +31,7 @@ class FuelPriceController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'name' => 'required|string|max:255',
+            'name' => 'required|string|in:Gasolina,ACPM',
             'price' => 'required|numeric',
             'effective_date' => 'nullable|date',
             'active' => 'boolean',
@@ -65,7 +65,7 @@ class FuelPriceController extends Controller
     public function update(Request $request, FuelPrice $fuelPrice)
     {
         $request->validate([
-            'name' => 'required|string|max:255',
+            'name' => 'required|string|in:Gasolina,ACPM',
             'price' => 'required|numeric',
             'effective_date' => 'nullable|date',
             'active' => 'boolean',

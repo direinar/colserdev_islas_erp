@@ -6,11 +6,26 @@
             Nombre
         </label>
 
-        <input type="text"
-               name="name"
-               class="form-control"
-               value="{{ old('name', $fuelPrice->name ?? '') }}"
-               required>
+        {{-- Fijo a "Gasolina"/"ACPM": son los nombres que FuelPrice::activePriceOn()
+             busca al calcular el precio vigente de cada turno (ver TurnoController
+             y planillas/turnos/create.blade.php). Un nombre libre rompería ese cálculo. --}}
+        <select name="name" class="form-select" required>
+
+            <option value="">Seleccione...</option>
+
+            <option value="Gasolina" {{ old('name', $fuelPrice->name ?? '') == 'Gasolina' ? 'selected' : '' }}>
+
+                Gasolina (Corriente)
+
+            </option>
+
+            <option value="ACPM" {{ old('name', $fuelPrice->name ?? '') == 'ACPM' ? 'selected' : '' }}>
+
+                ACPM
+
+            </option>
+
+        </select>
 
     </div>
 
@@ -20,12 +35,8 @@
             Precio
         </label>
 
-        <input type="number"
-               step="0.01"
-               name="price"
-               class="form-control"
-               value="{{ old('price', $fuelPrice->price ?? '') }}"
-               required>
+        <input type="number" step="0.01" name="price" class="form-control"
+            value="{{ old('price', $fuelPrice->price ?? '') }}" required>
 
     </div>
 
@@ -39,10 +50,8 @@
             Fecha Vigencia
         </label>
 
-        <input type="date"
-               name="effective_date"
-               class="form-control"
-               value="{{ old('effective_date', $fuelPrice->effective_date ?? '') }}">
+        <input type="date" name="effective_date" class="form-control"
+            value="{{ old('effective_date', $fuelPrice->effective_date ?? '') }}">
 
     </div>
 
@@ -52,18 +61,15 @@
             Estado
         </label>
 
-        <select name="active"
-                class="form-select">
+        <select name="active" class="form-select">
 
-            <option value="1"
-                {{ old('active', $fuelPrice->active ?? 1) == 1 ? 'selected' : '' }}>
+            <option value="1" {{ old('active', $fuelPrice->active ?? 1) == 1 ? 'selected' : '' }}>
 
                 Activo
 
             </option>
 
-            <option value="0"
-                {{ old('active', $fuelPrice->active ?? 1) == 0 ? 'selected' : '' }}>
+            <option value="0" {{ old('active', $fuelPrice->active ?? 1) == 0 ? 'selected' : '' }}>
 
                 Inactivo
 
