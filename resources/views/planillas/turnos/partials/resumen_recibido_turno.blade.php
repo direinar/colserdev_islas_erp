@@ -200,16 +200,16 @@
             document.getElementById('resumen-faltante').textContent = formatNumber(faltante);
             document.getElementById('resumen-recaudos').textContent = formatNumber(recaudos);
 
-            // Calcular subtotal
+            // Calcular subtotal (ya incluye el sobrante/faltante trasladado)
             let subtotal = consignaciones + qrTotal + puntos + gasolina + descuentos +
                 cartera + varios + sobrante + faltante;
             document.getElementById('resumen-subtotal').textContent = formatNumber(subtotal);
 
-            // Total = subtotal + recaudos
+            // Total = subtotal - recaudos. El sobrante/faltante ya quedó aplicado en el
+            // subtotal, así que no debe volver a sumarse aquí (evita duplicar el ajuste).
             const totalBase = subtotal - recaudos;
             window.turnoResumenTotalBase = totalBase;
-            let total = totalBase + traslado.sobrante + traslado.faltante;
-            document.getElementById('resumen-total').textContent = formatNumber(total);
+            document.getElementById('resumen-total').textContent = formatNumber(totalBase);
         }
 
         document.addEventListener('turno:traslado-aplicado', updateResumen);
@@ -225,7 +225,7 @@
 
         // Usar MutationObserver para detectar cuando se agregan nuevas filas dinámicamente
         const tables = document.querySelectorAll(
-            '.medios-pago-table tbody, .tabla-qr tbody, .tabla-transferencias tbody, .tabla-gasolina-eds tbody, .tabla-varios tbody, .tabla-recaudos tbody'
+            '.medio-pago-table tbody, .tabla-qr tbody, .tabla-transferencias tbody, .tabla-gasolina-eds tbody, .tabla-varios tbody, .tabla-recaudos tbody'
         );
 
         tables.forEach(table => {

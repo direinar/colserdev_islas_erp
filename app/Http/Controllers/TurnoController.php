@@ -131,7 +131,11 @@ class TurnoController extends Controller
                 $turno->transferencias()->delete();
                 $turno->gasolinaEds()->delete();
                 $turno->varios()->delete();
-                $turno->recaudosAdmin()->delete();
+                // RECAUDOS POR ADMINISTRACIÓN está bloqueado para el rol islero; sus
+                // filas no se tocan si quién guarda no tiene permiso de administración.
+                if (! $request->user()->isIslero()) {
+                    $turno->recaudosAdmin()->delete();
+                }
             } else {
                 $turno = Turno::create($atributos);
             }
@@ -147,7 +151,9 @@ class TurnoController extends Controller
             $this->saveTransferencias($turno, $request->input('transferencias', []));
             $this->saveGasolinaEds($turno, $request->input('gasolina_eds', []));
             $this->saveVarios($turno, $request->input('varios', []));
-            $this->saveRecaudosAdmin($turno, $request->input('recaudos_admin', []));
+            if (! $request->user()->isIslero()) {
+                $this->saveRecaudosAdmin($turno, $request->input('recaudos_admin', []));
+            }
             $this->saveVentasTotales($turno);
             $this->saveVentaLecturasTotales($turno);
         });

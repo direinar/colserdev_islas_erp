@@ -1,10 +1,14 @@
 <x-erp-card>
 
+    @php $bloqueadoIslero = auth()->user()->isIslero(); @endphp
+
     <div class="medio-pago-toolbar">
         <div class="medio-pago-title">RECAUDOS POR ADMINISTRACIÓN</div>
-        <button type="button" id="add-recaudo-admin-row" class="btn btn-sm btn-outline-primary medio-pago-add-btn">
-            + AGREGAR FILA
-        </button>
+        @unless ($bloqueadoIslero)
+            <button type="button" id="add-recaudo-admin-row" class="btn btn-sm btn-outline-primary medio-pago-add-btn">
+                + AGREGAR FILA
+            </button>
+        @endunless
     </div>
 
     <div class="table-responsive">
@@ -26,11 +30,13 @@
                             <td>
                                 <input type="text" name="recaudos_admin[{{ $i }}][banco]"
                                     class="form-control form-control-sm border-0 bg-transparent"
-                                    placeholder="Ej: Bancolombia" value="{{ $r->banco }}">
+                                    placeholder="Ej: Bancolombia" value="{{ $r->banco }}"
+                                    @disabled($bloqueadoIslero)>
                             </td>
                             <td>
                                 <select name="recaudos_admin[{{ $i }}][cliente_id]"
-                                    class="form-select form-select-sm border-0 bg-transparent recaudos-admin-responsable">
+                                    class="form-select form-select-sm border-0 bg-transparent recaudos-admin-responsable"
+                                    @disabled($bloqueadoIslero)>
                                     <option value="">Seleccione cliente</option>
                                     @foreach ($customers ?? collect() as $customer)
                                         <option value="{{ $customer->id }}"
@@ -42,10 +48,13 @@
                             <td>
                                 <input type="text" name="recaudos_admin[{{ $i }}][valor]"
                                     class="form-control form-control-sm text-end border-0 bg-transparent recaudo-admin-valor"
-                                    inputmode="decimal" value="{{ number_format($r->valor, 0, ',', '.') }}">
+                                    inputmode="decimal" value="{{ number_format($r->valor, 0, ',', '.') }}"
+                                    @disabled($bloqueadoIslero)>
                             </td>
                             <td class="text-center">
-                                <button type="button" class="btn btn-sm btn-danger remove-row">×</button>
+                                @unless ($bloqueadoIslero)
+                                    <button type="button" class="btn btn-sm btn-danger remove-row">×</button>
+                                @endunless
                             </td>
                         </tr>
                     @endforeach
@@ -54,11 +63,12 @@
                         <td>
                             <input type="text" name="recaudos_admin[0][banco]"
                                 class="form-control form-control-sm border-0 bg-transparent"
-                                placeholder="Ej: Bancolombia">
+                                placeholder="Ej: Bancolombia" @disabled($bloqueadoIslero)>
                         </td>
                         <td>
                             <select name="recaudos_admin[0][cliente_id]"
-                                class="form-select form-select-sm border-0 bg-transparent recaudos-admin-responsable">
+                                class="form-select form-select-sm border-0 bg-transparent recaudos-admin-responsable"
+                                @disabled($bloqueadoIslero)>
                                 <option value="">Seleccione cliente</option>
                                 @foreach ($customers ?? collect() as $customer)
                                     <option value="{{ $customer->id }}">{{ $customer->name }}</option>
@@ -68,10 +78,12 @@
                         <td>
                             <input type="text" name="recaudos_admin[0][valor]"
                                 class="form-control form-control-sm text-end border-0 bg-transparent recaudo-admin-valor"
-                                inputmode="decimal">
+                                inputmode="decimal" @disabled($bloqueadoIslero)>
                         </td>
                         <td class="text-center">
-                            <button type="button" class="btn btn-sm btn-danger remove-row">×</button>
+                            @unless ($bloqueadoIslero)
+                                <button type="button" class="btn btn-sm btn-danger remove-row">×</button>
+                            @endunless
                         </td>
                     </tr>
                 @endif
