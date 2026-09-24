@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Customer;
+use App\Models\FuelPrice;
 use App\Models\Lubricant;
 use App\Models\Turno;
 use App\Support\NumberParser;
@@ -17,43 +18,60 @@ class TurnoController extends Controller
         $lubricants = Lubricant::orderBy('reference', 'asc')->get();
         $customers = Customer::orderBy('name', 'asc')->get();
 
-        // Consecutivo global de turnos: no se reinicia por día, sigue subiendo
-        // sin importar la fecha con la que se registre el siguiente turno.
-        $today = Carbon::today()->toDateString();
-        $row = DB::selectOne('select max(numero_turno) as max_turno from turnos');
-        $last = $row->max_turno ?? 0;
-        $nextNumber = (int) $last + 1;
-
         // Si vienen parámetros de búsqueda, cargar el turno
         $turno = null;
         $previousTurno = null;
         $searchFecha = $request->query('fecha');
         $searchNumero = $request->query('numero_turno');
+        // Búsqueda independiente de la fecha: se ingresa solo el número de turno
+        // y se localiza el registro más reciente que coincida con ese número.
+        $searchTurnoSolo = $request->query('turno_busqueda');
+
+        if (! $searchFecha && ! $searchNumero && $searchTurnoSolo) {
+            $turno = Turno::with(['ventas', 'surtidores', 'lubricantes', 'consignaciones', 'descuentos', 'cartera', 'qrPagos', 'recaudos', 'transferencias', 'gasolinaEds', 'varios', 'recaudosAdmin'])
+                ->where('numero_turno', $searchTurnoSolo)
+                ->orderByDesc('fecha')
+                ->first();
+
+            if ($turno) {
+                $searchFecha = $turno->fecha->toDateString();
+                $searchNumero = $turno->numero_turno;
+            }
+        }
+
+        // Consecutivo global: numero_turno es único en toda la tabla (no se
+        // reinicia por fecha), así que el próximo número es el máximo + 1 sin
+        // importar la fecha consultada.
+        $today = Carbon::today()->toDateString();
+        $fechaConsecutivo = $searchFecha ?: $today;
+        $nextNumber = (int) Turno::max('numero_turno') + 1;
 
         // Turnos ya registrados en la fecha consultada, para poblar el selector
-        // de números de turno en el formulario de búsqueda (el consecutivo es
-        // global, así que estos números no necesariamente inician en 1).
+        // de números de turno en el formulario de búsqueda.
         $turnosDelDia = Turno::query()
-            ->whereDate('fecha', $searchFecha ?: $today)
+            ->whereDate('fecha', $fechaConsecutivo)
             ->orderBy('numero_turno')
             ->pluck('numero_turno');
 
-        if ($searchFecha && $searchNumero) {
+        if (! $turno && $searchFecha && $searchNumero) {
             // 'fecha' se guarda con hora (cast date -> datetime ISO), por lo que se
             // compara solo la parte de fecha para evitar fallos de coincidencia exacta.
             $turno = Turno::with(['ventas', 'surtidores', 'lubricantes', 'consignaciones', 'descuentos', 'cartera', 'qrPagos', 'recaudos', 'transferencias', 'gasolinaEds', 'varios', 'recaudosAdmin'])
                 ->whereDate('fecha', $searchFecha)
                 ->where('numero_turno', $searchNumero)
                 ->first();
-        } else {
-            // Si es un nuevo turno, cargar el último turno registrado (sin importar
-            // la fecha) para precargar las lecturas iniciales con sus finales.
+        }
+
+        if (! $turno && ! $searchNumero) {
+            // Si es un nuevo turno, cargar el último turno registrado (consecutivo
+            // global, sin importar la fecha) para precargar las lecturas iniciales
+            // con sus finales.
             $previousTurno = Turno::with('surtidores')
                 ->orderByDesc('numero_turno')
                 ->first();
         }
 
-        return view('planillas.turnos.create', compact('lubricants', 'customers', 'nextNumber', 'turno', 'previousTurno', 'turnosDelDia'));
+        return view('planillas.turnos.create', compact('lubricants', 'customers', 'nextNumber', 'turno', 'previousTurno', 'turnosDelDia', 'searchFecha', 'searchNumero'));
     }
 
     public function store(Request $request)
@@ -78,12 +96,10 @@ class TurnoController extends Controller
         ]);
 
         DB::transaction(function () use ($request) {
-            // Si ya existe un turno para esa fecha + numero_turno, se actualiza en vez de duplicar
-            // 'fecha' se guarda con hora (cast date -> datetime ISO), por lo que se
-            // compara solo la parte de fecha para detectar correctamente el turno existente
-            // y actualizarlo en vez de intentar crear uno duplicado (violaría el unique fecha+numero_turno).
+            // numero_turno es un consecutivo único en toda la tabla, así que basta
+            // con buscarlo por ese campo para detectar si ya existe y actualizarlo
+            // en vez de intentar crear uno duplicado (violaría el unique numero_turno).
             $turno = Turno::query()
-                ->whereDate('fecha', $request->input('fecha'))
                 ->where('numero_turno', $request->input('numero_turno'))
                 ->first();
 
@@ -96,8 +112,10 @@ class TurnoController extends Controller
                 'fecha' => $request->input('fecha'),
                 'numero_turno' => $request->input('numero_turno'),
                 'nombre_vendedor' => $request->user()->name,
-                'precio_corriente' => config('combustibles.corriente'),
-                'precio_acpm' => config('combustibles.acpm'),
+                'precio_corriente' => FuelPrice::activePriceOn('Gasolina', $request->input('fecha'))
+                    ?? config('combustibles.corriente'),
+                'precio_acpm' => FuelPrice::activePriceOn('ACPM', $request->input('fecha'))
+                    ?? config('combustibles.acpm'),
             ];
 
             if ($turno) {

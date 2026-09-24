@@ -135,11 +135,11 @@
                             </th>
 
                             <th class="text-center">
-                                CORRIENTE
+                                GALONES
                             </th>
 
                             <th class="text-center">
-                                ACPM
+                                VALOR
                             </th>
                         </tr>
                     </thead>
@@ -147,7 +147,7 @@
                     <tbody>
 
                         <tr>
-                            <th scope="row">GALONES</th>
+                            <th scope="row">CORRIENTE</th>
 
                             <td>
                                 <input type="text" readonly
@@ -157,25 +157,25 @@
 
                             <td>
                                 <input type="text" readonly
-                                    class="form-control form-control-sm ventas-lectura-galones-acpm text-end"
-                                    value="{{ isset($turno) ? number_format($turno->lecturas_galones_acpm, 3, '.', ',') : '' }}">
+                                    class="form-control form-control-sm ventas-lectura-valor-corriente text-end"
+                                    data-precio="{{ $precioCorriente }}"
+                                    value="{{ isset($turno) ? number_format($turno->lecturas_valor_corriente, 0, ',', '.') : '' }}">
                             </td>
                         </tr>
 
                         <tr>
-                            <th scope="row">VALOR</th>
+                            <th scope="row">ACPM</th>
 
                             <td>
                                 <input type="text" readonly
-                                    class="form-control form-control-sm ventas-lectura-valor-corriente text-end"
-                                    data-precio="{{ config('combustibles.corriente') }}"
-                                    value="{{ isset($turno) ? number_format($turno->lecturas_valor_corriente, 0, ',', '.') : '' }}">
+                                    class="form-control form-control-sm ventas-lectura-galones-acpm text-end"
+                                    value="{{ isset($turno) ? number_format($turno->lecturas_galones_acpm, 3, '.', ',') : '' }}">
                             </td>
 
                             <td>
                                 <input type="text" readonly
                                     class="form-control form-control-sm ventas-lectura-valor-acpm text-end"
-                                    data-precio="{{ config('combustibles.acpm') }}"
+                                    data-precio="{{ $precioAcpm }}"
                                     value="{{ isset($turno) ? number_format($turno->lecturas_valor_acpm, 0, ',', '.') : '' }}">
                             </td>
                         </tr>
@@ -191,33 +191,17 @@
 
                 </table>
 
-                @php
-                    $precioCorriente =
-                        \App\Models\FuelPrice::where('name', 'Gasolina')
-                            ->where('active', true)
-                            ->orderByDesc('effective_date')
-                            ->value('price') ?? config('combustibles.corriente');
-                    $precioAcpm =
-                        \App\Models\FuelPrice::where('name', 'ACPM')
-                            ->where('active', true)
-                            ->orderByDesc('effective_date')
-                            ->value('price') ?? config('combustibles.acpm');
-                @endphp
-
-                <div class="row g-2 mt-2">
-                    <div class="col-6">
-                        <div class="card text-center">
-                            <div class="card-header py-1 fw-bold">PRECIO CORRIENTE</div>
-                            <div class="card-body py-2">
-                                {{ number_format($precioCorriente, 0, ',', '.') }}
+                <div class="card text-center mt-2">
+                    <div class="card-header py-1 fw-bold">PRECIOS ACTUALES</div>
+                    <div class="card-body py-2">
+                        <div class="row g-2">
+                            <div class="col-6">
+                                <div class="fw-bold small">CORRIENTE</div>
+                                <div>{{ number_format($precioCorriente, 0, ',', '.') }}</div>
                             </div>
-                        </div>
-                    </div>
-                    <div class="col-6">
-                        <div class="card text-center">
-                            <div class="card-header py-1 fw-bold">PRECIO ACPM</div>
-                            <div class="card-body py-2">
-                                {{ number_format($precioAcpm, 0, ',', '.') }}
+                            <div class="col-6">
+                                <div class="fw-bold small">ACPM</div>
+                                <div>{{ number_format($precioAcpm, 0, ',', '.') }}</div>
                             </div>
                         </div>
                     </div>

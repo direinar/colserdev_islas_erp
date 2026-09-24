@@ -5,13 +5,12 @@
 
             <!-- Encabezado principal -->
             <thead class="ventas-header">
-                <tr class="ventas-title-row bg-green-100">
+                <tr class="ventas-title-row" style="background-color: #b5fdd2;">
                     <th colspan="3" class="text-center font-bold">
                         VENTAS SEGÚN CIERRES DE IAPPROPIADA
                     </th>
                 </tr>
-
-                <tr class="bg-green-100">
+                <tr style="background-color: #b5fdd2;">
                     <th>SURTIDOR</th>
                     <th class="text-end">GALONES</th>
                     <th class="text-end">VALOR</th>
@@ -33,7 +32,7 @@
                                 @php $galonesClass = $v->combustible === 'ACPM' ? 'galones-acpm' : 'galones-cte'; @endphp
                                 <input type="text" name="ventas[{{ $i }}][galones]"
                                     class="form-control form-control-sm erp-input galones-input {{ $galonesClass }}"
-                                    data-precio="{{ $v->combustible === 'ACPM' ? config('combustibles.acpm') : config('combustibles.corriente') }}"
+                                    data-precio="{{ $v->combustible === 'ACPM' ? $precioAcpm : $precioCorriente }}"
                                     value="{{ number_format($v->galones, 3, '.', ',') }}">
                             </td>
                             <td class="text-end">
@@ -53,7 +52,7 @@
                         <td class="text-end">
                             <input type="text" name="ventas[0][galones]"
                                 class="form-control form-control-sm erp-input galones-input galones-cte"
-                                data-precio="{{ config('combustibles.corriente') }}">
+                                data-precio="{{ $precioCorriente }}">
                         </td>
                         <td class="text-end">
                             <input type="text" name="ventas[0][valor]"
@@ -69,7 +68,7 @@
                         <td class="text-end">
                             <input type="text" name="ventas[1][galones]"
                                 class="form-control form-control-sm erp-input galones-input galones-acpm"
-                                data-precio="{{ config('combustibles.acpm') }}">
+                                data-precio="{{ $precioAcpm }}">
                         </td>
                         <td class="text-end">
                             <input type="text" name="ventas[1][valor]"
@@ -85,7 +84,7 @@
                         <td class="text-end">
                             <input type="text" name="ventas[2][galones]"
                                 class="form-control form-control-sm erp-input galones-input galones-cte"
-                                data-precio="{{ config('combustibles.corriente') }}">
+                                data-precio="{{ $precioCorriente }}">
                         </td>
                         <td class="text-end">
                             <input type="text" name="ventas[2][valor]"
@@ -101,7 +100,7 @@
                         <td class="text-end">
                             <input type="text" name="ventas[3][galones]"
                                 class="form-control form-control-sm erp-input galones-input galones-acpm"
-                                data-precio="{{ config('combustibles.acpm') }}">
+                                data-precio="{{ $precioAcpm }}">
                         </td>
                         <td class="text-end">
                             <input type="text" name="ventas[3][valor]"
@@ -117,7 +116,7 @@
                         <td class="text-end">
                             <input type="text" name="ventas[4][galones]"
                                 class="form-control form-control-sm erp-input galones-input galones-acpm"
-                                data-precio="{{ config('combustibles.acpm') }}">
+                                data-precio="{{ $precioAcpm }}">
                         </td>
                         <td class="text-end">
                             <input type="text" name="ventas[4][valor]"
@@ -133,7 +132,7 @@
                         <td class="text-end">
                             <input type="text" name="ventas[5][galones]"
                                 class="form-control form-control-sm erp-input galones-input galones-cte"
-                                data-precio="{{ config('combustibles.corriente') }}">
+                                data-precio="{{ $precioCorriente }}">
                         </td>
                         <td class="text-end">
                             <input type="text" name="ventas[5][valor]"
@@ -151,11 +150,11 @@
                     </th>
 
                     <th class="text-center whitespace-nowrap">
-                        CORRIENTE
+                        GALONES
                     </th>
 
                     <th class="text-center whitespace-nowrap">
-                        ACPM
+                        VALOR
                     </th>
                 </tr>
             </thead>
@@ -163,7 +162,7 @@
             <tbody>
                 <tr>
                     <th scope="row" class="text-left">
-                        GALONES
+                        CORRIENTE
                     </th>
 
                     <td>
@@ -174,27 +173,27 @@
 
                     <td>
                         <input type="text" readonly
-                            class="form-control form-control-sm erp-input tirillas-galones-acpm text-end"
-                            value="{{ isset($turno) ? number_format($turno->tirillas_galones_acpm, 3, '.', ',') : '' }}">
+                            class="form-control form-control-sm erp-input tirillas-valor-corriente text-end"
+                            data-precio="{{ $precioCorriente }}"
+                            value="{{ isset($turno) ? number_format($turno->tirillas_valor_corriente, 0, ',', '.') : '' }}">
                     </td>
                 </tr>
 
                 <tr>
                     <th scope="row" class="text-left">
-                        VALOR
+                        ACPM
                     </th>
 
                     <td>
                         <input type="text" readonly
-                            class="form-control form-control-sm erp-input tirillas-valor-corriente text-end"
-                            data-precio="{{ config('combustibles.corriente') }}"
-                            value="{{ isset($turno) ? number_format($turno->tirillas_valor_corriente, 0, ',', '.') : '' }}">
+                            class="form-control form-control-sm erp-input tirillas-galones-acpm text-end"
+                            value="{{ isset($turno) ? number_format($turno->tirillas_galones_acpm, 3, '.', ',') : '' }}">
                     </td>
 
                     <td>
                         <input type="text" readonly
                             class="form-control form-control-sm erp-input tirillas-valor-acpm text-end"
-                            data-precio="{{ config('combustibles.acpm') }}"
+                            data-precio="{{ $precioAcpm }}"
                             value="{{ isset($turno) ? number_format($turno->tirillas_valor_acpm, 0, ',', '.') : '' }}">
                     </td>
                 </tr>

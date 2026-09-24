@@ -2,50 +2,108 @@
 
 @section('content')
 
-    {{-- BÚSQUEDA: cargar un turno existente por fecha + número --}}
-    <form method="GET" action="{{ route('turnos.create') }}" class="mb-3 pastel-section" id="buscar-turno-form">
-        <div class="row g-2 align-items-end">
-            <div class="col-auto">
-                <label class="form-label small mb-0">Fecha</label>
-                <input type="date" name="fecha" id="buscar-turno-fecha" class="form-control form-control-sm"
-                    value="{{ request('fecha', date('Y-m-d')) }}">
-            </div>
-            <div class="col-auto">
-                <label class="form-label small mb-0">Turno</label>
-                <select name="numero_turno" id="buscar-turno-numero" class="form-select form-select-sm"
-                    style="min-width: 140px" onchange="document.getElementById('buscar-turno-form').submit()">
-                    <option value="">-- Seleccione --</option>
-                    @foreach ($turnosDelDia as $numero)
-                        <option value="{{ $numero }}" @selected((string) request('numero_turno') === (string) $numero)>
-                            Turno {{ $numero }}
-                        </option>
-                    @endforeach
-                </select>
-                @if ($turnosDelDia->isEmpty())
-                    <small class="text-muted d-block">Sin turnos registrados esta fecha</small>
-                @endif
-            </div>
-            <div class="col-auto">
-                <button type="submit" class="btn btn-sm btn-outline-primary">Buscar</button>
-                <a href="{{ route('turnos.create') }}" class="btn btn-sm btn-outline-secondary">Nuevo</a>
-                @if ($puedeGuardar ?? true)
-                    <button type="submit" form="turno-form" class="btn btn-sm btn-primary">Guardar</button>
-                @endif
-            </div>
-            <div class="col-auto ms-auto">
-                <form method="POST" action="{{ route('logout') }}" class="m-0">
-                    @csrf
-                    <button type="submit" class="btn btn-sm btn-outline-danger">Cerrar sesión</button>
-                </form>
-            </div>
+    {{-- BÚSQUEDA: por fecha + número de turno, o por número de turno solo --}}
+    <div class="mb-3 pastel-section d-flex flex-wrap justify-content-between align-items-end gap-3">
+
+        <div class="d-flex flex-wrap align-items-end gap-3">
+
+            <form method="GET" action="{{ route('turnos.create') }}" id="buscar-turno-form"
+                class="d-flex flex-wrap align-items-end gap-2 mb-0">
+                <div>
+                    <label class="form-label small mb-0">Fecha búsqueda</label>
+                    <input type="date" name="fecha" id="buscar-turno-fecha" class="form-control form-control-sm"
+                        value="{{ request('fecha', $searchFecha ?? date('Y-m-d')) }}">
+                </div>
+                <div>
+                    <label class="form-label small mb-0">Turno búsqueda</label>
+                    <select name="numero_turno" id="buscar-turno-numero" class="form-select form-select-sm"
+                        style="min-width: 140px" onchange="document.getElementById('buscar-turno-form').submit()">
+                        <option value="">-- Seleccione --</option>
+                        @foreach ($turnosDelDia as $numero)
+                            <option value="{{ $numero }}" @selected((string) request('numero_turno') === (string) $numero)>
+                                Turno {{ $numero }}
+                            </option>
+                        @endforeach
+                    </select>
+                    @if ($turnosDelDia->isEmpty())
+                        <small class="text-muted d-block">Sin turnos registrados esta fecha</small>
+                    @endif
+                </div>
+            </form>
+
+            <form method="GET" action="{{ route('turnos.create') }}" id="buscar-turno-solo-form"
+                class="d-flex align-items-end gap-2 mb-0">
+                <div>
+                    <label class="form-label small mb-0">Turno búsqueda</label>
+                    <input type="number" name="turno_busqueda" min="1" class="form-control form-control-sm"
+                        style="width: 140px" placeholder="N° de turno" value="{{ request('turno_busqueda') }}">
+                </div>
+            </form>
+
         </div>
-    </form>
+
+        <div class="d-flex align-items-end gap-2">
+            <button type="submit" form="buscar-turno-form" class="btn btn-sm btn-outline-primary">Buscar</button>
+            <button type="submit" form="buscar-turno-solo-form" class="btn btn-sm btn-outline-primary">Buscar por
+                turno</button>
+            <a href="{{ route('turnos.create') }}" class="btn btn-sm btn-outline-secondary">Nuevo</a>
+            <button type="button" class="btn btn-sm btn-outline-warning" onclick="limpiarPlanilla()">Limpiar</button>
+            @if ($puedeGuardar ?? true)
+                <button type="submit" form="turno-form" class="btn btn-sm btn-primary">Guardar</button>
+            @endif
+        </div>
+
+    </div>
 
     <script>
         // Al cambiar la fecha, recargar la búsqueda para refrescar los turnos disponibles ese día.
         document.getElementById('buscar-turno-fecha')?.addEventListener('change', function() {
             document.getElementById('buscar-turno-form')?.submit();
         });
+
+        // Vacía todos los campos editables de la planilla (deja intactos los readonly/hidden)
+        // y dispara los eventos que usa galones.js para recalcular totales en pantalla.
+        function limpiarPlanilla() {
+            Swal.fire({
+                title: '¿Limpiar planilla?',
+                text: 'Se borrarán todos los campos de la planilla. Esta acción no se puede deshacer.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Sí, limpiar',
+                cancelButtonText: 'Cancelar',
+                confirmButtonColor: '#dc3545',
+                reverseButtons: true,
+            }).then(result => {
+                if (result.isConfirmed) {
+                    ejecutarLimpiezaPlanilla();
+                }
+            });
+        }
+
+        function ejecutarLimpiezaPlanilla() {
+            const form = document.getElementById('turno-form');
+            if (!form) return;
+
+            form.querySelectorAll('input, select, textarea').forEach(el => {
+                if (el.type === 'hidden' || el.type === 'checkbox' || el.type === 'radio' || el.readOnly || el
+                    .disabled) {
+                    return;
+                }
+
+                if (el.tagName === 'SELECT') {
+                    el.selectedIndex = 0;
+                } else {
+                    el.value = '';
+                }
+
+                el.dispatchEvent(new Event('input', {
+                    bubbles: true
+                }));
+                el.dispatchEvent(new Event('change', {
+                    bubbles: true
+                }));
+            });
+        }
     </script>
 
     <form method="POST" action="{{ route('turnos.store') }}" id="turno-form">
@@ -105,6 +163,18 @@
         @endif
 
         {{-- CONTENIDO --}}
+
+        @php
+            // Un turno guardado ya tiene su precio ligado (snapshot); uno nuevo
+            // usa el precio vigente para hoy según la tabla de precios.
+            $fechaPrecio = isset($turno) ? $turno->fecha : now();
+            $precioCorriente = isset($turno)
+                ? $turno->precio_corriente
+                : \App\Models\FuelPrice::activePriceOn('Gasolina', $fechaPrecio) ?? config('combustibles.corriente');
+            $precioAcpm = isset($turno)
+                ? $turno->precio_acpm
+                : \App\Models\FuelPrice::activePriceOn('ACPM', $fechaPrecio) ?? config('combustibles.acpm');
+        @endphp
 
         <div class="row">
 

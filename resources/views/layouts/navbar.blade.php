@@ -196,9 +196,18 @@
             </ul>
 
             {{-- ================= Usuario y Logout ================= --}}
-            <ul class="navbar-nav ms-auto">
+            <ul class="navbar-nav ms-auto d-flex flex-row align-items-center gap-2">
 
                 @auth
+                    <li class="nav-item">
+                        <form method="POST" action="{{ route('logout') }}" class="m-0">
+                            @csrf
+                            <button type="submit" class="btn btn-sm btn-outline-danger">
+                                Cerrar sesión
+                            </button>
+                        </form>
+                    </li>
+
                     <li class="nav-item dropdown">
                         {{-- Se quitó text-white --}}
                         <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
@@ -209,17 +218,6 @@
                                 <span class="dropdown-item-text text-muted">
                                     {{ auth()->user()->email }}
                                 </span>
-                            </li>
-                            <li>
-                                <hr class="dropdown-divider">
-                            </li>
-                            <li>
-                                <form method="POST" action="{{ route('logout') }}" class="m-0">
-                                    @csrf
-                                    <button class="dropdown-item text-danger">
-                                        Cerrar sesión
-                                    </button>
-                                </form>
                             </li>
                         </ul>
                     </li>
