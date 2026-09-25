@@ -202,8 +202,11 @@
             <!-- Total general + precios -->
             <tfoot>
                 <tr class="table-secondary fw-bold">
-                    <td colspan="2" class="text-end" style="text-align: right;">TOTAL</td>
-                    <td class="text-end ventas-total-turno" style="text-align: right;">
+                    <td class="text-start">TOTAL</td>
+                    <td class="text-end ventas-total-galones">
+                        {{ isset($turno) ? number_format($turno->tirillas_galones_corriente + $turno->tirillas_galones_acpm, 3, '.', ',') : '' }}
+                    </td>
+                    <td class="text-end ventas-total-turno">
                         {{ isset($turno) ? number_format($turno->total_ventas, 0, ',', '.') : '0' }}</td>
                 </tr>
                 {{-- <tr class="table-warning">

@@ -193,6 +193,9 @@ function initGalones() {
         if (corrienteInput) corrienteInput.value = formatGalones(totalCorriente);
         if (acpmInput) acpmInput.value = formatGalones(totalAcpms);
 
+        const totalGalonesField = document.querySelector('.ventas-total-galones');
+        if (totalGalonesField) totalGalonesField.textContent = formatGalones(totalCorriente + totalAcpms);
+
         if (valorCorrienteInput) {
             const precioCorriente = parseFloat(valorCorrienteInput.dataset.precio);
             const totalValorCorriente = totalCorriente * (isNaN(precioCorriente) ? 0 : precioCorriente);
@@ -223,10 +226,12 @@ function initGalones() {
         const galonesAcpmsInput = document.querySelector('.ventas-lectura-galones-acpm');
         const valorCorrienteInput = document.querySelector('.ventas-lectura-valor-corriente');
         const valorAcpmsInput = document.querySelector('.ventas-lectura-valor-acpm');
+        const totalGalonesLecturaField = document.querySelector('.ventas-total-lectura-galones');
         const ventasTotal = document.querySelector('.ventas-total-lectura');
 
         if (galonesCorrienteInput) galonesCorrienteInput.value = formatGalones(glsCorriente);
         if (galonesAcpmsInput) galonesAcpmsInput.value = formatGalones(glsAcpms);
+        if (totalGalonesLecturaField) totalGalonesLecturaField.textContent = formatGalones(glsCorriente + glsAcpms);
 
         if (valorCorrienteInput) {
             const precioCorriente = parseFloat(valorCorrienteInput.dataset.precio);

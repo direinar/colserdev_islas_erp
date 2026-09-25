@@ -208,6 +208,45 @@ test('lubricantes table shows previously saved rows when consulting an existing 
     $response->assertSee('value="297,500"', false);
 });
 
+test('urea_lubricantes sent with dot-thousands money format are not truncated on save', function () {
+    $today = now()->toDateString();
+
+    Lubricant::create([
+        'reference' => 'MOBIL SUPER 20W50',
+        'sale_price' => 250000,
+        'iva' => 47500,
+        'total' => 297500,
+        'cost_price' => 200000,
+        'active' => true,
+    ]);
+
+    $admin = User::factory()->create(['role' => User::ROLE_ADMINISTRADOR]);
+
+    $response = $this->actingAs($admin)->post(route('turnos.store'), [
+        'fecha' => $today,
+        'numero_turno' => 1,
+        'nombre_vendedor' => 'Ana',
+        'urea_lubricantes' => [
+            [
+                'cantidad' => 1,
+                'producto' => 'MOBIL SUPER 20W50',
+                'valor_sin_iva' => '250.000',
+                'iva' => '47.500',
+                'total' => '297.500',
+            ],
+        ],
+        'ventas' => [],
+        'lecturas' => [],
+    ]);
+
+    $response->assertRedirect();
+
+    $lubricante = Turno::first()->lubricantes()->firstOrFail();
+    expect((float) $lubricante->valor_sin_iva)->toBe(250000.0);
+    expect((float) $lubricante->iva)->toBe(47500.0);
+    expect((float) $lubricante->total)->toBe(297500.0);
+});
+
 test('medios de pago renders as three independent tables with add row actions', function () {
     $today = now()->toDateString();
 

@@ -181,7 +181,10 @@
                         </tr>
 
                         <tr class="table-secondary fw-bold">
-                            <td colspan="2" class="text-end">TOTAL</td>
+                            <td class="text-start">TOTAL</td>
+                            <td class="text-end ventas-total-lectura-galones">
+                                {{ isset($turno) ? number_format($turno->lecturas_galones_corriente + $turno->lecturas_galones_acpm, 3, '.', ',') : '' }}
+                            </td>
                             <td class="text-end ventas-total-lectura">
                                 {{ isset($turno) ? number_format($turno->total_venta_lecturas, 0, ',', '.') : '0' }}
                             </td>
@@ -192,7 +195,7 @@
                 </table>
 
                 <div class="card text-center mt-2">
-                    <div class="card-header py-1 fw-bold">PRECIOS ACTUALES</div>
+                    <div class="card-header py-1 fw-bold" style="background-color: #b5fdd2;">PRECIOS ACTUALES</div>
                     <div class="card-body py-2">
                         <div class="row g-2">
                             <div class="col-6">

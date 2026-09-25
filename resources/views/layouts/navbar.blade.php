@@ -83,7 +83,7 @@
                     {{-- INVENTARIO --}}
                     @if ($user->isAdministrador() || $user->canAccessProveedores())
                         <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle {{ request()->is('fuel-prices*') || request()->is('lubricants*') || request()->is('proveedores*') || request()->is('inventarios/gasolina*') || request()->is('inventarios/acpm*') || request()->is('inventarios/lubricantes*') || request()->is('inventarios/aditivo-motos*') || request()->is('inventarios/urea-automotriz*') ? 'active' : '' }}"
+                            <a class="nav-link dropdown-toggle {{ request()->is('fuel-prices*') || request()->is('lubricants*') || request()->is('proveedores*') || request()->is('bancos*') || request()->is('inventarios/gasolina*') || request()->is('inventarios/acpm*') || request()->is('inventarios/lubricantes*') || request()->is('inventarios/aditivo-motos*') || request()->is('inventarios/urea-automotriz*') ? 'active' : '' }}"
                                 href="#" data-bs-toggle="dropdown">
                                 Inventario
                             </a>
@@ -122,6 +122,11 @@
                                     <li>
                                         <a class="dropdown-item" href="{{ route('lubricants.index') }}">
                                             Lubricantes
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" href="{{ route('bancos.index') }}">
+                                            Bancos
                                         </a>
                                     </li>
                                 @endif

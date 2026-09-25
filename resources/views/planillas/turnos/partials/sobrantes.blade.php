@@ -23,6 +23,11 @@
         <button type="button" id="trasladar-sobrante-btn" class="btn btn-sm btn-primary">
             TRASLADAR
         </button>
+        {{-- Persisten el traslado para que el resumen no lo pierda al guardar --}}
+        <input type="hidden" name="traslado_sobrante" id="traslado-sobrante-input"
+            value="{{ optional($turno ?? null)->traslado_sobrante ?? 0 }}">
+        <input type="hidden" name="traslado_faltante" id="traslado-faltante-input"
+            value="{{ optional($turno ?? null)->traslado_faltante ?? 0 }}">
     </div>
 
     <div class="row g-2 mt-3">
@@ -67,7 +72,21 @@
             const totalVentasIapropiadaCell = document.getElementById('resumen-total-iapropiada');
             const totalSurtidoresCell = document.getElementById('resumen-total-surtidores');
             const trasladarButton = document.getElementById('trasladar-sobrante-btn');
-            let trasladoAplicado = false;
+            const trasladoSobranteInput = document.getElementById('traslado-sobrante-input');
+            const trasladoFaltanteInput = document.getElementById('traslado-faltante-input');
+
+            // Restaura el traslado guardado en el turno para que el resumen no
+            // vuelva a mostrar el sobrante/faltante original al recargar la página.
+            const trasladoSobrantePrevio = Number(trasladoSobranteInput?.value || 0);
+            const trasladoFaltantePrevio = Number(trasladoFaltanteInput?.value || 0);
+            let trasladoAplicado = trasladoSobrantePrevio !== 0 || trasladoFaltantePrevio !== 0;
+
+            if (trasladoAplicado) {
+                window.turnoTraslado = {
+                    sobrante: trasladoSobrantePrevio,
+                    faltante: trasladoFaltantePrevio
+                };
+            }
 
             function parseNumber(value) {
                 if (!value) return 0;
@@ -125,6 +144,10 @@
 
                 trasladoAplicado = true;
                 this.dataset.transferredValue = String(value);
+                if (trasladoSobranteInput) trasladoSobranteInput.value = String(window.turnoTraslado
+                    .sobrante);
+                if (trasladoFaltanteInput) trasladoFaltanteInput.value = String(window.turnoTraslado
+                    .faltante);
                 document.dispatchEvent(new CustomEvent('turno:traslado-aplicado'));
                 updateSobrante();
             });

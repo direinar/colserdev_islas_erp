@@ -1,18 +1,19 @@
 <?php
 
-use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\AnticipoBimestralController;
-use App\Http\Controllers\CompraController;
-use App\Http\Controllers\ComprobanteContableCompraController;
-use App\Http\Controllers\CompraLubricanteController;
-use App\Http\Controllers\FuelPriceController;
-use App\Http\Controllers\LubricantController;
-use App\Http\Controllers\TurnoController;
+use App\Http\Controllers\BancoController;
 use App\Http\Controllers\CarteraController;
+use App\Http\Controllers\CompraController;
+use App\Http\Controllers\CompraLubricanteController;
+use App\Http\Controllers\ComprobanteContableCompraController;
+use App\Http\Controllers\CustomerController;
+use App\Http\Controllers\FuelPriceController;
 use App\Http\Controllers\InventarioAcpmController;
 use App\Http\Controllers\InventarioGasolinaController;
 use App\Http\Controllers\InventarioLubricanteController;
+use App\Http\Controllers\LubricantController;
 use App\Http\Controllers\ProveedorController;
+use App\Http\Controllers\TurnoController;
 use App\Http\Controllers\UserController;
 use App\Models\User;
 use Illuminate\Support\Facades\Route;
@@ -22,7 +23,7 @@ Route::redirect('/', '/dashboard');
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::view('dashboard', 'dashboard.index')->name('dashboard');
 
-    Route::middleware('role:' . implode(',', [User::ROLE_ISLERO, User::ROLE_JEFE_PATIOS, User::ROLE_ADMINISTRADOR]))->group(function () {
+    Route::middleware('role:'.implode(',', [User::ROLE_ISLERO, User::ROLE_JEFE_PATIOS, User::ROLE_ADMINISTRADOR]))->group(function () {
         Route::get('/turnos/create', [TurnoController::class, 'create'])
             ->name('turnos.create');
 
@@ -30,7 +31,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             ->name('turnos.store');
     });
 
-    Route::middleware('role:' . User::ROLE_ADMINISTRADOR)->group(function () {
+    Route::middleware('role:'.User::ROLE_ADMINISTRADOR)->group(function () {
         Route::get('/turnos/pendientes', [TurnoController::class, 'pendientes'])
             ->name('turnos.pendientes');
 
@@ -38,7 +39,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             ->name('turnos.revisar');
     });
 
-    Route::middleware('role:' . implode(',', [User::ROLE_JEFE_PATIOS, User::ROLE_ADMINISTRADOR]))->group(function () {
+    Route::middleware('role:'.implode(',', [User::ROLE_JEFE_PATIOS, User::ROLE_ADMINISTRADOR]))->group(function () {
         Route::get('/cartera', [CarteraController::class, 'index'])
             ->name('cartera.index');
 
@@ -70,7 +71,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             ->name('comprobante-contable-compras.store');
     });
 
-    Route::middleware('role:' . User::ROLE_ADMINISTRADOR)->group(function () {
+    Route::middleware('role:'.User::ROLE_ADMINISTRADOR)->group(function () {
         Route::get('/inventarios/lubricantes/create', [InventarioLubricanteController::class, 'create'])
             ->name('inventarios-lubricantes.create');
 
@@ -106,6 +107,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::resource('lubricants', LubricantController::class);
 
         Route::resource('customers', CustomerController::class);
+
+        Route::resource('bancos', BancoController::class);
 
         Route::resource('proveedores', ProveedorController::class)
             ->parameters(['proveedores' => 'proveedor']);

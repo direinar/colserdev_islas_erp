@@ -28,10 +28,16 @@
                     @foreach ($turno->recaudosAdmin as $i => $r)
                         <tr data-index="{{ $i }}">
                             <td>
-                                <input type="text" name="recaudos_admin[{{ $i }}][banco]"
-                                    class="form-control form-control-sm border-0 bg-transparent"
-                                    placeholder="Ej: Bancolombia" value="{{ $r->banco }}"
+                                <select name="recaudos_admin[{{ $i }}][banco]"
+                                    class="form-select form-select-sm border-0 bg-transparent"
                                     @disabled($bloqueadoIslero)>
+                                    <option value="">Seleccione banco</option>
+                                    @foreach ($bancos ?? collect() as $banco)
+                                        <option value="{{ $banco->name }}"
+                                            @if ($r->banco === $banco->name) selected @endif>{{ $banco->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
                             </td>
                             <td>
                                 <select name="recaudos_admin[{{ $i }}][cliente_id]"
@@ -61,9 +67,13 @@
                 @else
                     <tr data-index="0">
                         <td>
-                            <input type="text" name="recaudos_admin[0][banco]"
-                                class="form-control form-control-sm border-0 bg-transparent"
-                                placeholder="Ej: Bancolombia" @disabled($bloqueadoIslero)>
+                            <select name="recaudos_admin[0][banco]"
+                                class="form-select form-select-sm border-0 bg-transparent" @disabled($bloqueadoIslero)>
+                                <option value="">Seleccione banco</option>
+                                @foreach ($bancos ?? collect() as $banco)
+                                    <option value="{{ $banco->name }}">{{ $banco->name }}</option>
+                                @endforeach
+                            </select>
                         </td>
                         <td>
                             <select name="recaudos_admin[0][cliente_id]"
@@ -109,6 +119,13 @@
     @endforeach
 </select>
 
+<select id="recaudos-admin-bancos-template" class="d-none">
+    <option value="">Seleccione banco</option>
+    @foreach ($bancos ?? collect() as $banco)
+        <option value="{{ $banco->name }}">{{ $banco->name }}</option>
+    @endforeach
+</select>
+
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const tbody = document.getElementById('recaudos-admin-body');
@@ -116,6 +133,8 @@
         const totalCell = document.getElementById('total-recaudos-admin');
         const customersTemplate = document.getElementById('recaudos-admin-customers-template');
         const customersHtml = customersTemplate ? customersTemplate.innerHTML : '';
+        const bancosTemplate = document.getElementById('recaudos-admin-bancos-template');
+        const bancosHtml = bancosTemplate ? bancosTemplate.innerHTML : '';
 
         function parseNumber(value) {
             const number = window.MoneyFormat.parseMoney(value);
@@ -150,7 +169,9 @@
             tr.dataset.index = index;
             tr.innerHTML = `
                 <td>
-                    <input type="text" name="recaudos_admin[${index}][banco]" class="form-control form-control-sm border-0 bg-transparent" placeholder="Ej: Bancolombia">
+                    <select name="recaudos_admin[${index}][banco]" class="form-select form-select-sm border-0 bg-transparent">
+                        ${bancosHtml}
+                    </select>
                 </td>
                 <td>
                     <select name="recaudos_admin[${index}][responsable_id]" class="form-select form-select-sm border-0 bg-transparent recaudos-admin-responsable">

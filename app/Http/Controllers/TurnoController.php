@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Banco;
 use App\Models\Customer;
 use App\Models\FuelPrice;
 use App\Models\Lubricant;
@@ -17,6 +18,7 @@ class TurnoController extends Controller
     {
         $lubricants = Lubricant::orderBy('reference', 'asc')->get();
         $customers = Customer::orderBy('name', 'asc')->get();
+        $bancos = Banco::orderBy('name', 'asc')->get();
 
         // Si vienen parámetros de búsqueda, cargar el turno
         $turno = null;
@@ -71,7 +73,7 @@ class TurnoController extends Controller
                 ->first();
         }
 
-        return view('planillas.turnos.create', compact('lubricants', 'customers', 'nextNumber', 'turno', 'previousTurno', 'turnosDelDia', 'searchFecha', 'searchNumero'));
+        return view('planillas.turnos.create', compact('lubricants', 'customers', 'bancos', 'nextNumber', 'turno', 'previousTurno', 'turnosDelDia', 'searchFecha', 'searchNumero'));
     }
 
     public function store(Request $request)
@@ -93,6 +95,8 @@ class TurnoController extends Controller
             'gasolina_eds' => ['nullable', 'array'],
             'varios' => ['nullable', 'array'],
             'recaudos_admin' => ['nullable', 'array'],
+            'traslado_sobrante' => ['nullable'],
+            'traslado_faltante' => ['nullable'],
         ]);
 
         DB::transaction(function () use ($request) {
@@ -116,6 +120,11 @@ class TurnoController extends Controller
                 // en Precios de Combustible; si no existe, queda en 0.
                 'precio_corriente' => (float) FuelPrice::activePriceOn('Gasolina', $request->input('fecha')),
                 'precio_acpm' => (float) FuelPrice::activePriceOn('ACPM', $request->input('fecha')),
+                // Estado del traslado de sobrante/faltante (botón TRASLADAR en
+                // sobrantes.blade.php): debe persistir para que el resumen no
+                // vuelva a mostrar el faltante/sobrante original al recargar.
+                'traslado_sobrante' => NumberParser::money($request->input('traslado_sobrante')),
+                'traslado_faltante' => NumberParser::money($request->input('traslado_faltante')),
             ];
 
             if ($turno) {
@@ -300,9 +309,9 @@ class TurnoController extends Controller
         foreach ($rows as $row) {
             $cantidad = (int) ($row['cantidad'] ?? 0);
             $producto = $row['producto'] ?? null;
-            $valorSinIva = NumberParser::quantity($row['valor_sin_iva'] ?? null);
-            $iva = NumberParser::quantity($row['iva'] ?? null);
-            $total = NumberParser::quantity($row['total'] ?? ($cantidad * ($valorSinIva + $iva)));
+            $valorSinIva = NumberParser::money($row['valor_sin_iva'] ?? null);
+            $iva = NumberParser::money($row['iva'] ?? null);
+            $total = NumberParser::money($row['total'] ?? ($cantidad * ($valorSinIva + $iva)));
 
             if (! $producto || $cantidad <= 0) {
                 continue;
