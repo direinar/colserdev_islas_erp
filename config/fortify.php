@@ -145,7 +145,8 @@ return [
 
     'features' => [
         //Features::registration(),
-        Features::resetPasswords(),
+        // Desactivado: las contraseñas las restablece el administrador desde Usuarios.
+        // Features::resetPasswords(),
         Features::emailVerification(),
         Features::twoFactorAuthentication([
             'confirm' => true,
