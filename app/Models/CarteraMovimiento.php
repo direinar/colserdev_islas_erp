@@ -10,6 +10,7 @@ class CarteraMovimiento extends Model
 
     protected $fillable = [
         'customer_id',
+        'turno_id',
         'saldo_inicial',
         'fecha_inicial',
         'fecha_final',
@@ -52,5 +53,19 @@ class CarteraMovimiento extends Model
     public function customer()
     {
         return $this->belongsTo(Customer::class);
+    }
+
+    /**
+     * Planilla de turno que originó el movimiento (CARTERA - CRÉDITO DIRECTO).
+     * Nulo cuando el movimiento se registró manualmente en el módulo de cartera.
+     */
+    public function turno()
+    {
+        return $this->belongsTo(Turno::class);
+    }
+
+    public function esDeTurno(): bool
+    {
+        return $this->turno_id !== null;
     }
 }

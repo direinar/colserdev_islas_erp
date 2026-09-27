@@ -7,6 +7,7 @@ use App\Models\Customer;
 use App\Models\FuelPrice;
 use App\Models\Lubricant;
 use App\Models\Turno;
+use App\Services\CarteraTurnoSyncService;
 use App\Support\NumberParser;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -76,7 +77,7 @@ class TurnoController extends Controller
         return view('planillas.turnos.create', compact('lubricants', 'customers', 'bancos', 'nextNumber', 'turno', 'previousTurno', 'turnosDelDia', 'searchFecha', 'searchNumero'));
     }
 
-    public function store(Request $request)
+    public function store(Request $request, CarteraTurnoSyncService $carteraSync)
     {
         $request->validate([
             'fecha' => ['required', 'date'],
@@ -99,7 +100,7 @@ class TurnoController extends Controller
             'traslado_faltante' => ['nullable'],
         ]);
 
-        DB::transaction(function () use ($request) {
+        DB::transaction(function () use ($request, $carteraSync) {
             // numero_turno es un consecutivo único en toda la tabla, así que basta
             // con buscarlo por ese campo para detectar si ya existe y actualizarlo
             // en vez de intentar crear uno duplicado (violaría el unique numero_turno).
@@ -155,6 +156,7 @@ class TurnoController extends Controller
             $this->saveConsignaciones($turno, $request->input('consignaciones', []));
             $this->saveDescuentos($turno, $request->input('descuentos', []));
             $this->saveCartera($turno, $request->input('cartera', []));
+            $carteraSync->sincronizar($turno);
             $this->saveQrPagos($turno, $request->input('qr_pagos', []));
             $this->saveRecaudos($turno, $request->input('recaudos', []));
             $this->saveTransferencias($turno, $request->input('transferencias', []));
