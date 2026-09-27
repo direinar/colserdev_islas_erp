@@ -501,8 +501,28 @@ textarea:focus-visible {
     display: flex;
     align-items: center;
     gap: 10px;
+    margin-bottom: 0;
     font-size: .88rem;
+    font-weight: 500;
+    text-transform: none;
     color: var(--ink-soft);
+    cursor: pointer;
+}
+
+/* La casilla no debe heredar el tamaño de los campos de texto (.auth-form input) */
+.auth-form .remember input[type="checkbox"] {
+    flex-shrink: 0;
+    width: 1.1rem;
+    height: 1.1rem;
+    min-height: 0;
+    padding: 0;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.auth-form .remember input[type="checkbox"]:checked {
+    background-color: var(--mint-mid);
+    border-color: var(--mint-mid);
 }
 
 .auth-footer {
