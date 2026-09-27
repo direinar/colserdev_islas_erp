@@ -33,6 +33,7 @@ test('credito directo de la planilla de turno se registra en la cartera del clie
         ->and($movimientos[0]->factura)->toBe('FE-101')
         ->and((float) $movimientos[0]->vr_neto_cargo)->toBe(350000.0)
         ->and((float) $movimientos[0]->saldo)->toBe(350000.0)
+        ->and($movimientos[0]->concepto)->toBe('Venta a crédito')
         ->and($movimientos[0]->tercero)->toBe('Transportes Boyacá')
         ->and($movimientos[0]->nit)->toBe('900123456');
 });
@@ -118,6 +119,7 @@ test('en cartera no se pueden cambiar los datos de planilla y se gestionan movim
                 'id' => $deTurno->id,
                 'fecha' => '2026-01-01',
                 'factura' => 'CAMBIADA',
+                'concepto' => 'Otro concepto',
                 'descuento' => '50.000',
                 'placas' => 'XYZ987',
                 'abonos' => '150.000',
@@ -130,6 +132,7 @@ test('en cartera no se pueden cambiar los datos de planilla y se gestionan movim
     $manual = CarteraMovimiento::whereNull('turno_id')->firstOrFail();
 
     expect($deTurno->factura)->toBe('F-7')
+        ->and($deTurno->concepto)->toBe('Venta a crédito')
         ->and($deTurno->fecha->toDateString())->toBe('2026-09-10')
         ->and((float) $deTurno->vr_neto_cargo)->toBe(200000.0)
         ->and($deTurno->placas)->toBe('XYZ987')

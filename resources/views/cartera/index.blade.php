@@ -88,7 +88,7 @@
                     <button type="button" id="add-cartera-row" class="btn btn-sm btn-outline-primary">+ Agregar fila</button>
                     <div class="small text-muted mt-1">
                         <span class="badge text-bg-secondary">Planilla</span>
-                        Movimiento de una planilla de turno: planilla, fecha, factura y valor se modifican desde el turno.
+                        Venta a crédito de una planilla de turno: planilla, fecha, factura y valor se modifican desde el turno.
                     </div>
                 </div>
             </div>
@@ -186,7 +186,8 @@
                                     </td>
                                     <td>
                                         <input type="text" name="detalles[{{ $index }}][concepto]"
-                                            class="form-control form-control-sm" value="{{ $m->concepto }}">
+                                            class="form-control form-control-sm" value="{{ $m->concepto }}"
+                                            @readonly($deTurno)>
                                     </td>
                                     <td>
                                         <input type="text" name="detalles[{{ $index }}][tercero]"

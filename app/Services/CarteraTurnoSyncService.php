@@ -16,6 +16,8 @@ use App\Models\Turno;
  */
 class CarteraTurnoSyncService
 {
+    public const CONCEPTO_VENTA_CREDITO = 'Venta a crédito';
+
     public function __construct(private CarteraSaldoService $saldos) {}
 
     public function sincronizar(Turno $turno): void
@@ -49,6 +51,7 @@ class CarteraTurnoSyncService
                 'bruto' => $valor,
                 'descuento' => 0,
                 'vr_neto_cargo' => $valor,
+                'concepto' => self::CONCEPTO_VENTA_CREDITO,
             ];
 
             if ($movimiento) {

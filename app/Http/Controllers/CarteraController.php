@@ -14,11 +14,11 @@ class CarteraController extends Controller
 {
     /**
      * Campos que se pueden completar en cartera para los movimientos que
-     * vienen de la planilla de turno. Planilla, fecha, factura y valor
-     * pertenecen a la planilla y solo se modifican desde allí.
+     * vienen de la planilla de turno. Planilla, fecha, factura, valor y
+     * concepto (venta a crédito) los fija la planilla.
      */
     private const CAMPOS_EDITABLES_TURNO = [
-        'placas', 'producto', 'galones', 'vr_unitario', 'cuenta', 'concepto', 'tercero', 'nit', 'abonos',
+        'placas', 'producto', 'galones', 'vr_unitario', 'cuenta', 'tercero', 'nit', 'abonos',
     ];
 
     public function index(Request $request, CarteraSaldoService $saldos)
