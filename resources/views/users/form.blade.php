@@ -26,7 +26,7 @@
         <label class="form-label">Contraseña</label>
         <input type="password" name="password" class="form-control" {{ isset($user) ? '' : 'required' }}>
         <div class="form-text">
-            {{ isset($user) ? 'Dejar vacío para mantener la contraseña actual.' : 'Mínimo 8 caracteres.' }}</div>
+            {{ isset($user) ? 'Dejar vacío para mantener la contraseña actual.' : 'Mínimo 12 caracteres, con mayúsculas, minúsculas, números y símbolos.' }}</div>
     </div>
 
     <div class="col-md-6 mb-3">

@@ -224,6 +224,19 @@
                                     {{ auth()->user()->email }}
                                 </span>
                             </li>
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{{ route('profile.edit') }}">
+                                    <i class="bi bi-person me-2"></i>Mi perfil
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{{ route('security.edit') }}">
+                                    <i class="bi bi-shield-lock me-2"></i>Seguridad
+                                </a>
+                            </li>
                         </ul>
                     </li>
                 @endauth

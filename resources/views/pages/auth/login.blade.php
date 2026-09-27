@@ -10,7 +10,7 @@
 
             <label for="email">{{ __('Correo') }}</label>
             <flux:input id="email" name="email" :value="old('email')" type="email" required autofocus
-                autocomplete="email" placeholder="Correo electrónico" />
+                autocomplete="email" :placeholder="__('Correo electrónico')" />
 
             <div>
                 <label for="password">{{ __('Contraseña') }}</label>
@@ -26,7 +26,10 @@
                 @endif
             </div>
 
-            <flux:checkbox name="remember" :label="__('Recuérdame')" :checked="old('remember')" />
+            <label class="remember" for="remember">
+                <input type="checkbox" id="remember" name="remember" class="form-check-input m-0" @checked(old('remember'))>
+                {{ __('Recuérdame') }}
+            </label>
 
             <flux:button variant="primary" type="submit" class="btn-submit" data-test="login-button">
                 {{ __('Iniciar sesión') }}

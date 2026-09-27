@@ -21,9 +21,12 @@
     <div class="container-fluid py-2">
         <main>
             @yield('content')
+            {{-- Páginas Livewire de página completa (settings/*) se renderizan en $slot --}}
+            {{ $slot ?? '' }}
         </main>
     </div>
 
+    @fluxScripts
 </body>
 
 </html>
