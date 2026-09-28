@@ -3,6 +3,7 @@
 use App\Http\Controllers\AnticipoBimestralController;
 use App\Http\Controllers\BancoController;
 use App\Http\Controllers\CarteraController;
+use App\Http\Controllers\CarteraSaldoInicialController;
 use App\Http\Controllers\CompraController;
 use App\Http\Controllers\CompraLubricanteController;
 use App\Http\Controllers\ComprobanteContableCompraController;
@@ -48,6 +49,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         Route::post('/cartera', [CarteraController::class, 'store'])
             ->name('cartera.store');
+
+        Route::get('/cartera/exportar', [CarteraController::class, 'exportar'])
+            ->name('cartera.exportar');
 
         Route::get('/compras/create', [CompraController::class, 'create'])
             ->name('compras.create');
@@ -112,6 +116,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::resource('customers', CustomerController::class);
 
         Route::resource('bancos', BancoController::class);
+
+        Route::post('/cartera/saldos-iniciales/importar', [CarteraSaldoInicialController::class, 'importar'])
+            ->name('cartera-saldos-iniciales.importar');
+
+        Route::resource('cartera/saldos-iniciales', CarteraSaldoInicialController::class)
+            ->only(['index', 'store', 'edit', 'update', 'destroy'])
+            ->parameters(['saldos-iniciales' => 'saldoInicial'])
+            ->names('cartera-saldos-iniciales');
 
         Route::resource('proveedores', ProveedorController::class)
             ->parameters(['proveedores' => 'proveedor']);

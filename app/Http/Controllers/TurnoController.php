@@ -167,7 +167,6 @@ class TurnoController extends Controller
             $this->saveConsignaciones($turno, $request->input('consignaciones', []));
             $this->saveDescuentos($turno, $request->input('descuentos', []));
             $this->saveCartera($turno, $request->input('cartera', []));
-            $carteraSync->sincronizar($turno);
             $this->saveQrPagos($turno, $request->input('qr_pagos', []));
             $this->saveRecaudos($turno, $request->input('recaudos', []));
             $this->saveTransferencias($turno, $request->input('transferencias', []));
@@ -178,6 +177,8 @@ class TurnoController extends Controller
             }
             $this->saveVentasTotales($turno);
             $this->saveVentaLecturasTotales($turno);
+            // Al final: la cartera lee créditos y recaudos ya guardados del turno.
+            $carteraSync->sincronizar($turno);
         });
 
         return redirect()->route('turnos.create', [

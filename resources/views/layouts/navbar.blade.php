@@ -63,7 +63,15 @@
                                 @if ($user->canAccessCartera())
                                     <li>
                                         <a class="dropdown-item" href="{{ route('cartera.index') }}">
-                                            Cartera
+                                            Cartera - Estado de cuenta
+                                        </a>
+                                    </li>
+                                @endif
+
+                                @if ($user->isAdministrador())
+                                    <li>
+                                        <a class="dropdown-item" href="{{ route('cartera-saldos-iniciales.index') }}">
+                                            Saldos iniciales de cartera
                                         </a>
                                     </li>
                                 @endif

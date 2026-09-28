@@ -22,6 +22,7 @@ test('una planilla revisada no se puede modificar ni por el administrador', func
     $this->actingAs($admin)->get(route('turnos.create', ['turno_busqueda' => 3]))
         ->assertOk()
         ->assertSee('PLANILLA REVISADA.')
+        ->assertSee('Planilla REVISADA: el registro está bloqueado')
         ->assertSee('Volver a pendiente de revisión')
         ->assertDontSee('onclick="limpiarPlanilla()"', false);
 });

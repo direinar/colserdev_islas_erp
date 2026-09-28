@@ -262,8 +262,8 @@
         </fieldset>
 
         @if (! $puedeGuardar)
-            <div class="pastel-section mt-3 text-end">
-                <span class="badge bg-secondary">Planilla REVISADA: el registro está bloqueado</span>
+            <div class="alert alert-danger mt-3 mb-0 text-center fs-4 fw-bold text-danger border-2 border-danger">
+                <i class="bi bi-lock-fill"></i> Planilla REVISADA: el registro está bloqueado
             </div>
         @endif
 

@@ -40,13 +40,13 @@
                                 </select>
                             </td>
                             <td>
-                                <select name="recaudos_admin[{{ $i }}][cliente_id]"
+                                <select name="recaudos_admin[{{ $i }}][responsable_id]"
                                     class="form-select form-select-sm border-0 bg-transparent recaudos-admin-responsable"
                                     @disabled($bloqueadoIslero)>
                                     <option value="">Seleccione cliente</option>
                                     @foreach ($customers ?? collect() as $customer)
                                         <option value="{{ $customer->id }}"
-                                            @if ($r->cliente_id == $customer->id) selected @endif>{{ $customer->name }}
+                                            @selected($r->responsable_id == $customer->id)>{{ $customer->name }}
                                         </option>
                                     @endforeach
                                 </select>
@@ -76,7 +76,7 @@
                             </select>
                         </td>
                         <td>
-                            <select name="recaudos_admin[0][cliente_id]"
+                            <select name="recaudos_admin[0][responsable_id]"
                                 class="form-select form-select-sm border-0 bg-transparent recaudos-admin-responsable"
                                 @disabled($bloqueadoIslero)>
                                 <option value="">Seleccione cliente</option>

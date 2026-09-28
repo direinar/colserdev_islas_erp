@@ -26,6 +26,43 @@ class CarteraSaldoService
     }
 
     /**
+     * Estado de cuenta del cliente entre dos fechas: saldo anterior (saldo
+     * final del día anterior a $desde, incluido el saldo inicial) + cargos -
+     * abonos = saldo final. Cada movimiento trae en `saldo_corrido` el saldo
+     * acumulado del estado de cuenta; puede ser negativo (anticipos).
+     *
+     * @return array{saldoAnterior: float, movimientos: Collection<int, CarteraMovimiento>, totalCargos: float, totalAbonos: float, saldoFinal: float}
+     */
+    public function estadoDeCuenta(int $customerId, string $desde, string $hasta): array
+    {
+        $saldoAnterior = $this->saldoAnterior($customerId, $desde);
+
+        $movimientos = $this->ordenar(
+            CarteraMovimiento::query()
+                ->with('turno')
+                ->where('customer_id', $customerId)
+                ->whereDate('fecha', '>=', $desde)
+                ->whereDate('fecha', '<=', $hasta)
+                ->get()
+        );
+
+        $saldo = $saldoAnterior;
+
+        foreach ($movimientos as $movimiento) {
+            $saldo += (float) $movimiento->vr_neto_cargo - (float) $movimiento->abonos;
+            $movimiento->saldo_corrido = $saldo;
+        }
+
+        return [
+            'saldoAnterior' => $saldoAnterior,
+            'movimientos' => $movimientos,
+            'totalCargos' => (float) $movimientos->sum(fn (CarteraMovimiento $m): float => (float) $m->vr_neto_cargo),
+            'totalAbonos' => (float) $movimientos->sum(fn (CarteraMovimiento $m): float => (float) $m->abonos),
+            'saldoFinal' => $saldo,
+        ];
+    }
+
+    /**
      * @param  Collection<int, CarteraMovimiento>  $movimientos
      * @return Collection<int, CarteraMovimiento>
      */

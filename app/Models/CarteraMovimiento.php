@@ -6,11 +6,24 @@ use Illuminate\Database\Eloquent\Model;
 
 class CarteraMovimiento extends Model
 {
+    /** Venta a crédito de la planilla de turno (CARTERA - CRÉDITO DIRECTO): cargo. */
+    public const ORIGEN_CREDITO_DIRECTO = 'credito_directo';
+
+    /** Planilla de turno: RECAUDOS Y ANTICIPOS POR ISLAS. Abono. */
+    public const ORIGEN_RECAUDO_ISLAS = 'recaudo_islas';
+
+    /** Planilla de turno: RECAUDOS POR ADMINISTRACIÓN. Abono. */
+    public const ORIGEN_RECAUDO_ADMIN = 'recaudo_admin';
+
+    /** Saldo del cliente al arrancar el sistema (se carga una sola vez). */
+    public const ORIGEN_SALDO_INICIAL = 'saldo_inicial';
+
     protected $table = 'cartera_movimientos';
 
     protected $fillable = [
         'customer_id',
         'turno_id',
+        'origen',
         'saldo_inicial',
         'fecha_inicial',
         'fecha_final',
@@ -67,5 +80,19 @@ class CarteraMovimiento extends Model
     public function esDeTurno(): bool
     {
         return $this->turno_id !== null;
+    }
+
+    /**
+     * Solo las ventas a crédito llevan datos del vehículo (placas, producto,
+     * galones, vr. unitario, descuento) para el estado de cuenta del cliente.
+     */
+    public function llevaDatosVehiculo(): bool
+    {
+        return $this->origen === self::ORIGEN_CREDITO_DIRECTO;
+    }
+
+    public function esSaldoInicial(): bool
+    {
+        return $this->origen === self::ORIGEN_SALDO_INICIAL;
     }
 }
