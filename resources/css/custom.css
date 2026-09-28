@@ -208,6 +208,7 @@ body {
 /* Actions */
 .crud-actions {
     display: flex;
+    flex-wrap: wrap;
     gap: 8px;
     align-items: center;
     justify-content: flex-end;
@@ -659,7 +660,11 @@ body ::selection {
     background: var(--plan-s1);
     border: 1px solid var(--plan-b1);
     border-radius: 6px;
-    margin-bottom: 10px;
+    margin-bottom: 10px
+}
+
+/* Solo la vista vieja de planilla recorta; en el ERP recortar impedía desplazar tablas en móvil. */
+.wrap .card {
     overflow: hidden
 }
 
@@ -1114,7 +1119,136 @@ input[inputmode="decimal"] {
 
 .crud-create-wrap {
     display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 12px;
+}
+/* =========================================================
+   Menú responsive (layouts/navbar.blade.php)
+   Menos de 992px (celulares y tablets): panel lateral con ☰.
+   ========================================================= */
+.navbar-pastel .navbar-toggler {
+    border-color: rgba(225, 16, 0, 0.35);
+    padding: .35rem .6rem;
+}
+
+.navbar-pastel .navbar-toggler:focus {
+    box-shadow: 0 0 0 .2rem rgba(225, 16, 0, 0.15);
+}
+
+@media (max-width: 991.98px) {
+    .navbar-offcanvas {
+        width: min(320px, 86vw) !important;
+    }
+
+    .navbar-offcanvas .offcanvas-body {
+        overflow-y: auto;
+        padding-top: .5rem;
+    }
+
+    .navbar-offcanvas .navbar-nav {
+        width: 100%;
+    }
+
+    /* Áreas táctiles cómodas y textos largos que bajan de línea en vez de salirse. */
+    .navbar-offcanvas .nav-link {
+        padding: .65rem .75rem !important;
+        font-weight: 600;
+    }
+
+    .navbar-offcanvas .dropdown-menu {
+        position: static !important;
+        transform: none !important;
+        border: 0;
+        box-shadow: none;
+        background: var(--rose);
+        margin: 0 0 .25rem .5rem;
+        padding: .25rem 0;
+    }
+
+    .navbar-offcanvas .dropdown-item {
+        white-space: normal;
+        padding: .55rem .9rem;
+    }
+
+    .navbar-offcanvas .navbar-usuario {
+        border-top: 1px solid var(--border);
+    }
+
+    .navbar-offcanvas .navbar-usuario .btn,
+    .navbar-offcanvas .navbar-usuario form {
+        width: 100%;
+    }
+}
+
+@media (min-width: 992px) {
+    /* En computador los submenús largos (Inventario) no deben pasar del alto de la pantalla. */
+    .navbar-pastel .dropdown-menu {
+        max-height: calc(100vh - 80px);
+        overflow-y: auto;
+    }
+}
+
+/* =========================================================
+   Responsive general: celulares (< 576px) y tablets (< 768px)
+   ========================================================= */
+
+/* Tablas anchas: se desplazan con el dedo dentro de su recuadro, sin mover la página. */
+.table-responsive {
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Barras de título + botón de las tablas de la planilla: el botón baja de línea si no cabe. */
+.medio-pago-toolbar,
+.canastilla-toolbar {
+    flex-wrap: wrap;
+    gap: .5rem;
+}
+
+@media (max-width: 767.98px) {
+    h2,
+    .h2 {
+        font-size: 1.4rem;
+    }
+
+    h3,
+    .h3 {
+        font-size: 1.25rem;
+    }
+
+    .pastel-section {
+        padding: .75rem;
+    }
+
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 575.98px) {
+    /* Los botones del ERP son en mayúsculas con bastante relleno: se compactan en celular. */
+    .btn {
+        padding: 7px 12px;
+        letter-spacing: .02em;
+    }
+
+    .btn-sm {
+        padding: 5px 10px;
+    }
+
+    .container,
+    .container-fluid {
+        padding-left: 10px;
+        padding-right: 10px;
+    }
+
+    .table {
+        font-size: .85rem;
+    }
+
+    .crud-actions {
+        justify-content: flex-start;
+    }
 }

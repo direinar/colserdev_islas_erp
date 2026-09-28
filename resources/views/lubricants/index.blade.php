@@ -8,6 +8,7 @@
             <a href="{{ route('lubricants.create') }}" class="btn btn-primary">Nuevo</a>
         </div>
 
+        <div class="table-responsive">
         <table class="crud-table">
 
             <thead class="table-primary">
@@ -57,7 +58,6 @@
                         </td>
 
                         <td>
-                        <td>
                             @if ($lubricant->active)
                                 <span class="badge-pill badge-active">ACTIVO</span>
                             @else
@@ -75,6 +75,7 @@
             </tbody>
 
         </table>
+        </div>
 
     </div>
 @endsection

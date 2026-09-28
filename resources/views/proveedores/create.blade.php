@@ -4,7 +4,7 @@
 
     <div class="container">
 
-        <div class="d-flex justify-content-between mb-3">
+        <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center mb-3">
             <h3>Crear proveedor</h3>
             <a href="{{ route('proveedores.index') }}" class="btn btn-secondary">Volver</a>
         </div>

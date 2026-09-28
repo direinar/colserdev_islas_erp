@@ -15,8 +15,8 @@
         </table>
     </div>
 
-    <div class="d-flex align-items-end gap-2 mt-2">
-        <div class="flex-grow-1">
+    <div class="d-flex flex-wrap align-items-end gap-2 mt-2">
+        <div class="flex-grow-1" style="min-width: min(100%, 260px);">
             <label class="form-label fw-bold" for="observaciones">OBSERVACIONES</label>
             <textarea class="form-control form-control-sm" name="observaciones" id="observaciones" rows="2">{{ old('observaciones', optional($turno ?? null)->observaciones) }}</textarea>
         </div>

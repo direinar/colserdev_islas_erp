@@ -3,7 +3,7 @@
 @section('content')
     <div class="container">
 
-        <div class="d-flex justify-content-between mb-3">
+        <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center mb-3">
             <h3>Detalle de banco</h3>
             <a href="{{ route('bancos.index') }}" class="btn btn-secondary">Volver</a>
         </div>

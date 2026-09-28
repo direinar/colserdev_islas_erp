@@ -3,7 +3,7 @@
 @section('content')
     <div class="container">
 
-        <div class="d-flex justify-content-between align-items-center mb-4">
+        <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center mb-4">
 
             <h2 class="mb-0">
                 Precios de Combustible
@@ -28,6 +28,7 @@
 
             <div class="card-body p-0">
 
+                <div class="table-responsive">
                 <table class="table table-bordered table-hover mb-0">
 
                     <thead class="table-dark">
@@ -101,6 +102,7 @@
                     </tbody>
 
                 </table>
+                </div>
 
             </div>
 

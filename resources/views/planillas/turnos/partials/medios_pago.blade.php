@@ -216,8 +216,15 @@
     <style>
         .medio-pago-stack {
             display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
+            /* Celular: una tabla debajo de la otra; desde tablet (768px), dos columnas. */
+            grid-template-columns: minmax(0, 1fr);
             gap: 14px;
+        }
+
+        @media (min-width: 768px) {
+            .medio-pago-stack {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
         }
 
         .medio-pago-section {

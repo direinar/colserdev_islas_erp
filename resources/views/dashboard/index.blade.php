@@ -12,7 +12,7 @@
                 <h1 class="h3 mb-1">Dashboard</h1>
                 <p class="mb-0">Resumen gráfico de turnos y ventas.</p>
             </div>
-            <div class="d-flex align-items-center gap-2">
+            <div class="d-flex flex-wrap align-items-center gap-2">
                 @if (auth()->check() && auth()->user()->isAdministrador())
                     <a href="{{ route('users.index') }}" class="btn btn-outline-secondary">
                         Gestionar usuarios

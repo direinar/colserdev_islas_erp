@@ -1,19 +1,45 @@
-{{-- ¡Asegúrate de borrar el bloque <style> que tenías aquí arriba! --}}
-
-<nav class="navbar navbar-expand-lg navbar-light navbar-pastel shadow-sm">
+{{--
+    Menú responsive: en computador (lg y más) es la barra horizontal; en
+    celulares y tablets se abre con el botón ☰ como panel lateral (offcanvas)
+    con los submenús desplegados hacia abajo, sin salirse de la pantalla.
+--}}
+<nav class="navbar navbar-expand-lg navbar-light navbar-pastel shadow-sm sticky-top">
 
     <div class="container-fluid">
 
-        {{-- Se quitó text-white para que tome el color var(--ink) de tu custom.css --}}
         <a class="navbar-brand d-flex align-items-center fw-bold" href="{{ route('dashboard') }}">
             <img src="{{ asset('images/logo-dashboard-32.png') }}" alt="Logo" class="brand-logo me-2">
             <span class="brand-text">ByH</span>
         </a>
 
-        <div class="d-flex align-items-center w-100">
+        @auth
+            <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#menu-principal"
+                aria-controls="menu-principal" aria-label="Abrir menú">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+        @endauth
+
+        <div class="offcanvas offcanvas-end offcanvas-lg navbar-offcanvas" tabindex="-1" id="menu-principal"
+            aria-labelledby="menu-principal-titulo">
+
+            <div class="offcanvas-header border-bottom">
+                <div class="d-flex align-items-center">
+                    <img src="{{ asset('images/logo-dashboard-32.png') }}" alt="Logo" class="brand-logo me-2">
+                    <div>
+                        <h5 class="offcanvas-title fw-bold mb-0" id="menu-principal-titulo">ByH</h5>
+                        @auth
+                            <small class="text-muted">{{ auth()->user()->name }}</small>
+                        @endauth
+                    </div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#menu-principal"
+                    aria-label="Cerrar menú"></button>
+            </div>
+
+        <div class="offcanvas-body d-flex flex-column flex-lg-row align-items-lg-center w-100">
 
             {{-- ================= MENÚ ================= --}}
-            <ul class="navbar-nav me-auto d-flex flex-row align-items-center gap-1">
+            <ul class="navbar-nav me-lg-auto align-items-lg-center gap-lg-1">
 
                 @auth
 
@@ -209,7 +235,7 @@
             </ul>
 
             {{-- ================= Usuario y Logout ================= --}}
-            <ul class="navbar-nav ms-auto d-flex flex-row align-items-center gap-2">
+            <ul class="navbar-nav navbar-usuario ms-lg-auto align-items-lg-center gap-2 mt-3 mt-lg-0 pt-3 pt-lg-0">
 
                 @auth
                     {{-- Se muestra solo cuando el navegador permite instalar la PWA (resources/js/pwa.js) --}}
@@ -258,6 +284,8 @@
                 @endauth
 
             </ul>
+
+        </div>
 
         </div>
 

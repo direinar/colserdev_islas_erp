@@ -21,18 +21,18 @@
                 </form>
 
                 <form method="GET" action="{{ route('turnos.create') }}" id="buscar-turno-solo-form"
-                    class="d-flex align-items-end gap-2 mb-0">
+                    class="d-flex flex-wrap align-items-end gap-2 mb-0">
                     <div>
                         <label class="form-label small mb-0" for="turno-busqueda">Turno búsqueda</label>
                         <input type="number" name="turno_busqueda" id="turno-busqueda" min="1"
-                            class="form-control form-control-sm" style="width: 140px" placeholder="N° de turno"
+                            class="form-control form-control-sm" style="width: 140px; max-width: 100%" placeholder="N° de turno"
                             value="{{ request('turno_busqueda') }}">
                     </div>
                     <button type="submit" class="btn btn-sm btn-outline-primary">Buscar por turno</button>
                 </form>
             </div>
 
-            <div class="d-flex align-items-end gap-2">
+            <div class="d-flex flex-wrap align-items-end gap-2">
                 <a href="{{ route('turnos.create') }}" class="btn btn-sm btn-outline-secondary">Nuevo</a>
                 @if ($puedeGuardar)
                     <button type="button" class="btn btn-sm btn-outline-warning" onclick="limpiarPlanilla()">Limpiar</button>
@@ -132,7 +132,7 @@
 
         <div class="pastel-section mb-3">
 
-            <div class="row align-items-center">
+            <div class="row align-items-center g-2">
 
                 <div class="col-md-6">
 
@@ -142,7 +142,7 @@
 
                 </div>
 
-                <div class="col-md-6 text-end">
+                <div class="col-md-6 d-flex flex-wrap align-items-center gap-2 justify-content-md-end">
 
                     FECHA:
 

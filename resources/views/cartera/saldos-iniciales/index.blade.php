@@ -9,7 +9,7 @@
 @section('content')
     <div class="container">
 
-        <div class="d-flex justify-content-between mb-3">
+        <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center mb-3">
             <div>
                 <h3 class="mb-0">Saldos iniciales de cartera</h3>
                 <small class="text-muted">
@@ -107,6 +107,7 @@
             </div>
         </div>
 
+        <div class="table-responsive">
         <table class="table table-bordered table-striped">
             <thead class="table-primary">
                 <tr>
@@ -137,6 +138,7 @@
                 @endforelse
             </tbody>
         </table>
+        </div>
 
     </div>
 @endsection
