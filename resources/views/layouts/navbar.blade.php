@@ -212,6 +212,14 @@
             <ul class="navbar-nav ms-auto d-flex flex-row align-items-center gap-2">
 
                 @auth
+                    {{-- Se muestra solo cuando el navegador permite instalar la PWA (resources/js/pwa.js) --}}
+                    <li class="nav-item d-none" data-pwa-install>
+                        <button type="button" class="btn btn-sm btn-outline-primary" data-pwa-install-button
+                            title="Instalar el ERP como aplicación en este equipo">
+                            <i class="bi bi-download"></i> Instalar aplicación
+                        </button>
+                    </li>
+
                     <li class="nav-item">
                         <form method="POST" action="{{ route('logout') }}" class="m-0">
                             @csrf

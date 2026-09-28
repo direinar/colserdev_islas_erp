@@ -1,0 +1,48 @@
+{
+    "name": "ByH ERP - EDS El Portal de Tunja",
+    "short_name": "ByH ERP",
+    "description": "Planillas de turno, cartera e inventarios de la EDS El Portal de Tunja.",
+    "id": "/",
+    "start_url": "/dashboard",
+    "scope": "/",
+    "display": "standalone",
+    "orientation": "any",
+    "lang": "es-CO",
+    "dir": "ltr",
+    "background_color": "#ffffff",
+    "theme_color": "#d40000",
+    "icons": [
+        {
+            "src": "/icons/icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "/icons/icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "/icons/icon-maskable-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "maskable"
+        }
+    ],
+    "shortcuts": [
+        {
+            "name": "Planilla de turno",
+            "short_name": "Planilla",
+            "url": "/turnos/create",
+            "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" }]
+        },
+        {
+            "name": "Estado de cuenta",
+            "short_name": "Cartera",
+            "url": "/cartera",
+            "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" }]
+        }
+    ]
+}
