@@ -10,6 +10,9 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Shared\Date as ExcelDate;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
 use Throwable;
 
 /**
@@ -81,7 +84,8 @@ class CarteraSaldoInicialService
             $fecha = $fila['B'] ?? null;
             $valor = $fila['C'] ?? null;
 
-            if ($documento === '' && ($fecha === null || $fecha === '') && ($valor === null || $valor === '')) {
+            // Fila sin fecha ni valor: cliente de la plantilla que no trae saldo.
+            if (($fecha === null || $fecha === '') && ($valor === null || $valor === '')) {
                 continue;
             }
 
@@ -112,6 +116,36 @@ class CarteraSaldoInicialService
         }
 
         return ['cargados' => $cargados, 'errores' => $errores];
+    }
+
+    /**
+     * Plantilla para la importación: todos los clientes con su NIT; se llenan
+     * fecha de corte y valor solo de los que tienen saldo. La columna D es de
+     * referencia y no se lee al importar.
+     */
+    public function plantilla(): Spreadsheet
+    {
+        $libro = new Spreadsheet;
+        $hoja = $libro->getActiveSheet();
+        $hoja->setTitle('Saldos iniciales');
+
+        $filas = [['NIT / DOCUMENTO', 'FECHA DE CORTE (aaaa-mm-dd)', 'VALOR (negativo = a favor)', 'CLIENTE (referencia)']];
+
+        foreach (Customer::orderBy('name')->get() as $cliente) {
+            $filas[] = [(string) $cliente->document, null, null, $cliente->name];
+        }
+
+        $hoja->fromArray($filas);
+        $hoja->getStyle('A1:D1')->getFont()->setBold(true);
+        $hoja->getStyle('A1:D1')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('CCCCFF');
+        $hoja->getStyle('A2:A'.count($filas))->getNumberFormat()->setFormatCode(NumberFormat::FORMAT_TEXT);
+        $hoja->getStyle('C2:C'.count($filas))->getNumberFormat()->setFormatCode('#,##0;[Red]-#,##0');
+
+        foreach (['A', 'B', 'C', 'D'] as $columna) {
+            $hoja->getColumnDimension($columna)->setAutoSize(true);
+        }
+
+        return $libro;
     }
 
     /**

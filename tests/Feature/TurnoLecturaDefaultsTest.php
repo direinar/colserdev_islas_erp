@@ -103,12 +103,12 @@ test('save button form is not broken by a nested form and stays enabled while no
     ]));
 
     $response->assertOk();
-    $response->assertSee('Guardar Turno', false);
-    $response->assertSee('value="Ana"', false); // confirma que el turno SÍ fue encontrado (whereDate)
+    $response->assertSee('<button type="submit" form="turno-form"', false);
+    expect($response->viewData('turno')?->id)->toBe($turno->id); // confirma que el turno SÍ fue encontrado (whereDate)
     $response->assertDontSee('<form method="POST" action="'.route('turnos.revisar', $turno).'" class="mt-2">', false);
 
-    $mainFormOpen = strpos($response->getContent(), '<form method="POST" action="'.route('turnos.store').'">');
-    $mainFormClose = strpos($response->getContent(), 'Guardar Turno');
+    $mainFormOpen = strpos($response->getContent(), '<form method="POST" action="'.route('turnos.store').'" id="turno-form">');
+    $mainFormClose = strpos($response->getContent(), '</form>', $mainFormOpen ?: 0);
     expect($mainFormOpen)->not->toBeFalse();
     expect($mainFormClose)->toBeGreaterThan($mainFormOpen);
 });
@@ -136,7 +136,8 @@ test('saving an already existing turno updates it instead of creating a duplicat
 
     $response->assertRedirect();
     expect(Turno::count())->toBe(1);
-    expect(Turno::first()->nombre_vendedor)->toBe('Ana Actualizada');
+    // El vendedor de la planilla es siempre el usuario que la guarda.
+    expect(Turno::first()->nombre_vendedor)->toBe($admin->name);
     expect(Turno::first()->id)->toBe($turno->id);
 });
 
@@ -161,7 +162,7 @@ test('save button is hidden when turno is revisado', function () {
     ]));
 
     $response->assertOk();
-    $response->assertDontSee('Guardar Turno', false);
+    $response->assertDontSee('<button type="submit" form="turno-form"', false);
     $response->assertSee('PLANILLA REVISADA.', false);
 });
 
@@ -203,9 +204,9 @@ test('lubricantes table shows previously saved rows when consulting an existing 
     $response->assertOk();
     $response->assertSee('value="10"', false);
     $response->assertSee('MOBIL SUPER 20W50', false);
-    $response->assertSee('value="250,000"', false);
-    $response->assertSee('value="47,500"', false);
-    $response->assertSee('value="297,500"', false);
+    $response->assertSee('value="250.000"', false);
+    $response->assertSee('value="47.500"', false);
+    $response->assertSee('value="297.500"', false);
 });
 
 test('urea_lubricantes sent with dot-thousands money format are not truncated on save', function () {
@@ -259,7 +260,7 @@ test('medios de pago renders as three independent tables with add row actions', 
     $response->assertSee('CONSIGNACIONES', false);
     $response->assertSee('DESCUENTOS', false);
     $response->assertSee('CARTERA - CRÉDITO DIRECTO', false);
-    $response->assertSee('+ Agregar fila', false);
+    $response->assertSee('+ AGREGAR FILA', false);
     $response->assertSee('remove-row', false);
 });
 

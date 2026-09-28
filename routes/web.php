@@ -117,6 +117,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         Route::resource('bancos', BancoController::class);
 
+        Route::get('/cartera/saldos-iniciales/plantilla', [CarteraSaldoInicialController::class, 'plantilla'])
+            ->name('cartera-saldos-iniciales.plantilla');
+
         Route::post('/cartera/saldos-iniciales/importar', [CarteraSaldoInicialController::class, 'importar'])
             ->name('cartera-saldos-iniciales.importar');
 

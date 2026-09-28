@@ -4,6 +4,7 @@ use App\Models\CarteraMovimiento;
 use App\Models\Customer;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
+use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
@@ -140,4 +141,35 @@ test('solo el administrador gestiona los saldos iniciales', function () {
     ])->assertForbidden();
 
     expect(CarteraMovimiento::count())->toBe(0);
+});
+
+test('la plantilla trae todos los clientes y al importarla se ignoran los que no tienen saldo', function () {
+    $admin = User::factory()->create(['role' => User::ROLE_ADMINISTRADOR]);
+    $arkatec = Customer::create(['name' => 'ARKATEC SAS', 'document' => '900306424']);
+    Customer::create(['name' => 'Cliente sin saldo', 'document' => '7184725']);
+
+    $response = $this->actingAs($admin)->get(route('cartera-saldos-iniciales.plantilla'));
+    $response->assertOk()->assertDownload('plantilla-saldos-iniciales.xlsx');
+
+    $archivo = tempnam(sys_get_temp_dir(), 'plantilla').'.xlsx';
+    file_put_contents($archivo, $response->streamedContent());
+    $libro = IOFactory::load($archivo);
+    $hoja = $libro->getActiveSheet();
+
+    expect((string) $hoja->getCell('A2')->getValue())->toBe('900306424')
+        ->and($hoja->getCell('D2')->getValue())->toBe('ARKATEC SAS')
+        ->and($hoja->getCell('D3')->getValue())->toBe('Cliente sin saldo');
+
+    $hoja->setCellValue('B2', '2026-10-31')->setCellValue('C2', 500000);
+    (new Xlsx($libro))->save($archivo);
+
+    $this->actingAs($admin)->post(route('cartera-saldos-iniciales.importar'), [
+        'archivo' => new UploadedFile($archivo, 'saldos.xlsx', null, null, true),
+    ])->assertSessionHas('success', 'Importación terminada: 1 saldo(s) cargado(s).')
+        ->assertSessionHas('errores_importacion', []);
+
+    unlink($archivo);
+
+    expect((float) CarteraMovimiento::sole()->saldo_inicial)->toBe(500000.0)
+        ->and(CarteraMovimiento::sole()->customer_id)->toBe($arkatec->id);
 });

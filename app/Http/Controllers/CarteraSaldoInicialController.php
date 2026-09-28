@@ -9,6 +9,8 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
  * Saldos iniciales de cartera (carga única al arrancar el sistema): uno por
@@ -85,6 +87,17 @@ class CarteraSaldoInicialController extends Controller
         return redirect()
             ->route('cartera-saldos-iniciales.index')
             ->with('success', 'Saldo inicial eliminado correctamente.');
+    }
+
+    public function plantilla(CarteraSaldoInicialService $service): StreamedResponse
+    {
+        $libro = $service->plantilla();
+
+        return response()->streamDownload(
+            fn () => (new Xlsx($libro))->save('php://output'),
+            'plantilla-saldos-iniciales.xlsx',
+            ['Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet']
+        );
     }
 
     public function importar(Request $request, CarteraSaldoInicialService $service): RedirectResponse

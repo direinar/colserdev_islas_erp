@@ -4,6 +4,7 @@ use App\Models\CarteraMovimiento;
 use App\Models\Customer;
 use App\Models\Turno;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 
 function guardarTurnoConCartera(User $user, int $numero, string $fecha, array $cartera, array $extra = [])
@@ -305,4 +306,49 @@ test('el islero no puede entrar al modulo de cartera', function () {
 
     $this->actingAs($islero)->get(route('cartera.index'))->assertForbidden();
     $this->actingAs($islero)->get(route('cartera.exportar'))->assertForbidden();
+});
+
+test('el estado de cuenta avisa las planillas con recaudos por administracion sin cliente', function () {
+    $admin = User::factory()->create(['role' => User::ROLE_ADMINISTRADOR]);
+
+    guardarTurnoConCartera($admin, 21, '2026-09-12', [], [
+        'recaudos_admin' => [['banco' => 'Caja', 'responsable_id' => null, 'valor' => '40.000']],
+    ]);
+    guardarTurnoConCartera($admin, 22, '2026-09-12', []);
+
+    $response = $this->actingAs($admin)->get(route('cartera.index'));
+
+    expect($response->viewData('planillasRecaudoSinCliente')->pluck('numero_turno')->all())->toBe([21]);
+
+    $response->assertSee('Recaudos por administración sin cliente')
+        ->assertSee(route('turnos.create', ['turno_busqueda' => 21]), false);
+});
+
+test('la migracion de origen elimina los movimientos manuales y carga los recaudos ya registrados', function () {
+    $migracion = require database_path('migrations/2026_09_28_145221_add_origen_to_cartera_movimientos_table.php');
+    $migracion->down();
+
+    $cliente = Customer::create(['name' => 'Cliente A', 'document' => '1']);
+    $turno = Turno::create(['fecha' => '2026-09-12', 'numero_turno' => 30, 'nombre_vendedor' => 'Ana']);
+    $turno->cartera()->create(['factura_no' => 'F-30', 'cliente_id' => $cliente->id, 'valor' => 100000]);
+    $turno->recaudos()->create(['cliente_id' => $cliente->id, 'valor' => 30000]);
+    $turno->recaudosAdmin()->create(['banco' => 'Caja', 'responsable_id' => $cliente->id, 'valor' => 20000]);
+
+    DB::table('cartera_movimientos')->insert([
+        ['customer_id' => $cliente->id, 'turno_id' => $turno->id, 'planillas' => '30', 'fecha' => '2026-09-12', 'factura' => 'F-30', 'placas' => 'ABC123', 'vr_neto_cargo' => 100000, 'abonos' => 0, 'concepto' => 'Venta a crédito'],
+        ['customer_id' => $cliente->id, 'turno_id' => null, 'planillas' => '', 'fecha' => '2026-09-13', 'factura' => '', 'placas' => '', 'vr_neto_cargo' => 0, 'abonos' => 5000, 'concepto' => 'Manual de prueba'],
+    ]);
+
+    $migracion->up();
+
+    $movimientos = CarteraMovimiento::orderBy('id')->get();
+
+    expect($movimientos->pluck('origen')->all())->toBe([
+        CarteraMovimiento::ORIGEN_CREDITO_DIRECTO,
+        CarteraMovimiento::ORIGEN_RECAUDO_ISLAS,
+        CarteraMovimiento::ORIGEN_RECAUDO_ADMIN,
+    ])
+        ->and($movimientos[0]->placas)->toBe('ABC123')
+        ->and($movimientos->where('concepto', 'Manual de prueba'))->toBeEmpty()
+        ->and((float) $movimientos->last()->saldo)->toBe(50000.0);
 });

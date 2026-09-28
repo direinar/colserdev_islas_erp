@@ -82,6 +82,18 @@
         <div class="alert alert-success d-print-none">{{ session('success') }}</div>
     @endif
 
+    @if ($planillasRecaudoSinCliente->isNotEmpty())
+        <div class="alert alert-warning d-print-none" id="recaudos-sin-cliente">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+            <strong>Recaudos por administración sin cliente:</strong> no se abonan a ninguna cartera hasta elegir el
+            CLIENTE en la planilla y guardarla. Planillas:
+            @foreach ($planillasRecaudoSinCliente as $planilla)
+                <a href="{{ route('turnos.create', ['turno_busqueda' => $planilla->numero_turno]) }}"
+                    class="alert-link">#{{ $planilla->numero_turno }}</a>{{ $loop->last ? '.' : ',' }}
+            @endforeach
+        </div>
+    @endif
+
     @if ($errors->any())
         <div class="alert alert-danger d-print-none">
             <ul class="mb-0">

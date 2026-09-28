@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\CarteraMovimiento;
 use App\Models\Customer;
+use App\Models\Turno;
 use App\Services\CarteraEstadoCuentaExcelService;
 use App\Services\CarteraSaldoService;
 use App\Support\NumberParser;
@@ -34,7 +35,13 @@ class CarteraController extends Controller
             ? $saldos->estadoDeCuenta($customer->id, $fechaInicial, $fechaFinal)
             : ['saldoAnterior' => 0.0, 'movimientos' => collect(), 'totalCargos' => 0.0, 'totalAbonos' => 0.0, 'saldoFinal' => 0.0];
 
-        return view('cartera.index', $estado + compact('customers', 'customer', 'fechaInicial', 'fechaFinal'));
+        // Recaudos por administración sin CLIENTE no llegan a ninguna cartera: se avisan para corregirlos en la planilla.
+        $planillasRecaudoSinCliente = Turno::query()
+            ->whereHas('recaudosAdmin', fn ($q) => $q->whereNull('responsable_id')->where('valor', '>', 0))
+            ->orderBy('numero_turno')
+            ->get(['id', 'numero_turno', 'fecha']);
+
+        return view('cartera.index', $estado + compact('customers', 'customer', 'fechaInicial', 'fechaFinal', 'planillasRecaudoSinCliente'));
     }
 
     /**

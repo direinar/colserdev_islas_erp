@@ -94,9 +94,13 @@
                                 <button type="submit" class="btn btn-outline-primary">Importar</button>
                             </div>
                             <small class="text-muted d-block mt-2">
-                                Primera fila = encabezado. Columnas: A = NIT/documento del cliente, B = fecha de corte
-                                (aaaa-mm-dd o dd/mm/aaaa), C = valor. Si el cliente ya tiene saldo inicial, se reemplaza.
+                                Descargue la plantilla (trae todos los clientes), llene fecha de corte
+                                (aaaa-mm-dd o dd/mm/aaaa) y valor solo de los clientes con saldo, y súbala aquí.
+                                Si el cliente ya tiene saldo inicial, se reemplaza.
                             </small>
+                            <a href="{{ route('cartera-saldos-iniciales.plantilla') }}" class="btn btn-sm btn-outline-success mt-2">
+                                <i class="bi bi-file-earmark-excel"></i> Descargar plantilla
+                            </a>
                         </form>
                     </div>
                 </div>
