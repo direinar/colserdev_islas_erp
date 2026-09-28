@@ -37,6 +37,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         Route::post('/turnos/{turno}/revisar', [TurnoController::class, 'revisar'])
             ->name('turnos.revisar');
+
+        Route::post('/turnos/{turno}/reabrir', [TurnoController::class, 'reabrir'])
+            ->name('turnos.reabrir');
     });
 
     Route::middleware('role:'.implode(',', [User::ROLE_JEFE_PATIOS, User::ROLE_ADMINISTRADOR]))->group(function () {

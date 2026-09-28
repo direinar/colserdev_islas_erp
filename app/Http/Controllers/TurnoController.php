@@ -10,7 +10,6 @@ use App\Models\Turno;
 use App\Services\CarteraTurnoSyncService;
 use App\Support\NumberParser;
 use Illuminate\Http\Request;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
 class TurnoController extends Controller
@@ -45,16 +44,16 @@ class TurnoController extends Controller
         // Consecutivo global: numero_turno es único en toda la tabla (no se
         // reinicia por fecha), así que el próximo número es el máximo + 1 sin
         // importar la fecha consultada.
-        $today = Carbon::today()->toDateString();
-        $fechaConsecutivo = $searchFecha ?: $today;
         $nextNumber = (int) Turno::max('numero_turno') + 1;
 
-        // Turnos ya registrados en la fecha consultada, para poblar el selector
-        // de números de turno en el formulario de búsqueda.
-        $turnosDelDia = Turno::query()
-            ->whereDate('fecha', $fechaConsecutivo)
-            ->orderBy('numero_turno')
-            ->pluck('numero_turno');
+        // Buscador por fecha: lista las planillas registradas ese día para abrirlas.
+        $buscarFecha = $request->query('buscar_fecha');
+        $turnosDeFecha = $buscarFecha
+            ? Turno::query()
+                ->whereDate('fecha', $buscarFecha)
+                ->orderBy('numero_turno')
+                ->get(['id', 'numero_turno', 'fecha', 'nombre_vendedor', 'revisado'])
+            : collect();
 
         if (! $turno && $searchFecha && $searchNumero) {
             // 'fecha' se guarda con hora (cast date -> datetime ISO), por lo que se
@@ -74,7 +73,7 @@ class TurnoController extends Controller
                 ->first();
         }
 
-        return view('planillas.turnos.create', compact('lubricants', 'customers', 'bancos', 'nextNumber', 'turno', 'previousTurno', 'turnosDelDia', 'searchFecha', 'searchNumero'));
+        return view('planillas.turnos.create', compact('lubricants', 'customers', 'bancos', 'nextNumber', 'turno', 'previousTurno', 'turnosDeFecha', 'buscarFecha', 'searchFecha', 'searchNumero'));
     }
 
     public function store(Request $request, CarteraTurnoSyncService $carteraSync)
@@ -108,9 +107,21 @@ class TurnoController extends Controller
                 ->where('numero_turno', $request->input('numero_turno'))
                 ->first();
 
-            // Una planilla ya revisada solo puede volver a modificarla el administrador
-            if ($turno && $turno->revisado && ! $request->user()->isAdministrador()) {
-                abort(403, 'Esta planilla ya fue revisada. Solo un administrador puede modificarla.');
+            // Una planilla revisada no se modifica ni se alimenta (ni siquiera el
+            // administrador): primero debe volverla a PENDIENTE DE REVISIÓN.
+            if ($turno && $turno->revisado) {
+                abort(403, 'Esta planilla está REVISADA y no se puede modificar. El administrador debe volverla a Pendiente de revisión.');
+            }
+
+            // Solo el administrador puede reversar un traslado ya guardado; para
+            // los demás roles se conserva el traslado registrado.
+            $trasladoSobrante = $this->trasladoValue($request->input('traslado_sobrante'));
+            $trasladoFaltante = $this->trasladoValue($request->input('traslado_faltante'));
+
+            if ($turno && ! $request->user()->isAdministrador()
+                && ((float) $turno->traslado_sobrante !== 0.0 || (float) $turno->traslado_faltante !== 0.0)) {
+                $trasladoSobrante = (float) $turno->traslado_sobrante;
+                $trasladoFaltante = (float) $turno->traslado_faltante;
             }
 
             $atributos = [
@@ -124,8 +135,8 @@ class TurnoController extends Controller
                 // Estado del traslado de sobrante/faltante (botón TRASLADAR en
                 // sobrantes.blade.php): debe persistir para que el resumen no
                 // vuelva a mostrar el faltante/sobrante original al recargar.
-                'traslado_sobrante' => NumberParser::money($request->input('traslado_sobrante')),
-                'traslado_faltante' => NumberParser::money($request->input('traslado_faltante')),
+                'traslado_sobrante' => $trasladoSobrante,
+                'traslado_faltante' => $trasladoFaltante,
             ];
 
             if ($turno) {
@@ -196,6 +207,36 @@ class TurnoController extends Controller
         ]);
 
         return back()->with('success', 'Turno #'.$turno->numero_turno.' del '.$turno->fecha->format('Y-m-d').' marcado como revisado.');
+    }
+
+    /**
+     * El administrador devuelve una planilla revisada a PENDIENTE DE REVISIÓN
+     * para hacerle correcciones o adiciones.
+     */
+    public function reabrir(Request $request, Turno $turno)
+    {
+        $turno->update([
+            'revisado' => false,
+            'revisado_por' => null,
+            'revisado_at' => null,
+        ]);
+
+        return redirect()->route('turnos.create', ['turno_busqueda' => $turno->numero_turno])
+            ->with('success', 'Turno #'.$turno->numero_turno.' devuelto a PENDIENTE DE REVISIÓN. Ya se puede corregir.');
+    }
+
+    /**
+     * El traslado lo escribe el navegador como número plano (ej. "-98000" o
+     * "-98000.00"). Leerlo como dinero borraba el punto decimal y multiplicaba
+     * el valor por 100 en cada guardado.
+     */
+    private function trasladoValue(mixed $value): float
+    {
+        if ($value === null || $value === '') {
+            return 0.0;
+        }
+
+        return is_numeric($value) ? round((float) $value) : NumberParser::money($value);
     }
 
     private function saveVentas(Turno $turno, array $rows): void

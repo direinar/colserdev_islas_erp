@@ -140,7 +140,7 @@ test('saving an already existing turno updates it instead of creating a duplicat
     expect(Turno::first()->id)->toBe($turno->id);
 });
 
-test('save button is hidden for non admins when turno is revisado', function () {
+test('save button is hidden when turno is revisado', function () {
     $today = now()->toDateString();
 
     $turno = Turno::create([
@@ -162,7 +162,7 @@ test('save button is hidden for non admins when turno is revisado', function () 
 
     $response->assertOk();
     $response->assertDontSee('Guardar Turno', false);
-    $response->assertSee('Planilla revisada', false);
+    $response->assertSee('PLANILLA REVISADA.', false);
 });
 
 test('lubricantes table shows previously saved rows when consulting an existing turno', function () {
@@ -336,24 +336,6 @@ test('turno ventas seeder loads the default surtidores for the sales form', func
         ]);
 });
 
-test('search datalist lists the turno numbers already registered for the queried date', function () {
-    $today = now()->toDateString();
-
-    Turno::create(['fecha' => $today, 'numero_turno' => 1, 'nombre_vendedor' => 'Ana']);
-    Turno::create(['fecha' => $today, 'numero_turno' => 2, 'nombre_vendedor' => 'Beto']);
-    Turno::create(['fecha' => $today, 'numero_turno' => 3, 'nombre_vendedor' => 'Caro']);
-
-    $user = User::factory()->create();
-
-    $response = $this->actingAs($user)->get(route('turnos.create', ['fecha' => $today]));
-
-    $response->assertOk();
-    $response->assertSee('id="turnos-del-dia"', false);
-    $response->assertSee('<option value="1">Turno 1</option>', false);
-    $response->assertSee('<option value="2">Turno 2</option>', false);
-    $response->assertSee('<option value="3">Turno 3</option>', false);
-});
-
 test('search still finds a turno by typing just the numero_turno', function () {
     $today = now()->toDateString();
 
@@ -361,11 +343,9 @@ test('search still finds a turno by typing just the numero_turno', function () {
 
     $user = User::factory()->create();
 
-    $response = $this->actingAs($user)->get(route('turnos.create', [
-        'fecha' => $today,
-        'numero_turno' => 4,
-    ]));
+    $response = $this->actingAs($user)->get(route('turnos.create', ['turno_busqueda' => 4]));
 
     $response->assertOk();
-    $response->assertSee('value="Dana"', false);
+    $response->assertSee('value="004"', false);
+    $response->assertSee('value="'.$today.'"', false);
 });

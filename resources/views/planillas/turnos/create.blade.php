@@ -2,65 +2,82 @@
 
 @section('content')
 
-    {{-- BÚSQUEDA: por fecha + número de turno, o por número de turno solo --}}
-    <div class="mb-3 pastel-section d-flex flex-wrap justify-content-between align-items-end gap-3">
+    @php
+        // Una planilla revisada queda bloqueada para todos; el administrador puede
+        // devolverla a PENDIENTE DE REVISIÓN para corregirla.
+        $turnoRevisado = isset($turno) && $turno && $turno->revisado;
+        $puedeGuardar = ! $turnoRevisado;
+    @endphp
 
-        <div class="d-flex flex-wrap align-items-end gap-3">
+    {{-- BÚSQUEDA: por fecha (lista las planillas del día) o por número de turno --}}
+    <div class="mb-3 pastel-section">
+        <div class="d-flex flex-wrap justify-content-between align-items-end gap-3">
 
-            <form method="GET" action="{{ route('turnos.create') }}" id="buscar-turno-form"
-                class="d-flex flex-wrap align-items-end gap-2 mb-0">
-                <div>
-                    <label class="form-label small mb-0">Fecha búsqueda</label>
-                    <input type="date" name="fecha" id="buscar-turno-fecha" class="form-control form-control-sm"
-                        value="{{ request('fecha', $searchFecha ?? date('Y-m-d')) }}">
-                </div>
-                <div>
-                    <label class="form-label small mb-0">Turno búsqueda</label>
-                    <select name="numero_turno" id="buscar-turno-numero" class="form-select form-select-sm"
-                        style="min-width: 140px" onchange="document.getElementById('buscar-turno-form').submit()">
-                        <option value="">-- Seleccione --</option>
-                        @foreach ($turnosDelDia as $numero)
-                            <option value="{{ $numero }}" @selected((string) request('numero_turno') === (string) $numero)>
-                                Turno {{ $numero }}
-                            </option>
-                        @endforeach
-                    </select>
-                    @if ($turnosDelDia->isEmpty())
-                        <small class="text-muted d-block">Sin turnos registrados esta fecha</small>
-                    @endif
-                </div>
-            </form>
+            <div class="d-flex flex-wrap align-items-end gap-3">
+                <form method="GET" action="{{ route('turnos.create') }}" id="buscar-fecha-form" class="mb-0">
+                    <label class="form-label small mb-0" for="buscar-turno-fecha">Buscar por fecha</label>
+                    <input type="date" name="buscar_fecha" id="buscar-turno-fecha" class="form-control form-control-sm"
+                        value="{{ $buscarFecha }}" onchange="this.form.submit()">
+                </form>
 
-            <form method="GET" action="{{ route('turnos.create') }}" id="buscar-turno-solo-form"
-                class="d-flex align-items-end gap-2 mb-0">
-                <div>
-                    <label class="form-label small mb-0">Turno búsqueda</label>
-                    <input type="number" name="turno_busqueda" min="1" class="form-control form-control-sm"
-                        style="width: 140px" placeholder="N° de turno" value="{{ request('turno_busqueda') }}">
-                </div>
-            </form>
+                <form method="GET" action="{{ route('turnos.create') }}" id="buscar-turno-solo-form"
+                    class="d-flex align-items-end gap-2 mb-0">
+                    <div>
+                        <label class="form-label small mb-0" for="turno-busqueda">Turno búsqueda</label>
+                        <input type="number" name="turno_busqueda" id="turno-busqueda" min="1"
+                            class="form-control form-control-sm" style="width: 140px" placeholder="N° de turno"
+                            value="{{ request('turno_busqueda') }}">
+                    </div>
+                    <button type="submit" class="btn btn-sm btn-outline-primary">Buscar por turno</button>
+                </form>
+            </div>
 
+            <div class="d-flex align-items-end gap-2">
+                <a href="{{ route('turnos.create') }}" class="btn btn-sm btn-outline-secondary">Nuevo</a>
+                @if ($puedeGuardar)
+                    <button type="button" class="btn btn-sm btn-outline-warning" onclick="limpiarPlanilla()">Limpiar</button>
+                    <button type="submit" form="turno-form" class="btn btn-sm btn-primary">Guardar</button>
+                @endif
+            </div>
         </div>
 
-        <div class="d-flex align-items-end gap-2">
-            <button type="submit" form="buscar-turno-form" class="btn btn-sm btn-outline-primary">Buscar</button>
-            <button type="submit" form="buscar-turno-solo-form" class="btn btn-sm btn-outline-primary">Buscar por
-                turno</button>
-            <a href="{{ route('turnos.create') }}" class="btn btn-sm btn-outline-secondary">Nuevo</a>
-            <button type="button" class="btn btn-sm btn-outline-warning" onclick="limpiarPlanilla()">Limpiar</button>
-            @if ($puedeGuardar ?? true)
-                <button type="submit" form="turno-form" class="btn btn-sm btn-primary">Guardar</button>
-            @endif
-        </div>
-
+        @if ($buscarFecha)
+            <div class="mt-2">
+                <small class="text-muted d-block mb-1">Planillas del
+                    {{ \Illuminate\Support\Carbon::parse($buscarFecha)->format('d/m/Y') }}:</small>
+                @forelse ($turnosDeFecha as $turnoFecha)
+                    <a href="{{ route('turnos.create', ['turno_busqueda' => $turnoFecha->numero_turno]) }}"
+                        class="btn btn-sm {{ $turnoFecha->revisado ? 'btn-outline-success' : 'btn-outline-danger' }} me-1 mb-1">
+                        Turno {{ str_pad($turnoFecha->numero_turno, 3, '0', STR_PAD_LEFT) }}
+                        · {{ $turnoFecha->revisado ? 'Revisado' : 'Pendiente' }}
+                        @if ($turnoFecha->nombre_vendedor)
+                            · {{ $turnoFecha->nombre_vendedor }}
+                        @endif
+                    </a>
+                @empty
+                    <span class="text-muted small">No hay planillas registradas en esta fecha.</span>
+                @endforelse
+            </div>
+        @endif
     </div>
 
-    <script>
-        // Al cambiar la fecha, recargar la búsqueda para refrescar los turnos disponibles ese día.
-        document.getElementById('buscar-turno-fecha')?.addEventListener('change', function() {
-            document.getElementById('buscar-turno-form')?.submit();
-        });
+    @if ($turnoRevisado)
+        <div class="alert alert-success d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <div>
+                <strong>PLANILLA REVISADA.</strong> No se puede modificar ni alimentar.
+                Revisada por {{ $turno->revisado_por }}{{ $turno->revisado_at ? ' el '.$turno->revisado_at->format('d/m/Y H:i') : '' }}.
+            </div>
+            @if (auth()->user()->isAdministrador())
+                <form method="POST" action="{{ route('turnos.reabrir', $turno) }}" class="mb-0"
+                    onsubmit="return confirm('¿Volver la planilla a PENDIENTE DE REVISIÓN para corregirla?');">
+                    @csrf
+                    <button type="submit" class="btn btn-sm btn-warning">Volver a pendiente de revisión</button>
+                </form>
+            @endif
+        </div>
+    @endif
 
+    <script>
         // Vacía todos los campos editables de la planilla (deja intactos los readonly/hidden)
         // y dispara los eventos que usa galones.js para recalcular totales en pantalla.
         function limpiarPlanilla() {
@@ -108,6 +125,8 @@
 
     <form method="POST" action="{{ route('turnos.store') }}" id="turno-form">
         @csrf
+        {{-- Planilla revisada: todos los campos y botones de la planilla quedan deshabilitados. --}}
+        <fieldset @disabled(! $puedeGuardar) style="min-width: 0;">
 
         {{-- HEADER --}}
 
@@ -128,7 +147,7 @@
                     FECHA:
 
                     <input type="date" name="fecha" class="form-control form-control-sm d-inline-block w-auto"
-                        value="{{ old('fecha', request('fecha', date('Y-m-d'))) }}" required>
+                        value="{{ old('fecha', isset($turno) && $turno ? $turno->fecha->toDateString() : request('fecha', date('Y-m-d'))) }}" required>
 
                     TURNO:
 
@@ -240,16 +259,11 @@
             </div>
         </div>
 
-        @php
-            // Coincide con la regla del servidor: un turno revisado solo lo puede
-            // seguir editando un administrador; para los demás se oculta "Guardar".
-            $turnoRevisado = isset($turno) && $turno && $turno->revisado;
-            $puedeGuardar = !$turnoRevisado || auth()->user()->isAdministrador();
-        @endphp
+        </fieldset>
 
-        @if (!$puedeGuardar)
+        @if (! $puedeGuardar)
             <div class="pastel-section mt-3 text-end">
-                <span class="badge bg-secondary">Planilla revisada: el registro está bloqueado</span>
+                <span class="badge bg-secondary">Planilla REVISADA: el registro está bloqueado</span>
             </div>
         @endif
 

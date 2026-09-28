@@ -23,11 +23,18 @@
         <button type="button" id="trasladar-sobrante-btn" class="btn btn-sm btn-primary">
             TRASLADAR
         </button>
-        {{-- Persisten el traslado para que el resumen no lo pierda al guardar --}}
+        @if (auth()->user()->isAdministrador())
+            {{-- Solo el administrador reversa el traslado; el cambio se aplica al Guardar. --}}
+            <button type="button" id="reversar-traslado-btn" class="btn btn-sm btn-outline-danger">
+                REVERSAR
+            </button>
+        @endif
+        {{-- Persisten el traslado para que el resumen no lo pierda al guardar. Se envían
+             como entero sin separadores para que no se alteren al volver a guardar. --}}
         <input type="hidden" name="traslado_sobrante" id="traslado-sobrante-input"
-            value="{{ optional($turno ?? null)->traslado_sobrante ?? 0 }}">
+            value="{{ (int) round((float) (optional($turno ?? null)->traslado_sobrante ?? 0)) }}">
         <input type="hidden" name="traslado_faltante" id="traslado-faltante-input"
-            value="{{ optional($turno ?? null)->traslado_faltante ?? 0 }}">
+            value="{{ (int) round((float) (optional($turno ?? null)->traslado_faltante ?? 0)) }}">
     </div>
 
     <div class="row g-2 mt-3">
@@ -127,8 +134,32 @@
                 }
             }
 
+            const reversarButton = document.getElementById('reversar-traslado-btn');
+
+            function refreshReversar() {
+                if (reversarButton) reversarButton.disabled = !trasladoAplicado;
+            }
+
+            // Devuelve el sobrante/faltante a su estado original (sin traslado).
+            reversarButton?.addEventListener('click', function() {
+                if (!trasladoAplicado) return;
+                if (!confirm('¿Reversar el traslado? El sobrante/faltante vuelve a su valor original. Recuerde Guardar.')) return;
+
+                window.turnoTraslado = {
+                    sobrante: 0,
+                    faltante: 0
+                };
+                trasladoAplicado = false;
+                if (trasladarButton) delete trasladarButton.dataset.transferredValue;
+                if (trasladoSobranteInput) trasladoSobranteInput.value = '0';
+                if (trasladoFaltanteInput) trasladoFaltanteInput.value = '0';
+                document.dispatchEvent(new CustomEvent('turno:traslado-aplicado'));
+                updateSobrante();
+                refreshReversar();
+            });
+
             trasladarButton?.addEventListener('click', function() {
-                const value = Number(this.dataset.currentValue || 0);
+                const value = Math.round(Number(this.dataset.currentValue || 0));
                 if (!value) return;
 
                 window.turnoTraslado = window.turnoTraslado || {
@@ -150,6 +181,7 @@
                     .faltante);
                 document.dispatchEvent(new CustomEvent('turno:traslado-aplicado'));
                 updateSobrante();
+                refreshReversar();
             });
 
             const observer = new MutationObserver(updateSobrante);
@@ -166,6 +198,7 @@
 
             // initial calculation
             updateSobrante();
+            refreshReversar();
         });
     </script>
 
