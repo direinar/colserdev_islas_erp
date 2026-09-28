@@ -20,7 +20,8 @@ jobs:
     environment: Testing
     strategy:
       matrix:
-        php-version: ['8.3', '8.4', '8.5']
+        # Misma versión del proyecto y del Dockerfile (PHP 8.4); en 8.3 las dependencias no instalan.
+        php-version: ['8.4']
 
     steps:
       - name: Checkout code
