@@ -59,6 +59,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/compras', [CompraController::class, 'store'])
             ->name('compras.store');
 
+        Route::get('/compras/{compra}/edit', [CompraController::class, 'edit'])
+            ->name('compras.edit');
+
+        Route::put('/compras/{compra}', [CompraController::class, 'update'])
+            ->name('compras.update');
+
+        Route::delete('/compras/{compra}', [CompraController::class, 'destroy'])
+            ->name('compras.destroy');
+
         Route::get('/anticipo-bimestral/create', [AnticipoBimestralController::class, 'create'])
             ->name('anticipo-bimestral.create');
 
@@ -71,6 +80,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/compras-lubricantes', [CompraLubricanteController::class, 'store'])
             ->name('compras-lubricantes.store');
 
+        Route::delete('/compras-lubricantes/{compraLubricante}', [CompraLubricanteController::class, 'destroy'])
+            ->name('compras-lubricantes.destroy');
+
         Route::get('/comprobante-contable-compras/create', [ComprobanteContableCompraController::class, 'create'])
             ->name('comprobante-contable-compras.create');
 
@@ -82,32 +94,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/inventarios/lubricantes/create', [InventarioLubricanteController::class, 'create'])
             ->name('inventarios-lubricantes.create');
 
-        Route::post('/inventarios/lubricantes', [InventarioLubricanteController::class, 'store'])
-            ->name('inventarios-lubricantes.store');
-
-        Route::get('/inventarios/aditivo-motos/create', [InventarioLubricanteController::class, 'createAditivoMotos'])
-            ->name('inventarios-aditivo-motos.create');
-
-        Route::post('/inventarios/aditivo-motos', [InventarioLubricanteController::class, 'storeAditivoMotos'])
-            ->name('inventarios-aditivo-motos.store');
-
-        Route::get('/inventarios/urea-automotriz/create', [InventarioLubricanteController::class, 'createUreaAutomotriz'])
-            ->name('inventarios-urea-automotriz.create');
-
-        Route::post('/inventarios/urea-automotriz', [InventarioLubricanteController::class, 'storeUreaAutomotriz'])
-            ->name('inventarios-urea-automotriz.store');
-
         Route::get('/inventarios/acpm/create', [InventarioAcpmController::class, 'create'])
             ->name('inventarios-acpm.create');
 
-        Route::post('/inventarios/acpm', [InventarioAcpmController::class, 'store'])
-            ->name('inventarios-acpm.store');
-
         Route::get('/inventarios/gasolina/create', [InventarioGasolinaController::class, 'create'])
             ->name('inventarios-gasolina.create');
-
-        Route::post('/inventarios/gasolina', [InventarioGasolinaController::class, 'store'])
-            ->name('inventarios-gasolina.store');
 
         Route::resource('fuel-prices', FuelPriceController::class);
 

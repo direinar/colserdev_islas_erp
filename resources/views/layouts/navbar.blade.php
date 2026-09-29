@@ -117,25 +117,15 @@
                     {{-- INVENTARIO --}}
                     @if ($user->isAdministrador() || $user->canAccessProveedores())
                         <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle {{ request()->is('fuel-prices*') || request()->is('lubricants*') || request()->is('proveedores*') || request()->is('bancos*') || request()->is('inventarios/gasolina*') || request()->is('inventarios/acpm*') || request()->is('inventarios/lubricantes*') || request()->is('inventarios/aditivo-motos*') || request()->is('inventarios/urea-automotriz*') ? 'active' : '' }}"
+                            <a class="nav-link dropdown-toggle {{ request()->is('fuel-prices*') || request()->is('lubricants*') || request()->is('proveedores*') || request()->is('bancos*') || request()->is('inventarios/gasolina*') || request()->is('inventarios/acpm*') || request()->is('inventarios/lubricantes*') ? 'active' : '' }}"
                                 href="#" data-bs-toggle="dropdown">
                                 Inventario
                             </a>
                             <ul class="dropdown-menu">
                                 @if ($user->isAdministrador())
                                     <li>
-                                        <a class="dropdown-item" href="{{ route('inventarios-urea-automotriz.create') }}">
-                                            Inventarios Urea Automotriz
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a class="dropdown-item" href="{{ route('inventarios-aditivo-motos.create') }}">
-                                            Inventarios Aditivo Motos
-                                        </a>
-                                    </li>
-                                    <li>
                                         <a class="dropdown-item" href="{{ route('inventarios-lubricantes.create') }}">
-                                            Inventarios Lubricantes
+                                            Inventarios Canastilla
                                         </a>
                                     </li>
                                     <li>

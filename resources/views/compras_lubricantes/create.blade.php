@@ -41,6 +41,7 @@
                         <tr>
                             <th class="text-center align-middle">FECHA</th>
                             <th class="text-center align-middle">PROVEEDOR</th>
+                            <th class="text-center align-middle">PRODUCTO</th>
                             <th class="text-center align-middle">No. FC</th>
                             <th class="text-center align-middle">UNIDADES</th>
                             <th class="text-center align-middle">VALOR UNITARIO</th>
@@ -57,6 +58,7 @@
                                 [
                                     'fecha' => date('Y-m-d'),
                                     'proveedor_id' => '',
+                                    'producto' => '',
                                     'no_fc' => '',
                                     'unidades' => '',
                                     'valor_unitario' => '',
@@ -78,6 +80,17 @@
                                         @foreach ($proveedores ?? collect() as $proveedor)
                                             <option value="{{ $proveedor->id }}" @selected(($row['proveedor_id'] ?? '') == $proveedor->id)>
                                                 {{ $proveedor->name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </td>
+                                <td>
+                                    <select name="detalles[{{ $index }}][producto]"
+                                        class="form-select form-select-sm producto-select">
+                                        <option value="">Seleccione producto</option>
+                                        @foreach ($productos ?? collect() as $producto)
+                                            <option value="{{ $producto }}" @selected(($row['producto'] ?? '') === $producto)>
+                                                {{ $producto }}
                                             </option>
                                         @endforeach
                                     </select>
@@ -118,7 +131,7 @@
 
                     <tfoot>
                         <tr class="table-secondary fw-bold">
-                            <td colspan="3" class="text-end">TOTALES</td>
+                            <td colspan="4" class="text-end">TOTALES</td>
                             <td id="total-unidades" class="text-end">0</td>
                             <td></td>
                             <td id="total-vr-sin-iva" class="text-end">0</td>
@@ -139,11 +152,88 @@
         @endforeach
     </select>
 
+    <select id="productos-options-template" class="d-none">
+        <option value="">Seleccione producto</option>
+        @foreach ($productos ?? collect() as $producto)
+            <option value="{{ $producto }}">{{ $producto }}</option>
+        @endforeach
+    </select>
+
+    <style>
+        #compras-lub-registradas tr:target td {
+            background-color: #fff3cd;
+        }
+    </style>
+
+    <x-erp-card title="COMPRAS DE LUBRICANTES REGISTRADAS">
+        <form method="GET" action="{{ route('compras-lubricantes.create') }}"
+            class="d-flex flex-wrap align-items-end gap-2 p-3 pb-2">
+            <div>
+                <label for="compras-lub-desde" class="form-label small mb-1">Desde</label>
+                <input type="date" id="compras-lub-desde" name="desde" class="form-control form-control-sm"
+                    value="{{ $desde }}">
+            </div>
+            <div>
+                <label for="compras-lub-hasta" class="form-label small mb-1">Hasta</label>
+                <input type="date" id="compras-lub-hasta" name="hasta" class="form-control form-control-sm"
+                    value="{{ $hasta }}">
+            </div>
+            <button type="submit" class="btn btn-sm btn-outline-primary">Consultar</button>
+        </form>
+
+        <div class="table-responsive">
+            <table class="table table-bordered table-sm mb-0 align-middle" id="compras-lub-registradas">
+                <thead style="background-color:#ccccff;">
+                    <tr>
+                        <th class="text-center">FECHA</th>
+                        <th class="text-center">PROVEEDOR</th>
+                        <th class="text-center">PRODUCTO</th>
+                        <th class="text-center">No. FC</th>
+                        <th class="text-center">UNIDADES</th>
+                        <th class="text-center">VALOR UNITARIO</th>
+                        <th class="text-center">VR SIN IVA</th>
+                        <th class="text-center">IVA</th>
+                        <th class="text-center">TOTAL</th>
+                        <th class="text-center">ACCION</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse ($comprasRegistradas as $compra)
+                        <tr id="compra-{{ $compra->id }}">
+                            <td class="text-center">{{ $compra->fecha->format('d/m/Y') }}</td>
+                            <td>{{ $compra->proveedor?->name }}</td>
+                            <td>{{ $compra->nombre }}</td>
+                            <td>{{ $compra->no_fc }}</td>
+                            <td class="text-end">{{ number_format((float) $compra->unidades, 0, ',', '.') }}</td>
+                            <td class="text-end">{{ number_format((float) $compra->valor_unitario, 0, ',', '.') }}</td>
+                            <td class="text-end">{{ number_format((float) $compra->vr_sin_iva, 0, ',', '.') }}</td>
+                            <td class="text-end">{{ number_format((float) $compra->iva, 0, ',', '.') }}</td>
+                            <td class="text-end">{{ number_format((float) $compra->total, 0, ',', '.') }}</td>
+                            <td class="text-center">
+                                <form method="POST" action="{{ route('compras-lubricantes.destroy', $compra) }}"
+                                    onsubmit="return confirm('¿Eliminar esta compra? El inventario de canastilla se recalcula sin ella.');">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">Eliminar</button>
+                                </form>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="10" class="text-center text-muted py-3">No hay compras en el rango seleccionado.</td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </x-erp-card>
+
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const tbody = document.getElementById('compras-lub-body');
             const addBtn = document.getElementById('add-lub-row');
             const proveedorOptionsHtml = document.getElementById('proveedores-options-template').innerHTML;
+            const productoOptionsHtml = document.getElementById('productos-options-template').innerHTML;
             let nextIndex = tbody.querySelectorAll('tr').length;
 
             function parseNumber(value) {
@@ -229,6 +319,11 @@
                         </select>
                     </td>
                     <td>
+                        <select name="detalles[${index}][producto]" class="form-select form-select-sm producto-select">
+                            ${productoOptionsHtml}
+                        </select>
+                    </td>
+                    <td>
                         <input type="text" name="detalles[${index}][no_fc]" class="form-control form-control-sm">
                     </td>
                     <td>
@@ -278,10 +373,9 @@
                         }
                     });
 
-                    const firstSelect = rows[0].querySelector('.proveedor-select');
-                    if (firstSelect) {
-                        firstSelect.value = '';
-                    }
+                    rows[0].querySelectorAll('.proveedor-select, .producto-select').forEach(select => {
+                        select.value = '';
+                    });
                 } else {
                     e.target.closest('tr').remove();
                 }

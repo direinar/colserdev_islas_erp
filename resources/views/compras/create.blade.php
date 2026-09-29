@@ -137,6 +137,91 @@
         </x-erp-card>
     </form>
 
+    <style>
+        #compras-registradas tr:target td {
+            background-color: #fff3cd;
+        }
+    </style>
+
+    <x-erp-card title="COMPRAS REGISTRADAS">
+        <form method="GET" action="{{ route('compras.create') }}"
+            class="d-flex flex-wrap align-items-end gap-2 p-3 pb-2">
+            <div>
+                <label for="compras-desde" class="form-label small mb-1">Desde</label>
+                <input type="date" id="compras-desde" name="desde" class="form-control form-control-sm"
+                    value="{{ $desde }}">
+            </div>
+            <div>
+                <label for="compras-hasta" class="form-label small mb-1">Hasta</label>
+                <input type="date" id="compras-hasta" name="hasta" class="form-control form-control-sm"
+                    value="{{ $hasta }}">
+            </div>
+            <button type="submit" class="btn btn-sm btn-outline-primary">Consultar</button>
+        </form>
+
+        <div class="table-responsive">
+            <table class="table table-bordered table-sm mb-0 align-middle" id="compras-registradas">
+                <thead class="table-light">
+                    <tr>
+                        <th rowspan="2" class="text-center align-middle">FECHA</th>
+                        <th rowspan="2" class="text-center align-middle">No. FACTURA</th>
+                        <th colspan="2" class="text-center">GASOLINA</th>
+                        <th colspan="2" class="text-center">ACPM</th>
+                        <th colspan="2" class="text-center">TOTAL</th>
+                        <th rowspan="2" class="text-center align-middle">ACCION</th>
+                    </tr>
+                    <tr>
+                        <th class="text-center">GALONES</th>
+                        <th class="text-center">DISTRIB. COSTO</th>
+                        <th class="text-center">GALONES</th>
+                        <th class="text-center">DISTRIB. COSTO</th>
+                        <th class="text-center">VALOR</th>
+                        <th class="text-center">GALONES</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse ($comprasRegistradas as $compra)
+                        <tr id="compra-{{ $compra->id }}">
+                            <td class="text-center">{{ $compra->fecha->format('d/m/Y') }}</td>
+                            <td>{{ $compra->factura }}</td>
+                            <td class="text-end">{{ number_format((float) $compra->gasolina, 0, ',', '.') }}</td>
+                            <td class="text-end">{{ number_format((float) $compra->distribucion_gasolina, 0, ',', '.') }}</td>
+                            <td class="text-end">{{ number_format((float) $compra->acpm, 0, ',', '.') }}</td>
+                            <td class="text-end">{{ number_format((float) $compra->distribucion_acpm, 0, ',', '.') }}</td>
+                            <td class="text-end">{{ number_format((float) $compra->vr_total_fra, 0, ',', '.') }}</td>
+                            <td class="text-end">{{ number_format((float) $compra->total, 0, ',', '.') }}</td>
+                            <td class="text-center text-nowrap">
+                                <a href="{{ route('compras.edit', $compra) }}" class="btn btn-sm btn-outline-primary">Editar</a>
+                                <form method="POST" action="{{ route('compras.destroy', $compra) }}" class="d-inline"
+                                    onsubmit="return confirm('¿Eliminar la compra {{ $compra->factura }}? El inventario se recalcula sin ella.');">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">Eliminar</button>
+                                </form>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="9" class="text-center text-muted py-3">No hay compras en el rango seleccionado.</td>
+                        </tr>
+                    @endforelse
+                </tbody>
+                <tfoot>
+                    <tr class="table-secondary fw-bold">
+                        <td colspan="2" class="text-end">TOTALES</td>
+                        <td class="text-end">{{ number_format((float) $comprasRegistradas->sum('gasolina'), 0, ',', '.') }}</td>
+                        <td class="text-end">{{ number_format((float) $comprasRegistradas->sum('distribucion_gasolina'), 0, ',', '.') }}</td>
+                        <td class="text-end">{{ number_format((float) $comprasRegistradas->sum('acpm'), 0, ',', '.') }}</td>
+                        <td class="text-end">{{ number_format((float) $comprasRegistradas->sum('distribucion_acpm'), 0, ',', '.') }}</td>
+                        <td class="text-end">{{ number_format((float) $comprasRegistradas->sum('vr_total_fra'), 0, ',', '.') }}</td>
+                        <td class="text-end">{{ number_format((float) $comprasRegistradas->sum('total'), 0, ',', '.') }}</td>
+                        <td></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </x-erp-card>
+
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const tbody = document.getElementById('compras-body');
