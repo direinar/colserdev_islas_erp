@@ -9,7 +9,6 @@
                 <h4 class="mb-0 text-danger fw-bold">INVENTARIOS GASOLINA</h4>
                 <small class="text-muted">Formato de control por planilla con kardex de costo promedio y ventas.</small>
             </div>
-            <button type="submit" form="inventario-gasolina-form" class="btn btn-primary btn-sm">Guardar inventario</button>
         </div>
     </div>
 
@@ -31,17 +30,20 @@
         @csrf
 
         @php
-            $rows = old('rows', [
-                [
-                    'fecha' => date('Y-m-d'),
-                    'planilla_no' => '',
-                    'fc_compra_no' => '',
-                    'entradas_galones' => '',
-                    'salidas_galones' => '',
-                    'valor_entradas' => '',
-                    'precio_venta' => old('precio_venta_default', '0'),
+            $rows = old(
+                'rows',
+                $rows ?? [
+                    [
+                        'fecha' => date('Y-m-d'),
+                        'planilla_no' => '',
+                        'fc_compra_no' => '',
+                        'entradas_galones' => '',
+                        'salidas_galones' => '',
+                        'valor_entradas' => '',
+                        'precio_venta' => old('precio_venta_default', '0'),
+                    ],
                 ],
-            ]);
+            );
         @endphp
 
         <x-erp-card title="INVENTARIOS GASOLINA">
@@ -109,9 +111,15 @@
                                         class="form-control form-control-sm" value="{{ $row['fecha'] ?? '' }}">
                                 </td>
                                 <td>
-                                    <input type="text" name="rows[{{ $index }}][planilla_no]"
-                                        class="form-control form-control-sm text-end" inputmode="numeric"
-                                        value="{{ $row['planilla_no'] ?? '' }}">
+                                    @if (!empty($row['numero_turno']))
+                                        <a href="{{ route('turnos.create', ['turno_busqueda' => $row['numero_turno']]) }}"
+                                            class="text-nowrap" title="Abrir planilla del turno">
+                                            #{{ $row['numero_turno'] }}
+                                            ({{ \Illuminate\Support\Carbon::parse($row['fecha'])->format('d/m/Y') }})
+                                        </a>
+                                    @else
+                                        <span class="text-muted">-</span>
+                                    @endif
                                 </td>
                                 <td>
                                     <input type="text" name="rows[{{ $index }}][fc_compra_no]"
@@ -137,8 +145,8 @@
                                         inputmode="decimal" value="{{ $row['valor_entradas'] ?? '' }}">
                                 </td>
                                 <td>
-                                    <input type="text"
-                                        class="form-control form-control-sm text-end valor-salidas-output" readonly>
+                                    <input type="text" class="form-control form-control-sm text-end valor-salidas-output"
+                                        readonly>
                                 </td>
                                 <td>
                                     <input type="text" class="form-control form-control-sm text-end valor-saldo-output"
@@ -199,16 +207,46 @@
             let nextIndex = tbody.querySelectorAll('tr[data-index]').length;
 
             function parseNumber(value) {
-                if (!value) {
+                if (value === null || value === undefined || value === '') {
                     return 0;
                 }
 
-                const clean = String(value).replace(/\./g, '').replace(/,/g, '.');
+                let clean = String(value).trim().replace(/\s+/g, '');
+
+                if (clean.includes(',') && clean.includes('.')) {
+                    const lastComma = clean.lastIndexOf(',');
+                    const lastDot = clean.lastIndexOf('.');
+
+                    if (lastDot > lastComma) {
+                        clean = clean.replace(/,/g, '');
+                    } else {
+                        clean = clean.replace(/\./g, '').replace(/,/g, '.');
+                    }
+                } else if (clean.includes(',')) {
+                    clean = clean.replace(/\./g, '').replace(/,/g, '.');
+                } else if (clean.includes('.')) {
+                    const parts = clean.split('.');
+                    if (parts.length > 1 && parts.every(part => /^\d+$/.test(part)) && parts[parts.length - 1]
+                        .length === 3 && parts.length > 1) {
+                        clean = clean.replace(/\./g, '');
+                    }
+                }
+
                 return Number(clean) || 0;
             }
 
             function formatNumber(number, decimals = 0) {
-                return Number(number).toLocaleString('es-CO', {
+                const value = Number(number);
+
+                if (!Number.isFinite(value)) {
+                    return '0';
+                }
+
+                if (decimals === 0) {
+                    return value.toString();
+                }
+
+                return Number(value).toLocaleString('es-CO', {
                     minimumFractionDigits: decimals,
                     maximumFractionDigits: decimals,
                 });
@@ -297,7 +335,7 @@
             function attachRowEvents(row) {
                 row.querySelectorAll(
                         '.entradas-galones-input, .salidas-galones-input, .valor-entradas-input, .precio-venta-input'
-                        )
+                    )
                     .forEach(input => {
                         input.addEventListener('input', updateRows);
                         input.addEventListener('change', updateRows);
@@ -318,7 +356,7 @@
                         <input type="date" name="rows[${index}][fecha]" class="form-control form-control-sm" value="{{ date('Y-m-d') }}">
                     </td>
                     <td>
-                        <input type="text" name="rows[${index}][planilla_no]" class="form-control form-control-sm text-end" inputmode="numeric">
+                        <span class="text-muted">-</span>
                     </td>
                     <td>
                         <input type="text" name="rows[${index}][fc_compra_no]" class="form-control form-control-sm">
@@ -361,7 +399,8 @@
             getRows().forEach(attachRowEvents);
 
             [saldoAnteriorGalonesInput, saldoAnteriorValorInput, saldoAnteriorPromedioInput,
-                precioVentaDefaultInput]
+                precioVentaDefaultInput
+            ]
             .forEach(input => {
                 input.addEventListener('input', updateRows);
                 input.addEventListener('change', updateRows);

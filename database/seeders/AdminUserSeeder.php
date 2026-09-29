@@ -28,6 +28,7 @@ class AdminUserSeeder extends Seeder
                 'name' => 'Carlos Beltrán',
                 'password' => 'password',
                 'role' => User::ROLE_ADMINISTRADOR,
+                
                 'email_verified_at' => now(),
             ]
         );

@@ -45,8 +45,14 @@ return new class extends Migration
             ->delete();
 
         Schema::table('cartera_movimientos', function (Blueprint $table) {
+            $table->dropForeign(['customer_id']);
             $table->dropIndex(['customer_id', 'origen']);
             $table->dropColumn('origen');
+            $table->index('customer_id');
+            $table->foreign('customer_id')
+                ->references('id')
+                ->on('customers')
+                ->cascadeOnDelete();
         });
     }
 };

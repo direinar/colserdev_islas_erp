@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Compra;
 use App\Models\InventarioGasolina;
+use App\Models\Turno;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -11,11 +13,66 @@ class InventarioGasolinaController extends Controller
 {
     public function create()
     {
-        return view('inventarios.gasolina.create');
+        $compras = Compra::query()
+            ->orderBy('fecha')
+            ->orderBy('id')
+            ->get();
+
+        $turnos = Turno::query()
+            ->orderBy('fecha')
+            ->orderBy('numero_turno')
+            ->get(['numero_turno', 'fecha', 'lecturas_galones_corriente']);
+
+        $filasCompras = $compras
+            ->map(function (Compra $compra) {
+                $fecha = $compra->fecha?->format('Y-m-d');
+
+                return [
+                    'fecha' => $fecha,
+                    'numero_turno' => null,
+                    'fc_compra_no' => $compra->factura,
+                    'entradas_galones' => $this->formatInputValue((float) $compra->gasolina),
+                    'salidas_galones' => '',
+                    'valor_entradas' => $this->formatInputValue((float) $compra->distribucion_gasolina),
+                    'precio_venta' => '0',
+                    'orden' => $fecha.'-0-'.sprintf('%010d', $compra->id),
+                ];
+            });
+
+        $filasTurnos = $turnos
+            ->map(function (Turno $turno) {
+                $fecha = $turno->fecha->format('Y-m-d');
+
+                return [
+                    'fecha' => $fecha,
+                    'numero_turno' => $turno->numero_turno,
+                    'fc_compra_no' => '',
+                    'entradas_galones' => '',
+                    'salidas_galones' => $this->formatQuantityInput((float) $turno->lecturas_galones_corriente),
+                    'valor_entradas' => '',
+                    'precio_venta' => '0',
+                    'orden' => $fecha.'-1-'.sprintf('%010d', $turno->numero_turno),
+                ];
+            });
+
+        $rows = $filasCompras
+            ->concat($filasTurnos)
+            ->sortBy('orden')
+            ->map(function (array $row) {
+                unset($row['orden']);
+
+                return $row;
+            })
+            ->values()
+            ->all();
+
+        return view('inventarios.gasolina.create', compact('rows'));
     }
 
     public function store(Request $request)
     {
+        abort(403, 'El inventario de gasolina se alimenta desde Compras de combustible.');
+
         $table = (new InventarioGasolina)->getTable();
         if (! Schema::hasTable($table)) {
             return back()->withErrors([
@@ -108,9 +165,24 @@ class InventarioGasolinaController extends Controller
             return 0.0;
         }
 
-        $clean = str_replace(['.', ' '], ['', ''], (string) $value);
+        $clean = str_replace([' ', '\t', '\n', '\r'], '', (string) $value);
+        $clean = str_replace('.', '', $clean);
         $clean = str_replace(',', '.', $clean);
 
         return is_numeric($clean) ? (float) $clean : 0.0;
+    }
+
+    private function formatInputValue(float $value): string
+    {
+        if (fmod($value, 1.0) === 0.0) {
+            return (string) (int) $value;
+        }
+
+        return rtrim(rtrim((string) number_format($value, 3, '.', ''), '0'), '.');
+    }
+
+    private function formatQuantityInput(float $value): string
+    {
+        return rtrim(rtrim(number_format($value, 3, ',', ''), '0'), ',');
     }
 }

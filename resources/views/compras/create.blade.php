@@ -38,21 +38,23 @@
 
             <div class="table-responsive">
                 <table class="table table-bordered table-sm mb-0" id="compras-table">
-                    <thead style="background-color:#fff000;">
+                    <thead class="table-light">
                         <tr>
-                            <th class="text-center align-middle">FECHA</th>
-                            <th class="text-center align-middle">No. FACTURA</th>
-                            <th class="text-center align-middle">VR TOTAL FRA</th>
-                            <th class="text-center align-middle">GASOLINA</th>
-                            <th class="text-center align-middle">ACPM</th>
-                            <th class="text-center align-middle">TOTAL</th>
-                            <th colspan="2" class="text-center align-middle">DISTRIBUCION DEL COSTO</th>
+                            <th class="text-center align-middle border-end">FECHA</th>
+                            <th class="text-center align-middle border-end">No. FACTURA</th>
+                            <th colspan="2" class="text-center align-middle border-end">GASOLINA</th>
+                            <th colspan="2" class="text-center align-middle border-end">ACPM</th>
+                            <th colspan="2" class="text-center align-middle border-end">TOTAL</th>
                             <th class="text-center align-middle">ACCION</th>
                         </tr>
                         <tr>
-                            <th colspan="6"></th>
-                            <th class="text-center">GASOLINA</th>
-                            <th class="text-center">ACPM</th>
+                            <th colspan="2" class="border-end"></th>
+                            <th class="text-center border-end">UNIDADES</th>
+                            <th class="text-center border-end">DISTRIB. COSTO</th>
+                            <th class="text-center border-end">UNIDADES</th>
+                            <th class="text-center border-end">DISTRIB. COSTO</th>
+                            <th class="text-center border-end">VALOR</th>
+                            <th class="text-center border-end">UNIDADES</th>
                             <th></th>
                         </tr>
                     </thead>
@@ -84,14 +86,14 @@
                                         class="form-control form-control-sm" value="{{ $row['factura'] ?? '' }}">
                                 </td>
                                 <td>
-                                    <input type="text" name="compras[{{ $index }}][vr_total_fra]"
-                                        class="form-control form-control-sm text-end vr-total-fra-input" inputmode="decimal"
-                                        value="{{ $row['vr_total_fra'] ?? '' }}">
-                                </td>
-                                <td>
                                     <input type="text" name="compras[{{ $index }}][gasolina]"
                                         class="form-control form-control-sm text-end gasolina-input" inputmode="decimal"
                                         value="{{ $row['gasolina'] ?? '' }}">
+                                </td>
+                                <td>
+                                    <input type="text" name="compras[{{ $index }}][distribucion_gasolina]"
+                                        class="form-control form-control-sm text-end distribucion-gasolina-input"
+                                        inputmode="decimal" value="{{ $row['distribucion_gasolina'] ?? '' }}">
                                 </td>
                                 <td>
                                     <input type="text" name="compras[{{ $index }}][acpm]"
@@ -99,16 +101,17 @@
                                         value="{{ $row['acpm'] ?? '' }}">
                                 </td>
                                 <td>
+                                    <input type="text" name="compras[{{ $index }}][distribucion_acpm]"
+                                        class="form-control form-control-sm text-end distribucion-acpm-input"
+                                        inputmode="decimal" value="{{ $row['distribucion_acpm'] ?? '' }}">
+                                </td>
+                                <td>
+                                    <input type="text" name="compras[{{ $index }}][vr_total_fra]"
+                                        class="form-control form-control-sm text-end vr-total-fra-input" readonly>
+                                </td>
+                                <td>
                                     <input type="text" name="compras[{{ $index }}][total]"
                                         class="form-control form-control-sm text-end total-input" readonly>
-                                </td>
-                                <td>
-                                    <input type="text" name="compras[{{ $index }}][distribucion_gasolina]"
-                                        class="form-control form-control-sm text-end distribucion-gasolina-input" readonly>
-                                </td>
-                                <td>
-                                    <input type="text" name="compras[{{ $index }}][distribucion_acpm]"
-                                        class="form-control form-control-sm text-end distribucion-acpm-input" readonly>
                                 </td>
                                 <td class="text-center">
                                     <button type="button" class="btn btn-sm btn-danger remove-row">×</button>
@@ -119,11 +122,14 @@
 
                     <tfoot>
                         <tr class="table-secondary fw-bold">
-                            <td colspan="3" class="text-end">TOTALES</td>
+                            <td colspan="2" class="text-end">TOTALES</td>
                             <td id="total-gasolina" class="text-end">0</td>
+                            <td id="total-distrib-gasolina" class="text-end">0</td>
                             <td id="total-acpm" class="text-end">0</td>
-                            <td id="total-general" class="text-end">0</td>
-                            <td colspan="3"></td>
+                            <td id="total-distrib-acpm" class="text-end">0</td>
+                            <td id="total-valor" class="text-end">0</td>
+                            <td id="total-unidades" class="text-end">0</td>
+                            <td></td>
                         </tr>
                     </tfoot>
                 </table>
@@ -138,26 +144,30 @@
             let nextIndex = tbody.querySelectorAll('tr').length;
 
             function parseNumber(value) {
-                if (!value) {
+                if (value === null || value === undefined || value === '') {
                     return 0;
                 }
 
-                const clean = value.toString()
+                const clean = String(value).trim()
+                    .replace(/\s+/g, '')
                     .replace(/\./g, '')
                     .replace(/,/g, '.');
 
                 return Number(clean) || 0;
             }
 
-            function formatNumber(number, decimals = 0) {
-                return Number(number).toLocaleString('es-CO', {
-                    minimumFractionDigits: decimals,
-                    maximumFractionDigits: decimals,
-                });
+            function formatNumber(number) {
+                const value = Number(number);
+
+                if (!Number.isFinite(value)) {
+                    return '0';
+                }
+
+                return value.toString();
             }
 
-            function setFormattedValue(input, value, decimals = 0) {
-                input.value = formatNumber(value, decimals);
+            function setFormattedValue(input, value) {
+                input.value = formatNumber(value);
             }
 
             function updateRow(row) {
@@ -168,46 +178,56 @@
                 const distribucionGasolinaInput = row.querySelector('.distribucion-gasolina-input');
                 const distribucionAcpmInput = row.querySelector('.distribucion-acpm-input');
 
-                const vrTotalFra = parseNumber(vrTotalFraInput.value);
                 const gasolina = parseNumber(gasolinaInput.value);
                 const acpm = parseNumber(acpmInput.value);
-                const total = gasolina + acpm;
+                const distribucionGasolina = parseNumber(distribucionGasolinaInput.value);
+                const distribucionAcpm = parseNumber(distribucionAcpmInput.value);
+                const totalUnidades = gasolina + acpm;
+                const totalValor = distribucionGasolina + distribucionAcpm;
 
-                const distribucionGasolina = total > 0 ? (vrTotalFra * gasolina) / total : 0;
-                const distribucionAcpm = total > 0 ? (vrTotalFra * acpm) / total : 0;
-
-                setFormattedValue(totalInput, total, 0);
-                setFormattedValue(distribucionGasolinaInput, distribucionGasolina, 0);
-                setFormattedValue(distribucionAcpmInput, distribucionAcpm, 0);
+                setFormattedValue(totalInput, totalUnidades);
+                setFormattedValue(vrTotalFraInput, totalValor);
             }
 
             function updateTotals() {
                 let totalGasolina = 0;
+                let totalDistribGasolina = 0;
                 let totalAcpm = 0;
-                let totalGeneral = 0;
+                let totalDistribAcpm = 0;
+                let totalValor = 0;
+                let totalUnidades = 0;
 
                 tbody.querySelectorAll('tr').forEach(row => {
                     updateRow(row);
 
                     totalGasolina += parseNumber(row.querySelector('.gasolina-input')?.value);
+                    totalDistribGasolina += parseNumber(row.querySelector('.distribucion-gasolina-input')
+                        ?.value);
                     totalAcpm += parseNumber(row.querySelector('.acpm-input')?.value);
-                    totalGeneral += parseNumber(row.querySelector('.total-input')?.value);
+                    totalDistribAcpm += parseNumber(row.querySelector('.distribucion-acpm-input')?.value);
+                    totalValor += parseNumber(row.querySelector('.vr-total-fra-input')?.value);
+                    totalUnidades += parseNumber(row.querySelector('.total-input')?.value);
                 });
 
                 document.getElementById('total-gasolina').textContent = formatNumber(totalGasolina);
+                document.getElementById('total-distrib-gasolina').textContent = formatNumber(totalDistribGasolina);
                 document.getElementById('total-acpm').textContent = formatNumber(totalAcpm);
-                document.getElementById('total-general').textContent = formatNumber(totalGeneral);
+                document.getElementById('total-distrib-acpm').textContent = formatNumber(totalDistribAcpm);
+                document.getElementById('total-valor').textContent = formatNumber(totalValor);
+                document.getElementById('total-unidades').textContent = formatNumber(totalUnidades);
             }
 
             function attachEvents(row) {
-                row.querySelectorAll('.vr-total-fra-input, .gasolina-input, .acpm-input').forEach(input => {
-                    input.addEventListener('input', updateTotals);
-                    input.addEventListener('change', updateTotals);
-                    input.addEventListener('blur', function() {
-                        const value = parseNumber(input.value);
-                        setFormattedValue(input, value, 0);
+                row.querySelectorAll(
+                        '.gasolina-input, .distribucion-gasolina-input, .acpm-input, .distribucion-acpm-input')
+                    .forEach(input => {
+                        input.addEventListener('input', updateTotals);
+                        input.addEventListener('change', updateTotals);
+                        input.addEventListener('blur', function() {
+                            const value = parseNumber(input.value);
+                            setFormattedValue(input, value);
+                        });
                     });
-                });
             }
 
             function createRow(index) {
@@ -221,22 +241,22 @@
                         <input type="text" name="compras[${index}][factura]" class="form-control form-control-sm">
                     </td>
                     <td>
-                        <input type="text" name="compras[${index}][vr_total_fra]" class="form-control form-control-sm text-end vr-total-fra-input" inputmode="decimal">
+                        <input type="text" name="compras[${index}][gasolina]" class="form-control form-control-sm text-end gasolina-input" inputmode="decimal">
                     </td>
                     <td>
-                        <input type="text" name="compras[${index}][gasolina]" class="form-control form-control-sm text-end gasolina-input" inputmode="decimal">
+                        <input type="text" name="compras[${index}][distribucion_gasolina]" class="form-control form-control-sm text-end distribucion-gasolina-input" inputmode="decimal">
                     </td>
                     <td>
                         <input type="text" name="compras[${index}][acpm]" class="form-control form-control-sm text-end acpm-input" inputmode="decimal">
                     </td>
                     <td>
+                        <input type="text" name="compras[${index}][distribucion_acpm]" class="form-control form-control-sm text-end distribucion-acpm-input" inputmode="decimal">
+                    </td>
+                    <td>
+                        <input type="text" name="compras[${index}][vr_total_fra]" class="form-control form-control-sm text-end vr-total-fra-input" readonly>
+                    </td>
+                    <td>
                         <input type="text" name="compras[${index}][total]" class="form-control form-control-sm text-end total-input" readonly>
-                    </td>
-                    <td>
-                        <input type="text" name="compras[${index}][distribucion_gasolina]" class="form-control form-control-sm text-end distribucion-gasolina-input" readonly>
-                    </td>
-                    <td>
-                        <input type="text" name="compras[${index}][distribucion_acpm]" class="form-control form-control-sm text-end distribucion-acpm-input" readonly>
                     </td>
                     <td class="text-center">
                         <button type="button" class="btn btn-sm btn-danger remove-row">×</button>
