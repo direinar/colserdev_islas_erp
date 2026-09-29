@@ -29,6 +29,7 @@ class CompraController extends Controller
 
         $facturasUsadas = [];
         $erroresDuplicados = [];
+        $rowsToSave = [];
 
         foreach ($request->input('compras', []) as $row) {
             $fecha = $row['fecha'] ?? null;
@@ -40,17 +41,19 @@ class CompraController extends Controller
             $vrTotalFra = $this->parseDecimal($row['vr_total_fra'] ?? null);
             $total = $this->parseDecimal($row['total'] ?? null);
 
-            if (! $fecha && $factura === '' && $gasolina === 0.0 && $acpm === 0.0 && $distribucionGasolina === 0.0 && $distribucionAcpm === 0.0 && $vrTotalFra === 0.0 && $total === 0.0) {
+            if ($factura === '' && $gasolina === 0.0 && $acpm === 0.0 && $distribucionGasolina === 0.0 && $distribucionAcpm === 0.0 && $vrTotalFra === 0.0 && $total === 0.0) {
                 continue;
             }
 
             if ($factura !== '' && in_array($factura, $facturasUsadas, true)) {
                 $erroresDuplicados[] = "La factura {$factura} ya existe en esta carga.";
+
                 continue;
             }
 
             if ($factura !== '' && Compra::where('factura', $factura)->exists()) {
                 $erroresDuplicados[] = "La factura {$factura} ya está registrada en el sistema.";
+
                 continue;
             }
 
@@ -91,13 +94,12 @@ class CompraController extends Controller
         }
 
         DB::transaction(function () use ($rowsToSave) {
-            foreach ($rowsToSave ?? [] as $row) {
+            foreach ($rowsToSave as $row) {
                 Compra::create($row);
             }
         });
 
         return redirect()->route('compras.create')
-            ->withInput()
             ->with('success', 'Compras guardadas correctamente.');
     }
 

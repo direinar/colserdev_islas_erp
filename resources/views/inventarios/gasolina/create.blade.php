@@ -113,10 +113,7 @@
                                 <td>
                                     @if (!empty($row['numero_turno']))
                                         <a href="{{ route('turnos.create', ['turno_busqueda' => $row['numero_turno']]) }}"
-                                            class="text-nowrap" title="Abrir planilla del turno">
-                                            #{{ $row['numero_turno'] }}
-                                            ({{ \Illuminate\Support\Carbon::parse($row['fecha'])->format('d/m/Y') }})
-                                        </a>
+                                            class="text-decoration-none" title="Abrir planilla del turno">{{ $row['numero_turno'] }}</a>
                                     @else
                                         <span class="text-muted">-</span>
                                     @endif

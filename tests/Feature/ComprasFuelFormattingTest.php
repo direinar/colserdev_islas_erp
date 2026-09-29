@@ -54,9 +54,9 @@ test('el inventario de gasolina conserva enteros y decimales de la compra sin fo
         ->toContain('value="30"')
         ->toContain('value="16.25"')
         ->toContain(route('turnos.create', ['turno_busqueda' => 15]))
-        ->toContain('#15')
-        ->toContain('#17')
-        ->toContain('15/09/2026')
+        ->toContain('>15</a>')
+        ->toContain('>17</a>')
+        ->not->toContain('(15/09/2026)')
         ->not->toContain('value="30.000"')
         ->not->toContain('value="16.250"');
 
@@ -70,4 +70,39 @@ test('el inventario de gasolina conserva enteros y decimales de la compra sin fo
         ->get(route('turnos.create', ['turno_busqueda' => $turno->numero_turno]));
 
     expect($turnoResponse->viewData('turno')->id)->toBe($turno->id);
+});
+
+test('guardar compras no devuelve las filas al formulario para evitar que se guarden dos veces', function () {
+    $admin = User::factory()->create(['role' => User::ROLE_ADMINISTRADOR]);
+
+    $this->actingAs($admin)
+        ->post(route('compras.store'), [
+            'compras' => [
+                ['fecha' => '2026-09-20', 'factura' => '', 'gasolina' => '10', 'acpm' => '0', 'distribucion_gasolina' => '1000'],
+            ],
+        ])
+        ->assertRedirect(route('compras.create'))
+        ->assertSessionHas('success');
+
+    expect(Compra::whereDate('fecha', '2026-09-20')->count())->toBe(1);
+
+    $this->actingAs($admin)
+        ->get(route('compras.create'))
+        ->assertOk()
+        ->assertDontSee('value="1000"', false);
+});
+
+test('una fila de compra que solo trae la fecha no se guarda', function () {
+    $admin = User::factory()->create(['role' => User::ROLE_ADMINISTRADOR]);
+
+    $this->actingAs($admin)
+        ->post(route('compras.store'), [
+            'compras' => [
+                ['fecha' => '2026-09-21', 'factura' => '', 'gasolina' => '', 'acpm' => '', 'distribucion_gasolina' => '', 'distribucion_acpm' => '', 'vr_total_fra' => '0', 'total' => '0'],
+                ['fecha' => '2026-09-21', 'factura' => 'F-300', 'gasolina' => '5', 'acpm' => '0', 'distribucion_gasolina' => '500'],
+            ],
+        ])
+        ->assertRedirect(route('compras.create'));
+
+    expect(Compra::whereDate('fecha', '2026-09-21')->pluck('factura')->all())->toBe(['F-300']);
 });
