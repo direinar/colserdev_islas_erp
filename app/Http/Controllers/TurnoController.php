@@ -11,6 +11,7 @@ use App\Services\CarteraTurnoSyncService;
 use App\Support\NumberParser;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class TurnoController extends Controller
 {
@@ -97,7 +98,10 @@ class TurnoController extends Controller
             'recaudos_admin' => ['nullable', 'array'],
             'traslado_sobrante' => ['nullable'],
             'traslado_faltante' => ['nullable'],
+            'sobrante_pendiente' => ['nullable', 'numeric'],
         ]);
+
+        $this->validarClientes($request);
 
         DB::transaction(function () use ($request, $carteraSync) {
             // numero_turno es un consecutivo único en toda la tabla, así que basta
@@ -137,6 +141,11 @@ class TurnoController extends Controller
                 // vuelva a mostrar el faltante/sobrante original al recargar.
                 'traslado_sobrante' => $trasladoSobrante,
                 'traslado_faltante' => $trasladoFaltante,
+                // Sobrante/faltante que quedó sin trasladar (lo calcula el navegador);
+                // impide marcar la planilla como revisada mientras no sea cero.
+                'sobrante_pendiente' => $request->filled('sobrante_pendiente')
+                    ? round((float) $request->input('sobrante_pendiente'))
+                    : null,
             ];
 
             if ($turno) {
@@ -201,6 +210,17 @@ class TurnoController extends Controller
 
     public function revisar(Request $request, Turno $turno)
     {
+        // No se revisa una planilla con SOBRANTE o FALTANTE sin trasladar.
+        if ($turno->sobrante_pendiente === null) {
+            return back()->withErrors(['revisar' => 'Turno #'.$turno->numero_turno.': abra la planilla y guárdela antes de marcarla como revisada, para verificar el sobrante o faltante.']);
+        }
+
+        if (abs((float) $turno->sobrante_pendiente) >= 1) {
+            $tipo = (float) $turno->sobrante_pendiente < 0 ? 'FALTANTE' : 'SOBRANTE';
+
+            return back()->withErrors(['revisar' => 'Turno #'.$turno->numero_turno.': tiene un '.$tipo.' de $'.number_format(abs((float) $turno->sobrante_pendiente), 0, ',', '.').' sin trasladar. Use TRASLADAR y guarde la planilla antes de marcarla como revisada.']);
+        }
+
         $turno->update([
             'revisado' => true,
             'revisado_por' => $request->user()->name,
@@ -224,6 +244,42 @@ class TurnoController extends Controller
 
         return redirect()->route('turnos.create', ['turno_busqueda' => $turno->numero_turno])
             ->with('success', 'Turno #'.$turno->numero_turno.' devuelto a PENDIENTE DE REVISIÓN. Ya se puede corregir.');
+    }
+
+    /**
+     * CARTERA - CRÉDITO DIRECTO, RECAUDOS Y ANTICIPOS POR ISLAS y RECAUDOS POR
+     * ADMINISTRACIÓN no admiten un valor sin CLIENTE. La planilla ya lo impide en
+     * pantalla; esto es el respaldo del lado del servidor.
+     */
+    private function validarClientes(Request $request): void
+    {
+        $secciones = [
+            'cartera' => ['valor' => 'cartera_valor', 'cliente' => 'cliente_id', 'titulo' => 'CARTERA - CRÉDITO DIRECTO'],
+            'recaudos' => ['valor' => 'valor', 'cliente' => 'cliente_id', 'titulo' => 'RECAUDOS Y ANTICIPOS POR ISLAS'],
+        ];
+
+        // El islero no alimenta RECAUDOS POR ADMINISTRACIÓN (sus filas no se guardan).
+        if (! $request->user()->isIslero()) {
+            $secciones['recaudos_admin'] = ['valor' => 'valor', 'cliente' => 'responsable_id', 'titulo' => 'RECAUDOS POR ADMINISTRACIÓN'];
+        }
+
+        $errores = [];
+
+        foreach ($secciones as $campo => $seccion) {
+            foreach ((array) $request->input($campo, []) as $row) {
+                if (! is_array($row)) {
+                    continue;
+                }
+
+                if (NumberParser::money($row[$seccion['valor']] ?? null) != 0 && empty($row[$seccion['cliente']])) {
+                    $errores[$campo] = 'En '.$seccion['titulo'].' hay valores sin CLIENTE. Seleccione el cliente de cada fila.';
+                }
+            }
+        }
+
+        if ($errores) {
+            throw ValidationException::withMessages($errores);
+        }
     }
 
     /**

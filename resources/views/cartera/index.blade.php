@@ -22,36 +22,76 @@
             min-width: 5.5rem;
         }
 
-        @media print {
-            @page {
-                size: landscape;
-                margin: 10mm;
-            }
+        /* Datos del vehículo: mismo tamaño de letra que la tabla y alineados a la derecha. */
+        #cartera-table .cartera-fila-vehiculo input.form-control {
+            font-size: inherit;
+            text-align: right;
+        }
 
+        /* Al definir un recuadro del margen de la página, Chrome/Edge no imprimen su
+           encabezado propio (título "Estado de cuenta" pequeño y fecha/hora repetida). */
+        @page {
+            size: landscape;
+            margin: 7mm 6mm 8mm;
+
+            @bottom-right {
+                content: "Página " counter(page) " de " counter(pages);
+                font-size: 8px;
+                color: #555;
+            }
+        }
+
+        @media print {
             nav,
             .navbar {
                 display: none !important;
             }
 
+            body > .container-fluid {
+                padding: 0 !important;
+            }
+
+            .card,
+            .card-body {
+                border: 0 !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                box-shadow: none !important;
+            }
+
+            .cartera-encabezado-impresion {
+                padding: 0 0 4px !important;
+            }
+
+            /* Compacto para que quepa el mayor número de transacciones por hoja. */
             #cartera-table {
-                font-size: 10px;
+                font-size: 9px;
+                line-height: 1.15;
+            }
+
+            #cartera-table > :not(caption) > * > * {
+                padding: 1px 3px !important;
             }
 
             #cartera-table input {
                 border: 0;
                 padding: 0;
+                height: auto;
+                min-height: 0;
+                line-height: inherit;
                 background: transparent;
                 min-width: 0 !important;
+                box-shadow: none;
+            }
+
+            #cartera-table tr {
+                break-inside: avoid;
             }
 
             #cartera-table thead {
                 background-color: #ccccff !important;
                 -webkit-print-color-adjust: exact;
                 print-color-adjust: exact;
-            }
-
-            .card {
-                border: 0;
             }
         }
     </style>
@@ -141,17 +181,25 @@
                 Seleccione un cliente para ver su estado de cuenta.
             </div>
         @else
-            <div class="px-3 pb-2 pt-2">
-                <div class="d-none d-print-block">
-                    <h4 class="fw-bold mb-1">ESTADO DE CUENTA</h4>
-                </div>
+            <div class="px-3 pb-2 pt-2 d-print-none">
                 <div class="small text-muted">Cliente</div>
                 <h5 class="mb-0 fw-bold">{{ $customer->name }}</h5>
                 <div class="small text-muted">NIT / Documento: {{ $customer->document }}</div>
-                <div class="small text-muted d-none d-print-block">
-                    Periodo: {{ \Illuminate\Support\Carbon::parse($fechaInicial)->format('d/m/Y') }}
-                    al {{ \Illuminate\Support\Carbon::parse($fechaFinal)->format('d/m/Y') }}
-                    · Impreso: {{ now()->format('d/m/Y H:i') }}
+            </div>
+
+            {{-- Encabezado impreso: compacto para dejar espacio a las transacciones. --}}
+            <div class="d-none d-print-block cartera-encabezado-impresion">
+                <div class="d-flex justify-content-between align-items-baseline">
+                    <h4 class="fw-bold mb-0">EDS EL PORTAL DE TUNJA</h4>
+                    <h4 class="fw-bold mb-0">ESTADO DE CUENTA</h4>
+                </div>
+                <div class="d-flex justify-content-between small">
+                    <span><strong>{{ $customer->name }}</strong> · NIT / Documento: {{ $customer->document }}</span>
+                    <span>
+                        Periodo: {{ \Illuminate\Support\Carbon::parse($fechaInicial)->format('d/m/Y') }}
+                        al {{ \Illuminate\Support\Carbon::parse($fechaFinal)->format('d/m/Y') }}
+                        · Impreso: {{ now()->format('d/m/Y H:i') }}
+                    </span>
                 </div>
             </div>
 
@@ -172,7 +220,7 @@
                                 <th class="text-center align-middle">PRODUCTO</th>
                                 <th class="text-center align-middle">GALONES</th>
                                 <th class="text-center align-middle">VR. UNITARIO</th>
-                                <th class="text-center align-middle">BRUTO</th>
+                                <th class="text-center align-middle">VR. BRUTO</th>
                                 <th class="text-center align-middle">DESCUENTO</th>
                                 <th class="text-center align-middle">CONCEPTO</th>
                                 <th class="text-center align-middle">VR. NETO CARGO</th>
@@ -196,7 +244,7 @@
                             @foreach ($movimientos as $index => $m)
                                 @php $vehiculo = $m->llevaDatosVehiculo(); @endphp
                                 <tr data-id="{{ $m->id }}" @class(['cartera-fila-vehiculo' => $vehiculo])>
-                                    <td class="text-nowrap">
+                                    <td class="text-nowrap text-center">
                                         @if ($m->esDeTurno())
                                             <a href="{{ route('turnos.create', ['turno_busqueda' => $m->planillas]) }}"
                                                 class="text-decoration-none" title="Abrir planilla del turno">{{ $m->planillas }}</a>

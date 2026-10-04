@@ -25,7 +25,7 @@
                     <div>
                         <label class="form-label small mb-0" for="turno-busqueda">Turno búsqueda</label>
                         <input type="number" name="turno_busqueda" id="turno-busqueda" min="1"
-                            class="form-control form-control-sm" style="width: 140px; max-width: 100%" placeholder="N° de turno"
+                            class="form-control form-control-sm" style="width: 140px; max-width: 100%; text-align: left !important;" placeholder="N° de turno"
                             value="{{ request('turno_busqueda') }}">
                     </div>
                     <button type="submit" class="btn btn-sm btn-outline-primary">Buscar por turno</button>
@@ -96,6 +96,84 @@
                 }
             });
         }
+
+        // CARTERA - CRÉDITO DIRECTO, RECAUDOS Y ANTICIPOS POR ISLAS y RECAUDOS POR
+        // ADMINISTRACIÓN: no se digita el valor sin haber SELECCIONADO el cliente.
+        const SECCIONES_CON_CLIENTE = [{
+                valor: '.cartera-valor-input',
+                cliente: '.cartera-cliente-select',
+                titulo: 'CARTERA - CRÉDITO DIRECTO'
+            },
+            {
+                valor: '.recaudo-valor',
+                cliente: '.recaudos-cliente',
+                titulo: 'RECAUDOS Y ANTICIPOS POR ISLAS'
+            },
+            {
+                valor: '.recaudo-admin-valor',
+                cliente: '.recaudos-admin-responsable',
+                titulo: 'RECAUDOS POR ADMINISTRACIÓN'
+            },
+        ];
+
+        function seccionDelValor(input) {
+            return SECCIONES_CON_CLIENTE.find(s => input.matches?.(s.valor));
+        }
+
+        function clienteDeLaFila(input, seccion) {
+            return input.closest('tr')?.querySelector(seccion.cliente);
+        }
+
+        function avisarSinCliente(seccion, select) {
+            Swal.fire({
+                title: 'Seleccione el cliente',
+                text: 'En ' + seccion.titulo + ' primero debe SELECCIONAR el cliente y luego digitar el valor.',
+                icon: 'warning',
+                confirmButtonText: 'Entendido',
+            }).then(() => select?.focus());
+        }
+
+        document.addEventListener('focusin', function(event) {
+            const seccion = seccionDelValor(event.target);
+            if (!seccion || event.target.disabled || event.target.readOnly) return;
+
+            const select = clienteDeLaFila(event.target, seccion);
+            if (select && !select.value) {
+                event.target.blur();
+                avisarSinCliente(seccion, select);
+            }
+        });
+
+        // Respaldo (p. ej. si se pega un valor): borra lo digitado sin cliente.
+        document.addEventListener('input', function(event) {
+            const seccion = seccionDelValor(event.target);
+            if (!seccion) return;
+
+            const select = clienteDeLaFila(event.target, seccion);
+            if (select && !select.value && event.target.value !== '') {
+                event.target.value = '';
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('turno-form')?.addEventListener('submit', function(event) {
+                for (const seccion of SECCIONES_CON_CLIENTE) {
+                    for (const input of this.querySelectorAll(seccion.valor)) {
+                        if (input.disabled) continue;
+
+                        const valor = Number(String(input.value).replace(/\./g, '').replace(/,/g, '.')) || 0;
+                        const select = clienteDeLaFila(input, seccion);
+
+                        if (valor !== 0 && select && !select.value) {
+                            event.preventDefault();
+                            event.stopImmediatePropagation();
+                            avisarSinCliente(seccion, select);
+                            return;
+                        }
+                    }
+                }
+            }, true);
+        });
 
         function ejecutarLimpiezaPlanilla() {
             const form = document.getElementById('turno-form');

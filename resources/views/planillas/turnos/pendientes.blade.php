@@ -10,6 +10,14 @@
         <div class="alert alert-success">{{ session('success') }}</div>
     @endif
 
+    @if ($errors->any())
+        <div class="alert alert-danger">
+            @foreach ($errors->all() as $error)
+                <div><i class="bi bi-exclamation-triangle-fill"></i> {{ $error }}</div>
+            @endforeach
+        </div>
+    @endif
+
     <div class="pastel-section">
         <div class="table-responsive">
             <table class="table table-bordered table-sm align-middle">

@@ -11,6 +11,56 @@
         }
     </style>
 
+    {{-- Ayuda: casi siempre solo 2 a 4 mangueras venden en el turno; las demás
+         cierran con la misma lectura inicial. Se copian todas y se corrigen las que cambiaron. --}}
+    <div class="d-flex justify-content-end mb-2">
+        <button type="button" id="copiar-lecturas-btn" class="btn btn-sm btn-outline-primary">
+            <i class="bi bi-files"></i> COPIAR SALDOS INICIALES A FINALES
+        </button>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const boton = document.getElementById('copiar-lecturas-btn');
+            if (!boton) return;
+
+            const filas = () => Array.from(document.querySelectorAll('tr'))
+                .filter(row => row.querySelector('.lectura-inicial') && row.querySelector('.lectura-final'));
+
+            function copiar() {
+                filas().forEach(row => {
+                    const final = row.querySelector('.lectura-final');
+                    final.value = row.querySelector('.lectura-inicial').value;
+                    // galones.js recalcula GLS y los totales con el evento input.
+                    final.dispatchEvent(new Event('input', {
+                        bubbles: true
+                    }));
+                });
+            }
+
+            boton.addEventListener('click', function() {
+                const hayFinales = filas().some(row => row.querySelector('.lectura-final').value.trim() !== '');
+
+                if (!hayFinales) {
+                    copiar();
+                    return;
+                }
+
+                Swal.fire({
+                    title: '¿Reemplazar las lecturas finales?',
+                    text: 'Ya hay lecturas finales digitadas. Se reemplazarán todas por las lecturas iniciales.',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Sí, copiar',
+                    cancelButtonText: 'Cancelar',
+                    reverseButtons: true,
+                }).then(result => {
+                    if (result.isConfirmed) copiar();
+                });
+            });
+        });
+    </script>
+
     <div class="table-responsive">
         <table class="table table-bordered table-erp">
 
@@ -134,11 +184,11 @@
                                 VENTA SEGÚN LECTURAS
                             </th>
 
-                            <th class="text-center">
+                            <th class="text-end">
                                 GALONES
                             </th>
 
-                            <th class="text-center">
+                            <th class="text-end">
                                 VALOR
                             </th>
                         </tr>

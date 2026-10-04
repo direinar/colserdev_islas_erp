@@ -10,7 +10,7 @@ use Illuminate\Support\Collection;
  * Lleva a la cartera del cliente los movimientos de la planilla de turno:
  * - CARTERA - CRÉDITO DIRECTO: cargo "Venta a crédito".
  * - RECAUDOS Y ANTICIPOS POR ISLAS: abono "Recaudo por islas".
- * - RECAUDOS POR ADMINISTRACIÓN: abono "Recaudo por administración"
+ * - RECAUDOS POR ADMINISTRACIÓN: abono "Recaudo por Admón."
  *   (el cliente es el de la columna CLIENTE; BANCO/CAJA no va a cartera).
  *
  * La planilla es la fuente de verdad de planilla (número de turno), fecha,
@@ -24,7 +24,7 @@ class CarteraTurnoSyncService
 
     public const CONCEPTO_RECAUDO_ISLAS = 'Recaudo por islas';
 
-    public const CONCEPTO_RECAUDO_ADMIN = 'Recaudo por administración';
+    public const CONCEPTO_RECAUDO_ADMIN = 'Recaudo por Admón.';
 
     public function __construct(private CarteraSaldoService $saldos) {}
 

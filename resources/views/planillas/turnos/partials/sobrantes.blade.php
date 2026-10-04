@@ -35,6 +35,8 @@
             value="{{ (int) round((float) (optional($turno ?? null)->traslado_sobrante ?? 0)) }}">
         <input type="hidden" name="traslado_faltante" id="traslado-faltante-input"
             value="{{ (int) round((float) (optional($turno ?? null)->traslado_faltante ?? 0)) }}">
+        {{-- Sobrante/faltante sin trasladar: si no es cero la planilla no se puede marcar como revisada. --}}
+        <input type="hidden" name="sobrante_pendiente" id="sobrante-pendiente-input" value="">
     </div>
 
     <div class="row g-2 mt-3">
@@ -64,7 +66,8 @@
                 {{-- Nota: no se anida un <form> aquí; este botón envía #form-marcar-revisado,
                      definido fuera del formulario principal de la planilla (ver create.blade.php),
                      para evitar que el navegador cierre prematuramente ese formulario. --}}
-                <button type="submit" form="form-marcar-revisado" class="btn btn-sm btn-outline-success mt-2">
+                <button type="submit" form="form-marcar-revisado" id="marcar-revisado-btn"
+                    class="btn btn-sm btn-outline-success mt-2">
                     Marcar como revisado
                 </button>
             @endif
@@ -81,6 +84,8 @@
             const trasladarButton = document.getElementById('trasladar-sobrante-btn');
             const trasladoSobranteInput = document.getElementById('traslado-sobrante-input');
             const trasladoFaltanteInput = document.getElementById('traslado-faltante-input');
+            const sobrantePendienteInput = document.getElementById('sobrante-pendiente-input');
+            const marcarRevisadoButton = document.getElementById('marcar-revisado-btn');
 
             // Restaura el traslado guardado en el turno para que el resumen no
             // vuelva a mostrar el sobrante/faltante original al recargar la página.
@@ -125,6 +130,10 @@
                 if (sobranteSurtidoresCell) {
                     sobranteSurtidoresCell.textContent = formatNumber(sobranteSurtidores);
                     sobranteSurtidoresCell.classList.toggle('text-danger', sobranteSurtidores < 0);
+                }
+
+                if (sobrantePendienteInput) {
+                    sobrantePendienteInput.value = String(Math.round(sobranteIapropiada));
                 }
 
                 if (trasladarButton) {
@@ -182,6 +191,34 @@
                 document.dispatchEvent(new CustomEvent('turno:traslado-aplicado'));
                 updateSobrante();
                 refreshReversar();
+            });
+
+            // No se marca como revisada una planilla con SOBRANTE o FALTANTE sin
+            // trasladar, ni con un traslado hecho en pantalla que aún no se guardó.
+            marcarRevisadoButton?.addEventListener('click', function(event) {
+                const pendiente = Math.round(Number(sobrantePendienteInput?.value || 0));
+                const trasladoSinGuardar =
+                    Number(trasladoSobranteInput?.value || 0) !== trasladoSobrantePrevio ||
+                    Number(trasladoFaltanteInput?.value || 0) !== trasladoFaltantePrevio;
+
+                let mensaje = null;
+                if (pendiente !== 0) {
+                    mensaje = 'Hay un ' + (pendiente < 0 ? 'FALTANTE' : 'SOBRANTE') + ' de $' +
+                        formatNumber(Math.abs(pendiente)) +
+                        ' sin trasladar. Use el botón TRASLADAR y guarde la planilla antes de marcarla como revisada.';
+                } else if (trasladoSinGuardar) {
+                    mensaje = 'El traslado del sobrante/faltante no se ha guardado. Guarde la planilla antes de marcarla como revisada.';
+                }
+
+                if (mensaje) {
+                    event.preventDefault();
+                    Swal.fire({
+                        title: 'No se puede revisar',
+                        text: mensaje,
+                        icon: 'error',
+                        confirmButtonText: 'Entendido',
+                    });
+                }
             });
 
             const observer = new MutationObserver(updateSobrante);

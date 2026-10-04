@@ -27,6 +27,7 @@ class Turno extends Model
         'total_venta_lecturas',
         'traslado_sobrante',
         'traslado_faltante',
+        'sobrante_pendiente',
     ];
 
     protected $casts = [
@@ -47,6 +48,7 @@ class Turno extends Model
         'total_venta_lecturas' => 'decimal:2',
         'traslado_sobrante' => 'decimal:2',
         'traslado_faltante' => 'decimal:2',
+        'sobrante_pendiente' => 'decimal:2',
     ];
 
     // Relaciones — todas correctas, solo agregar las que faltaban

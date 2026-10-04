@@ -13,6 +13,7 @@ function guardarTurnoConCartera(User $user, int $numero, string $fecha, array $c
         'fecha' => $fecha,
         'numero_turno' => $numero,
         'cartera' => $cartera,
+        'sobrante_pendiente' => '0',
     ], $extra));
 }
 
@@ -22,7 +23,6 @@ test('credito directo de la planilla de turno se registra en la cartera del clie
 
     guardarTurnoConCartera($islero, 15, '2026-09-10', [
         ['cartera_factura_no' => 'FE-101', 'cliente_id' => $cliente->id, 'cartera_valor' => '350.000'],
-        ['cartera_factura_no' => 'FE-102', 'cliente_id' => null, 'cartera_valor' => '20.000'],
     ])->assertRedirect();
 
     $movimientos = CarteraMovimiento::all();
@@ -90,7 +90,7 @@ test('los recaudos por islas y por administracion de la planilla son abonos del 
 
     $abonos = CarteraMovimiento::query()->where('abonos', '>', 0)->orderBy('abonos')->get();
 
-    expect($abonos->pluck('concepto')->all())->toBe(['Recaudo por administración', 'Recaudo por islas'])
+    expect($abonos->pluck('concepto')->all())->toBe(['Recaudo por Admón.', 'Recaudo por islas'])
         ->and($abonos->pluck('origen')->all())->toBe([CarteraMovimiento::ORIGEN_RECAUDO_ADMIN, CarteraMovimiento::ORIGEN_RECAUDO_ISLAS])
         ->and($abonos->pluck('planillas')->unique()->all())->toBe(['8'])
         ->and($abonos->every(fn ($m) => $m->fecha->toDateString() === '2026-09-12'))->toBeTrue()
@@ -101,7 +101,7 @@ test('los recaudos por islas y por administracion de la planilla son abonos del 
         'customer_id' => $cliente->id,
         'fecha_inicial' => '2026-09-01',
         'fecha_final' => '2026-09-30',
-    ]))->assertOk()->assertSee('Recaudo por islas')->assertSee('Recaudo por administración');
+    ]))->assertOk()->assertSee('Recaudo por islas')->assertSee('Recaudo por Admón.');
 
     expect($this->actingAs($admin)->get(route('cartera.index', [
         'customer_id' => $cliente->id,
@@ -311,9 +311,9 @@ test('el islero no puede entrar al modulo de cartera', function () {
 test('el estado de cuenta avisa las planillas con recaudos por administracion sin cliente', function () {
     $admin = User::factory()->create(['role' => User::ROLE_ADMINISTRADOR]);
 
-    guardarTurnoConCartera($admin, 21, '2026-09-12', [], [
-        'recaudos_admin' => [['banco' => 'Caja', 'responsable_id' => null, 'valor' => '40.000']],
-    ]);
+    // La planilla ya no deja guardar un recaudo sin cliente; se simula un registro anterior a esa regla.
+    guardarTurnoConCartera($admin, 21, '2026-09-12', []);
+    Turno::where('numero_turno', 21)->firstOrFail()->recaudosAdmin()->create(['banco' => 'Caja', 'responsable_id' => null, 'valor' => 40000, 'total' => 40000]);
     guardarTurnoConCartera($admin, 22, '2026-09-12', []);
 
     $response = $this->actingAs($admin)->get(route('cartera.index'));

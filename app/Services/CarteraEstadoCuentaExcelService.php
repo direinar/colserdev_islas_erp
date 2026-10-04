@@ -19,7 +19,7 @@ class CarteraEstadoCuentaExcelService
 
     private const ENCABEZADOS = [
         'PLANILLA', 'FECHA', 'FACTURA', 'PLACAS', 'PRODUCTO', 'GALONES', 'VR. UNITARIO',
-        'BRUTO', 'DESCUENTO', 'CONCEPTO', 'VR. NETO CARGO', 'ABONOS', 'SALDO',
+        'VR. BRUTO', 'DESCUENTO', 'CONCEPTO', 'VR. NETO CARGO', 'ABONOS', 'SALDO',
     ];
 
     public function __construct(private CarteraSaldoService $saldos) {}

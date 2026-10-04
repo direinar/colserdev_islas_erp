@@ -8,8 +8,58 @@ function guardarTurno(User $user, int $numero, array $extra = [])
     return test()->actingAs($user)->post(route('turnos.store'), array_merge([
         'fecha' => '2026-09-25',
         'numero_turno' => $numero,
+        'sobrante_pendiente' => '0',
     ], $extra));
 }
+
+test('no se marca como revisada una planilla con sobrante o faltante sin trasladar', function () {
+    $admin = User::factory()->create(['role' => User::ROLE_ADMINISTRADOR]);
+    guardarTurno($admin, 3, ['sobrante_pendiente' => '-20600']);
+    $turno = Turno::firstOrFail();
+
+    $this->actingAs($admin)->from(route('turnos.pendientes'))->post(route('turnos.revisar', $turno))
+        ->assertRedirect(route('turnos.pendientes'))
+        ->assertSessionHasErrors(['revisar' => 'Turno #3: tiene un FALTANTE de $20.600 sin trasladar. Use TRASLADAR y guarde la planilla antes de marcarla como revisada.']);
+
+    expect($turno->fresh()->revisado)->toBeFalse();
+
+    // Después de trasladar y guardar, el pendiente queda en cero y ya se puede revisar.
+    guardarTurno($admin, 3, ['traslado_faltante' => '20600', 'sobrante_pendiente' => '0']);
+    $this->actingAs($admin)->post(route('turnos.revisar', $turno))->assertSessionHasNoErrors();
+
+    expect($turno->fresh()->revisado)->toBeTrue();
+});
+
+test('una planilla que no se ha vuelto a guardar no se puede revisar', function () {
+    $admin = User::factory()->create(['role' => User::ROLE_ADMINISTRADOR]);
+    guardarTurno($admin, 3, ['sobrante_pendiente' => null]);
+    $turno = Turno::firstOrFail();
+
+    $this->actingAs($admin)->post(route('turnos.revisar', $turno))->assertSessionHasErrors('revisar');
+
+    expect($turno->fresh()->revisado)->toBeFalse();
+});
+
+test('no se guardan valores de cartera o recaudos sin cliente', function (string $seccion, array $fila) {
+    $admin = User::factory()->create(['role' => User::ROLE_ADMINISTRADOR]);
+
+    guardarTurno($admin, 3, [$seccion => [$fila]])->assertSessionHasErrors($seccion);
+
+    expect(Turno::count())->toBe(0);
+})->with([
+    'cartera' => ['cartera', ['cartera_factura_no' => 'F-1', 'cliente_id' => '', 'cartera_valor' => '50.000']],
+    'recaudos por islas' => ['recaudos', ['cliente_id' => '', 'valor' => '30.000']],
+    'recaudos por administracion' => ['recaudos_admin', ['banco' => 'Caja general', 'responsable_id' => '', 'valor' => '20.000']],
+]);
+
+test('la planilla tiene el boton para copiar las lecturas iniciales a finales', function () {
+    $admin = User::factory()->create(['role' => User::ROLE_ADMINISTRADOR]);
+
+    $this->actingAs($admin)->get(route('turnos.create'))
+        ->assertOk()
+        ->assertSee('COPIAR SALDOS INICIALES A FINALES')
+        ->assertSee('id="sobrante-pendiente-input"', false);
+});
 
 test('una planilla revisada no se puede modificar ni por el administrador', function () {
     $admin = User::factory()->create(['role' => User::ROLE_ADMINISTRADOR]);

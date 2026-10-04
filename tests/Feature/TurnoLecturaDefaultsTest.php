@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Customer;
 use App\Models\Lubricant;
 use App\Models\Turno;
 use App\Models\User;
@@ -267,6 +268,7 @@ test('medios de pago renders as three independent tables with add row actions', 
 test('independent payment tables persist rows and their totals', function () {
     $today = now()->toDateString();
     $admin = User::factory()->create(['role' => User::ROLE_ADMINISTRADOR]);
+    $cliente = Customer::create(['name' => 'Cliente A', 'document' => '1']);
 
     $response = $this->actingAs($admin)->post(route('turnos.store'), [
         'fecha' => $today,
@@ -280,8 +282,8 @@ test('independent payment tables persist rows and their totals', function () {
             ['descuento_no' => '2', 'descuento' => '5.000'],
         ],
         'cartera' => [
-            ['cartera_factura_no' => 'F-1', 'cartera_valor' => '300.000'],
-            ['cartera_factura_no' => 'F-2', 'cartera_valor' => '25.000'],
+            ['cartera_factura_no' => 'F-1', 'cliente_id' => $cliente->id, 'cartera_valor' => '300.000'],
+            ['cartera_factura_no' => 'F-2', 'cliente_id' => $cliente->id, 'cartera_valor' => '25.000'],
         ],
     ]);
 

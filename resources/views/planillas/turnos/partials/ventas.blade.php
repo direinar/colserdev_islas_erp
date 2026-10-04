@@ -149,11 +149,11 @@
                         VENTA SEGUN CORTES
                     </th>
 
-                    <th class="text-center whitespace-nowrap">
+                    <th class="text-end whitespace-nowrap">
                         GALONES
                     </th>
 
-                    <th class="text-center whitespace-nowrap">
+                    <th class="text-end whitespace-nowrap">
                         VALOR
                     </th>
                 </tr>
