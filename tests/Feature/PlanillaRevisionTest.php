@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Customer;
 use App\Models\Turno;
 use App\Models\User;
 
@@ -50,6 +51,19 @@ test('no se guardan valores de cartera o recaudos sin cliente', function (string
     'cartera' => ['cartera', ['cartera_factura_no' => 'F-1', 'cliente_id' => '', 'cartera_valor' => '50.000']],
     'recaudos por islas' => ['recaudos', ['cliente_id' => '', 'valor' => '30.000']],
     'recaudos por administracion' => ['recaudos_admin', ['banco' => 'Caja general', 'responsable_id' => '', 'valor' => '20.000']],
+]);
+
+test('el credito directo no admite cliente ni valor sin numero de factura', function (array $fila) {
+    $admin = User::factory()->create(['role' => User::ROLE_ADMINISTRADOR]);
+    $cliente = Customer::create(['name' => 'Cliente A', 'document' => '1']);
+
+    guardarTurno($admin, 3, ['cartera' => [array_merge(['cliente_id' => $cliente->id], $fila)]])
+        ->assertSessionHasErrors(['cartera' => 'En CARTERA - CRÉDITO DIRECTO hay filas sin No. de FACTURA. Digite la factura antes del cliente y el valor.']);
+
+    expect(Turno::count())->toBe(0);
+})->with([
+    'cliente y valor' => [['cartera_factura_no' => '', 'cartera_valor' => '50.000']],
+    'solo cliente' => [['cartera_factura_no' => '  ', 'cartera_valor' => '']],
 ]);
 
 test('la planilla tiene el boton para copiar las lecturas iniciales a finales', function () {

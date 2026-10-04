@@ -56,7 +56,9 @@ test('el inventario de gasolina valora las salidas al costo promedio y trae la v
         ]);
 
     $response
-        ->assertSeeInOrder(['No.', 'FECHA VENTA', 'FECHA COMPRA', 'No. FC'])
+        ->assertSeeInOrder(['PLANILLA', 'FECHA', 'COMPRA', 'No.', 'No. FC'])
+        ->assertDontSee('FECHA VENTA')
+        ->assertDontSee('FECHA COMPRA')
         ->assertSee('>3.000<', false)
         ->assertSee('>60,00<', false)
         ->assertSee('>2.940,00<', false)

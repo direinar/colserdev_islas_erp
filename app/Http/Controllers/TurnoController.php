@@ -248,7 +248,8 @@ class TurnoController extends Controller
 
     /**
      * CARTERA - CRÉDITO DIRECTO, RECAUDOS Y ANTICIPOS POR ISLAS y RECAUDOS POR
-     * ADMINISTRACIÓN no admiten un valor sin CLIENTE. La planilla ya lo impide en
+     * ADMINISTRACIÓN no admiten un valor sin CLIENTE, y en CRÉDITO DIRECTO el
+     * cliente y el valor exigen el No. de FACTURA. La planilla ya lo impide en
      * pantalla; esto es el respaldo del lado del servidor.
      */
     private function validarClientes(Request $request): void
@@ -265,7 +266,21 @@ class TurnoController extends Controller
 
         $errores = [];
 
+        foreach ((array) $request->input('cartera', []) as $row) {
+            if (! is_array($row) || trim((string) ($row['cartera_factura_no'] ?? '')) !== '') {
+                continue;
+            }
+
+            if (! empty($row['cliente_id']) || NumberParser::money($row['cartera_valor'] ?? null) != 0) {
+                $errores['cartera'] = 'En CARTERA - CRÉDITO DIRECTO hay filas sin No. de FACTURA. Digite la factura antes del cliente y el valor.';
+            }
+        }
+
         foreach ($secciones as $campo => $seccion) {
+            if (isset($errores[$campo])) {
+                continue;
+            }
+
             foreach ((array) $request->input($campo, []) as $row) {
                 if (! is_array($row)) {
                     continue;

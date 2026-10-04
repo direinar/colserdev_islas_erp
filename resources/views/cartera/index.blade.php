@@ -289,7 +289,7 @@
                                         <td></td>
                                     @endif
 
-                                    <td>{{ $m->concepto }}</td>
+                                    <td class="text-nowrap">{{ $m->concepto }}</td>
                                     <td class="text-end">{{ $moneyInput($m->vr_neto_cargo) }}</td>
                                     <td class="text-end">{{ $moneyInput($m->abonos) }}</td>
                                     <td class="text-end {{ $saldoClass($m->saldo_corrido) }}">{{ $money($m->saldo_corrido) }}</td>

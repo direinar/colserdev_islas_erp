@@ -133,6 +133,52 @@
             }).then(() => select?.focus());
         }
 
+        // CARTERA - CRÉDITO DIRECTO: ni cliente ni valor sin el No. de FACTURA.
+        const CAMPOS_CON_FACTURA = '.cartera-cliente-select, .cartera-valor-input';
+
+        function facturaVaciaDeLaFila(campo) {
+            if (!campo.matches?.(CAMPOS_CON_FACTURA) || campo.disabled) return null;
+
+            const factura = campo.closest('tr')?.querySelector('.cartera-no-input');
+            return factura && factura.value.trim() === '' ? factura : null;
+        }
+
+        function avisarSinFactura(factura) {
+            Swal.fire({
+                title: 'Digite el No. de factura',
+                text: 'En CARTERA - CRÉDITO DIRECTO primero debe digitar el No. de FACTURA y luego el cliente y el valor.',
+                icon: 'warning',
+                confirmButtonText: 'Entendido',
+            }).then(() => factura.focus());
+        }
+
+        // Con el mouse: evita que se abra la lista de clientes.
+        document.addEventListener('mousedown', function(event) {
+            const factura = facturaVaciaDeLaFila(event.target);
+            if (factura) {
+                event.preventDefault();
+                avisarSinFactura(factura);
+            }
+        });
+
+        // Con el teclado (Tab): se registra antes que la regla del cliente para avisar primero la factura.
+        document.addEventListener('focusin', function(event) {
+            const factura = facturaVaciaDeLaFila(event.target);
+            if (factura) {
+                event.stopImmediatePropagation();
+                event.target.blur();
+                avisarSinFactura(factura);
+            }
+        });
+
+        // Respaldo (p. ej. si se pega un valor): deshace lo alimentado sin factura.
+        document.addEventListener('input', function(event) {
+            if (facturaVaciaDeLaFila(event.target)) event.target.value = '';
+        });
+        document.addEventListener('change', function(event) {
+            if (facturaVaciaDeLaFila(event.target)) event.target.value = '';
+        });
+
         document.addEventListener('focusin', function(event) {
             const seccion = seccionDelValor(event.target);
             if (!seccion || event.target.disabled || event.target.readOnly) return;
@@ -157,6 +203,19 @@
 
         document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('turno-form')?.addEventListener('submit', function(event) {
+                for (const campo of this.querySelectorAll(CAMPOS_CON_FACTURA)) {
+                    const lleno = campo.tagName === 'SELECT' ? campo.value !== '' :
+                        (Number(String(campo.value).replace(/\./g, '').replace(/,/g, '.')) || 0) !== 0;
+                    const factura = facturaVaciaDeLaFila(campo);
+
+                    if (lleno && factura) {
+                        event.preventDefault();
+                        event.stopImmediatePropagation();
+                        avisarSinFactura(factura);
+                        return;
+                    }
+                }
+
                 for (const seccion of SECCIONES_CON_CLIENTE) {
                     for (const input of this.querySelectorAll(seccion.valor)) {
                         if (input.disabled) continue;

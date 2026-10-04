@@ -16,19 +16,19 @@
         <table class="table table-bordered table-sm mb-0 align-middle kardex-table">
             <thead>
                 <tr style="background-color:#000; color:#ff1c1c; letter-spacing:.25rem; font-weight:800;">
-                    <th colspan="13" class="text-center fs-5">{{ $titulo }}</th>
+                    <th colspan="12" class="text-center fs-5">{{ $titulo }}</th>
                 </tr>
                 <tr style="background-color:#f6e7d4;">
-                    <th colspan="2" class="text-center align-middle">PLANILLA</th>
-                    <th colspan="2" class="text-center align-middle">COMPRA</th>
+                    <th class="text-center align-middle">PLANILLA</th>
+                    {{-- Una sola FECHA: la de la venta (planilla) o la de la compra (con enlace a la compra). --}}
+                    <th rowspan="2" class="text-center align-middle">FECHA</th>
+                    <th class="text-center align-middle">COMPRA</th>
                     <th colspan="3" class="text-center align-middle">{{ $unidad }}</th>
                     <th colspan="4" class="text-center align-middle">VALORES AL COSTO PROMEDIO</th>
                     <th colspan="2" class="text-center align-middle">VENTAS</th>
                 </tr>
                 <tr style="background-color:#f6e7d4;">
                     <th class="text-center">No.</th>
-                    <th class="text-center">FECHA VENTA</th>
-                    <th class="text-center">FECHA COMPRA</th>
                     <th class="text-center">No. FC</th>
                     <th class="text-center">ENTRADAS</th>
                     <th class="text-center">SALIDAS</th>
@@ -52,12 +52,11 @@
                             @endif
                         </td>
                         <td class="text-center">
-                            {{ $row['fecha_venta'] ? \Illuminate\Support\Carbon::parse($row['fecha_venta'])->format('d/m/Y') : '' }}
-                        </td>
-                        <td class="text-center">
                             @if ($row['fecha_compra'])
                                 <a href="{{ route($compraRoute, ['desde' => $row['fecha_compra'], 'hasta' => $row['fecha_compra']]) }}#compra-{{ $row['compra_id'] }}"
                                     class="text-decoration-none" title="Consultar la compra">{{ \Illuminate\Support\Carbon::parse($row['fecha_compra'])->format('d/m/Y') }}</a>
+                            @elseif ($row['fecha_venta'])
+                                {{ \Illuminate\Support\Carbon::parse($row['fecha_venta'])->format('d/m/Y') }}
                             @endif
                         </td>
                         <td>{{ $row['factura'] }}</td>
@@ -73,14 +72,14 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="13" class="text-center text-muted py-3">No hay compras ni ventas registradas.</td>
+                        <td colspan="12" class="text-center text-muted py-3">No hay compras ni ventas registradas.</td>
                     </tr>
                 @endforelse
             </tbody>
 
             <tfoot>
                 <tr class="table-secondary fw-bold">
-                    <td colspan="4" class="text-end">TOTALES</td>
+                    <td colspan="3" class="text-end">TOTALES</td>
                     <td class="text-end">{{ number_format($kardex['totales']['entradas'], 0, ',', '.') }}</td>
                     <td class="text-end">{{ number_format($kardex['totales']['salidas'], 2, ',', '.') }}</td>
                     <td class="text-end">{{ number_format($kardex['totales']['saldo_unidades'], 2, ',', '.') }}</td>
