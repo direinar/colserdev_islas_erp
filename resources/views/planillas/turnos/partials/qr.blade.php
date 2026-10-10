@@ -26,7 +26,7 @@
                                 <select name="qr_pagos[{{ $i }}][concepto]"
                                     class="form-select form-select-sm border-0 bg-transparent">
                                     <option value="" @selected(! $q->concepto)>Seleccione concepto</option>
-                                    @foreach (\App\Http\Controllers\TurnoController::CONCEPTOS_QR as $concepto)
+                                    @foreach (\App\Models\TurnoQrPago::CONCEPTOS as $concepto)
                                         <option value="{{ $concepto }}" @selected($q->concepto === $concepto)>
                                             {{ $concepto }}
                                         </option>
