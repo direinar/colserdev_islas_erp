@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\ComprobanteContableCompra;
+use App\Support\NumberParser;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -36,8 +37,8 @@ class ComprobanteContableCompraController extends Controller
                 $concepto = trim((string) ($row['concepto'] ?? ''));
                 $tercero = trim((string) ($row['tercero'] ?? ''));
                 $nit = trim((string) ($row['nit'] ?? ''));
-                $debito = round($this->parseDecimal($row['debito'] ?? null), 0);
-                $credito = round($this->parseDecimal($row['credito'] ?? null), 0);
+                $debito = round(NumberParser::decimal($row['debito'] ?? null), 0);
+                $credito = round(NumberParser::decimal($row['credito'] ?? null), 0);
 
                 if ($cuenta === '' && $concepto === '' && $tercero === '' && $nit === '' && $debito === 0.0 && $credito === 0.0) {
                     continue;
@@ -58,17 +59,5 @@ class ComprobanteContableCompraController extends Controller
 
         return redirect()->route('comprobante-contable-compras.create')
             ->with('success', 'Comprobante contable de compras guardado correctamente.');
-    }
-
-    private function parseDecimal(mixed $value): float
-    {
-        if ($value === null || $value === '') {
-            return 0.0;
-        }
-
-        $clean = str_replace(['.', ' '], ['', ''], (string) $value);
-        $clean = str_replace(',', '.', $clean);
-
-        return is_numeric($clean) ? (float) $clean : 0.0;
     }
 }

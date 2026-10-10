@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Services\KardexInventarioService;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
@@ -17,7 +18,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // Una instancia por petición: los informes comparten los kardex ya calculados.
+        $this->app->scoped(KardexInventarioService::class);
     }
 
     /**

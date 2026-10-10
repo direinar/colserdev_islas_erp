@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Compra;
+use App\Support\NumberParser;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -155,12 +156,12 @@ class CompraController extends Controller
     {
         $fecha = $row['fecha'] ?? null;
         $factura = trim((string) ($row['factura'] ?? ''));
-        $gasolina = $this->parseDecimal($row['gasolina'] ?? null);
-        $acpm = $this->parseDecimal($row['acpm'] ?? null);
-        $distribucionGasolina = $this->parseDecimal($row['distribucion_gasolina'] ?? null);
-        $distribucionAcpm = $this->parseDecimal($row['distribucion_acpm'] ?? null);
-        $vrTotalFra = $this->parseDecimal($row['vr_total_fra'] ?? null);
-        $total = $this->parseDecimal($row['total'] ?? null);
+        $gasolina = NumberParser::decimal($row['gasolina'] ?? null);
+        $acpm = NumberParser::decimal($row['acpm'] ?? null);
+        $distribucionGasolina = NumberParser::decimal($row['distribucion_gasolina'] ?? null);
+        $distribucionAcpm = NumberParser::decimal($row['distribucion_acpm'] ?? null);
+        $vrTotalFra = NumberParser::decimal($row['vr_total_fra'] ?? null);
+        $total = NumberParser::decimal($row['total'] ?? null);
 
         if ($factura === '' && $gasolina === 0.0 && $acpm === 0.0 && $distribucionGasolina === 0.0 && $distribucionAcpm === 0.0 && $vrTotalFra === 0.0 && $total === 0.0) {
             return null;
@@ -203,19 +204,6 @@ class CompraController extends Controller
             'desde' => $compra->fecha->copy()->startOfMonth()->toDateString(),
             'hasta' => $compra->fecha->copy()->endOfMonth()->toDateString(),
         ];
-    }
-
-    private function parseDecimal(mixed $value): float
-    {
-        if ($value === null || $value === '') {
-            return 0.0;
-        }
-
-        $clean = str_replace([' ', '\t', '\n', '\r'], '', (string) $value);
-        $clean = str_replace('.', '', $clean);
-        $clean = str_replace(',', '.', $clean);
-
-        return is_numeric($clean) ? (float) $clean : 0.0;
     }
 
     private function formatInputValue(float $value): string

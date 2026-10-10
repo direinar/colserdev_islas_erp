@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\AnticipoBimestral;
+use App\Support\NumberParser;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -30,8 +31,8 @@ class AnticipoBimestralController extends Controller
 
             foreach ($request->input('detalles', []) as $row) {
                 $mes = trim((string) ($row['mes'] ?? ''));
-                $galones = $this->parseDecimal($row['galones'] ?? null);
-                $valorIntermediacion = $this->parseDecimal($row['valor_intermediacion'] ?? null);
+                $galones = NumberParser::decimal($row['galones'] ?? null);
+                $valorIntermediacion = NumberParser::decimal($row['valor_intermediacion'] ?? null);
 
                 if ($mes === '' && $galones === 0.0 && $valorIntermediacion === 0.0) {
                     continue;
@@ -52,17 +53,5 @@ class AnticipoBimestralController extends Controller
 
         return redirect()->route('anticipo-bimestral.create')
             ->with('success', 'Anticipo bimestral guardado correctamente.');
-    }
-
-    private function parseDecimal(mixed $value): float
-    {
-        if ($value === null || $value === '') {
-            return 0.0;
-        }
-
-        $clean = str_replace(['.', ' '], ['', ''], (string) $value);
-        $clean = str_replace(',', '.', $clean);
-
-        return is_numeric($clean) ? (float) $clean : 0.0;
     }
 }

@@ -3,10 +3,8 @@
 namespace App\Services;
 
 use App\Models\CarteraMovimiento;
-use App\Models\CompraLubricante;
 use App\Models\Customer;
 use App\Models\Lubricant;
-use App\Models\TurnoLubricante;
 
 /**
  * Informes de saldos a una fecha de corte: saldo de cartera de cada cliente, existencias
@@ -61,8 +59,7 @@ class InformeSaldosService
     {
         $catalogo = Lubricant::query()->pluck('active', 'reference');
         $referencias = $catalogo->keys()
-            ->concat(CompraLubricante::query()->distinct()->pluck('nombre'))
-            ->concat(TurnoLubricante::query()->whereHas('turno')->distinct()->pluck('producto'))
+            ->concat($this->kardex->referenciasCanastilla())
             ->filter()
             ->unique()
             ->sort(SORT_NATURAL | SORT_FLAG_CASE)

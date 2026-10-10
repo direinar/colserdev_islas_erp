@@ -29,6 +29,22 @@ class NumberParser
     }
 
     /**
+     * Fields typed in es-CO format with decimals (compras, cartera, anticipos): '.' is
+     * always the thousands separator and ',' the decimal point, e.g. "3.000,5" = 3000.5.
+     * Not for planilla galones/lecturas, which use quantity().
+     */
+    public static function decimal(mixed $value): float
+    {
+        if ($value === null || $value === '') {
+            return 0.0;
+        }
+
+        $clean = str_replace(',', '.', str_replace(['.', ' '], '', trim((string) $value)));
+
+        return is_numeric($clean) ? (float) $clean : 0.0;
+    }
+
+    /**
      * Quantity fields (galones, lecturas) can carry real decimals, so a lone
      * '.' or ',' is ambiguous: the separator closest to the end of the
      * string is treated as the decimal point, repeated separators can only

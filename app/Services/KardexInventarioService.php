@@ -15,11 +15,20 @@ use Illuminate\Support\Collection;
 class KardexInventarioService
 {
     /**
+     * Kardex ya calculados en esta petición. Varios informes piden los mismos inventarios
+     * (control caja, cierre, anticipo, saldos); se calculan una sola vez. El servicio se
+     * registra como "scoped" (AppServiceProvider), así que no sobrevive entre peticiones.
+     *
+     * @var array<string, mixed>
+     */
+    private array $memoria = [];
+
+    /**
      * @return array{rows: list<array<string, mixed>>, totales: array<string, float>}
      */
     public function gasolina(): array
     {
-        return $this->combustible('gasolina', 'distribucion_gasolina', 'tirillas_galones_corriente', 'tirillas_valor_corriente', 'precio_corriente');
+        return $this->memoria['gasolina'] ??= $this->combustible('gasolina', 'distribucion_gasolina', 'tirillas_galones_corriente', 'tirillas_valor_corriente', 'precio_corriente');
     }
 
     /**
@@ -27,7 +36,7 @@ class KardexInventarioService
      */
     public function acpm(): array
     {
-        return $this->combustible('acpm', 'distribucion_acpm', 'tirillas_galones_acpm', 'tirillas_valor_acpm', 'precio_acpm');
+        return $this->memoria['acpm'] ??= $this->combustible('acpm', 'distribucion_acpm', 'tirillas_galones_acpm', 'tirillas_valor_acpm', 'precio_acpm');
     }
 
     /**
@@ -35,36 +44,76 @@ class KardexInventarioService
      */
     public function canastilla(string $producto): array
     {
+        return $this->canastillaPorReferencia()[$producto] ?? $this->calcular(collect());
+    }
+
+    /**
+     * Referencias de canastilla con movimientos (compras o ventas en planillas), ordenadas.
+     *
+     * @return list<string>
+     */
+    public function referenciasCanastilla(): array
+    {
+        return array_keys($this->canastillaPorReferencia());
+    }
+
+    /**
+     * Kardex de cada referencia de canastilla, con todas las compras y ventas cargadas en dos
+     * consultas (antes eran dos consultas por referencia, sobre todo el historial).
+     *
+     * @return array<string, array{rows: list<array<string, mixed>>, totales: array<string, float>}>
+     */
+    private function canastillaPorReferencia(): array
+    {
+        if (isset($this->memoria['canastilla'])) {
+            return $this->memoria['canastilla'];
+        }
+
         $entradas = CompraLubricante::query()
-            ->where('nombre', $producto)
             ->get()
-            ->map(fn (CompraLubricante $compra): array => $this->movimientoCompra(
+            ->groupBy(fn (CompraLubricante $compra): string => (string) $compra->nombre)
+            ->map(fn (Collection $compras): Collection => $compras->map(fn (CompraLubricante $compra): array => $this->movimientoCompra(
                 $compra->id,
                 $compra->fecha->format('Y-m-d'),
                 (string) $compra->no_fc,
                 (float) $compra->unidades,
                 (float) $compra->vr_sin_iva,
-            ));
+            )));
 
-        $salidas = Turno::query()
-            ->whereHas('lubricantes', fn ($query) => $query->where('producto', $producto))
-            ->with(['lubricantes' => fn ($query) => $query->where('producto', $producto)])
+        // Una salida por planilla y referencia: se suman las líneas del mismo producto en el turno.
+        $salidas = TurnoLubricante::query()
+            ->whereHas('turno')
+            ->with('turno')
             ->get()
-            ->map(function (Turno $turno): array {
-                $cantidad = (float) $turno->lubricantes->sum('cantidad');
-                // La planilla guarda valor_sin_iva ya multiplicado por la cantidad de la línea.
-                $valorVenta = (float) $turno->lubricantes->sum(fn (TurnoLubricante $linea): float => (float) $linea->valor_sin_iva);
+            ->groupBy(fn (TurnoLubricante $linea): string => (string) $linea->producto)
+            ->map(fn (Collection $lineas): Collection => $lineas
+                ->groupBy('turno_id')
+                ->map(function (Collection $delTurno): array {
+                    /** @var Turno $turno */
+                    $turno = $delTurno->first()->turno;
+                    $cantidad = (float) $delTurno->sum('cantidad');
+                    // La planilla guarda valor_sin_iva ya multiplicado por la cantidad de la línea.
+                    $valorVenta = (float) $delTurno->sum(fn (TurnoLubricante $linea): float => (float) $linea->valor_sin_iva);
 
-                return $this->movimientoVenta(
-                    $turno->numero_turno,
-                    $turno->fecha->format('Y-m-d'),
-                    $cantidad,
-                    $valorVenta,
-                    $cantidad > 0 ? $valorVenta / $cantidad : 0.0,
-                );
-            });
+                    return $this->movimientoVenta(
+                        $turno->numero_turno,
+                        $turno->fecha->format('Y-m-d'),
+                        $cantidad,
+                        $valorVenta,
+                        $cantidad > 0 ? $valorVenta / $cantidad : 0.0,
+                    );
+                })
+                ->values());
 
-        return $this->calcular($entradas->concat($salidas));
+        $referencias = $entradas->keys()->concat($salidas->keys())->filter()->unique()->sort()->values();
+
+        return $this->memoria['canastilla'] = $referencias
+            ->mapWithKeys(fn (string $referencia): array => [
+                $referencia => $this->calcular(
+                    ($entradas->get($referencia) ?? collect())->concat($salidas->get($referencia) ?? collect())
+                ),
+            ])
+            ->all();
     }
 
     /**
@@ -76,17 +125,18 @@ class KardexInventarioService
      */
     public function canastillaControl(): array
     {
-        $referencias = CompraLubricante::query()->distinct()->pluck('nombre')
-            ->concat(TurnoLubricante::query()->whereHas('turno')->distinct()->pluck('producto'))
-            ->filter()
-            ->unique()
-            ->sort()
-            ->values();
+        return $this->memoria['canastilla_control'] ??= $this->calcularCanastillaControl();
+    }
 
-        $movimientos = $referencias->flatMap(
-            fn (string $referencia): array => array_map(
+    /**
+     * @return array{rows: list<array<string, mixed>>, totales: array<string, float>}
+     */
+    private function calcularCanastillaControl(): array
+    {
+        $movimientos = collect($this->canastillaPorReferencia())->flatMap(
+            fn (array $kardex, string $referencia): array => array_map(
                 fn (array $row): array => $row + ['referencia' => $referencia],
-                $this->canastilla($referencia)['rows'],
+                $kardex['rows'],
             )
         );
 

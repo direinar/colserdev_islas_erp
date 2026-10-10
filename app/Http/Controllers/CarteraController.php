@@ -7,6 +7,7 @@ use App\Models\Customer;
 use App\Models\Turno;
 use App\Services\CarteraEstadoCuentaExcelService;
 use App\Services\CarteraSaldoService;
+use App\Support\DescargaExcel;
 use App\Support\NumberParser;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -14,7 +15,6 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
-use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
@@ -77,7 +77,8 @@ class CarteraController extends Controller
                     continue;
                 }
 
-                $galones = $this->parseGalones($row['galones'] ?? null);
+                // La pantalla de cartera muestra los galones en formato es-CO, p. ej. "1.500,25".
+                $galones = NumberParser::decimal($row['galones'] ?? null);
                 $vrUnitario = round(NumberParser::money($row['vr_unitario'] ?? null), 0);
 
                 $movimiento->update([
@@ -112,26 +113,7 @@ class CarteraController extends Controller
         $libro = $excel->generar($customer, $fechaInicial, $fechaFinal);
         $archivo = 'estado-de-cuenta-'.Str::slug($customer->name).'-'.$fechaInicial.'-a-'.$fechaFinal.'.xlsx';
 
-        return response()->streamDownload(
-            fn () => (new Xlsx($libro))->save('php://output'),
-            $archivo,
-            ['Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet']
-        );
-    }
-
-    /**
-     * La pantalla de cartera muestra los galones en formato es-CO
-     * (punto = miles, coma = decimales), p. ej. "1.500,25".
-     */
-    private function parseGalones(mixed $value): float
-    {
-        if ($value === null || $value === '') {
-            return 0.0;
-        }
-
-        $clean = str_replace(',', '.', str_replace(['.', ' '], '', (string) $value));
-
-        return is_numeric($clean) ? (float) $clean : 0.0;
+        return DescargaExcel::respuesta($libro, $archivo);
     }
 
     /**

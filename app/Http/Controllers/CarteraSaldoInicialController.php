@@ -5,11 +5,11 @@ namespace App\Http\Controllers;
 use App\Models\CarteraMovimiento;
 use App\Models\Customer;
 use App\Services\CarteraSaldoInicialService;
+use App\Support\DescargaExcel;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
-use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
@@ -93,11 +93,7 @@ class CarteraSaldoInicialController extends Controller
     {
         $libro = $service->plantilla();
 
-        return response()->streamDownload(
-            fn () => (new Xlsx($libro))->save('php://output'),
-            'plantilla-saldos-iniciales.xlsx',
-            ['Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet']
-        );
+        return DescargaExcel::respuesta($libro, 'plantilla-saldos-iniciales.xlsx');
     }
 
     public function importar(Request $request, CarteraSaldoInicialService $service): RedirectResponse

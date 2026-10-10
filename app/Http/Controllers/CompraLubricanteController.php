@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\CompraLubricante;
 use App\Models\Lubricant;
 use App\Models\Proveedor;
+use App\Support\NumberParser;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -55,9 +56,9 @@ class CompraLubricanteController extends Controller
                 $proveedorId = $row['proveedor_id'] ?? null;
                 $producto = trim((string) ($row['producto'] ?? ''));
                 $noFc = trim((string) ($row['no_fc'] ?? ''));
-                $unidades = $this->parseDecimal($row['unidades'] ?? null);
-                $valorUnitario = $this->parseDecimal($row['valor_unitario'] ?? null);
-                $iva = $this->parseDecimal($row['iva'] ?? null);
+                $unidades = NumberParser::decimal($row['unidades'] ?? null);
+                $valorUnitario = NumberParser::decimal($row['valor_unitario'] ?? null);
+                $iva = NumberParser::decimal($row['iva'] ?? null);
 
                 if (! $proveedorId && $producto === '' && $noFc === '' && $unidades === 0.0 && $valorUnitario === 0.0 && $iva === 0.0) {
                     continue;
@@ -95,17 +96,5 @@ class CompraLubricanteController extends Controller
 
         return redirect()->route('compras-lubricantes.create', $filtro)
             ->with('success', 'Compra de lubricantes eliminada correctamente.');
-    }
-
-    private function parseDecimal(mixed $value): float
-    {
-        if ($value === null || $value === '') {
-            return 0.0;
-        }
-
-        $clean = str_replace(['.', ' '], ['', ''], (string) $value);
-        $clean = str_replace(',', '.', $clean);
-
-        return is_numeric($clean) ? (float) $clean : 0.0;
     }
 }

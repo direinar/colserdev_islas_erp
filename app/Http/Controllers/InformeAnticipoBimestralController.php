@@ -6,11 +6,11 @@ use App\Models\LiquidacionAnticipoBimestral;
 use App\Models\MargenIntermediacion;
 use App\Services\AnticipoBimestralExcelService;
 use App\Services\AnticipoBimestralService;
+use App\Support\DescargaExcel;
 use App\Support\NumberParser;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
-use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class InformeAnticipoBimestralController extends Controller
@@ -28,11 +28,7 @@ class InformeAnticipoBimestralController extends Controller
 
         $libro = $excel->generar($anio, $bimestre);
 
-        return response()->streamDownload(
-            fn () => (new Xlsx($libro))->save('php://output'),
-            'anticipo-bimestral-'.$anio.'-bimestre-'.$bimestre.'.xlsx',
-            ['Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet']
-        );
+        return DescargaExcel::respuesta($libro, 'anticipo-bimestral-'.$anio.'-bimestre-'.$bimestre.'.xlsx');
     }
 
     public function guardarAjustes(Request $request): RedirectResponse

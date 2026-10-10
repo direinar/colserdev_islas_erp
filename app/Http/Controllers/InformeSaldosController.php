@@ -4,10 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Services\InformeSaldosExcelService;
 use App\Services\InformeSaldosService;
+use App\Support\DescargaExcel;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
-use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class InformeSaldosController extends Controller
@@ -36,11 +36,7 @@ class InformeSaldosController extends Controller
 
         $libro = $excel->generar($seccion, $corte, $soloConSaldo);
 
-        return response()->streamDownload(
-            fn () => (new Xlsx($libro))->save('php://output'),
-            'saldos-'.$seccion.'-'.$corte.'.xlsx',
-            ['Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet']
-        );
+        return DescargaExcel::respuesta($libro, 'saldos-'.$seccion.'-'.$corte.'.xlsx');
     }
 
     /**

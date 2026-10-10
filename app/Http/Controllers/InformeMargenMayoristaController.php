@@ -2,19 +2,21 @@
 
 namespace App\Http\Controllers;
 
+use App\Concerns\ResuelveRangoFechas;
 use App\Models\MargenMayorista;
 use App\Services\MargenMayoristaExcelService;
 use App\Services\MargenMayoristaService;
+use App\Support\DescargaExcel;
 use App\Support\NumberParser;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Carbon;
 use Illuminate\View\View;
-use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class InformeMargenMayoristaController extends Controller
 {
+    use ResuelveRangoFechas;
+
     public function index(Request $request, MargenMayoristaService $margenMayorista): View
     {
         [$desde, $hasta] = $this->rango($request);
@@ -31,11 +33,7 @@ class InformeMargenMayoristaController extends Controller
 
         $libro = $excel->generar($desde, $hasta);
 
-        return response()->streamDownload(
-            fn () => (new Xlsx($libro))->save('php://output'),
-            'margen-mayorista-'.$desde.'-a-'.$hasta.'.xlsx',
-            ['Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet']
-        );
+        return DescargaExcel::respuesta($libro, 'margen-mayorista-'.$desde.'-a-'.$hasta.'.xlsx');
     }
 
     /**
@@ -64,27 +62,5 @@ class InformeMargenMayoristaController extends Controller
 
         return redirect()->route('informes.margen-mayorista.index', $request->only('desde', 'hasta'))
             ->with('success', 'Parámetros del convenio de mayorista guardados correctamente.');
-    }
-
-    /**
-     * Por defecto, el mes en curso hasta hoy (el margen mayorista se liquida mensualmente).
-     *
-     * @return array{0: string, 1: string}
-     */
-    private function rango(Request $request): array
-    {
-        $request->validate([
-            'desde' => ['nullable', 'date'],
-            'hasta' => ['nullable', 'date'],
-        ]);
-
-        $desde = Carbon::parse($request->query('desde') ?: now()->startOfMonth());
-        $hasta = Carbon::parse($request->query('hasta') ?: now());
-
-        if ($hasta->lt($desde)) {
-            [$desde, $hasta] = [$hasta, $desde];
-        }
-
-        return [$desde->format('Y-m-d'), $hasta->format('Y-m-d')];
     }
 }

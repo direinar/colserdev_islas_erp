@@ -6,6 +6,7 @@ use App\Models\AforoTanque;
 use App\Models\TanqueSaldoInicial;
 use App\Services\ControlTanquesExcelService;
 use App\Services\ControlTanquesService;
+use App\Support\DescargaExcel;
 use App\Support\NumberParser;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -13,7 +14,6 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
-use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ControlTanqueController extends Controller
@@ -110,11 +110,7 @@ class ControlTanqueController extends Controller
 
         $libro = $excel->generar($desde, $hasta);
 
-        return response()->streamDownload(
-            fn () => (new Xlsx($libro))->save('php://output'),
-            'control-de-tanques-'.$desde.'-a-'.$hasta.'.xlsx',
-            ['Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet']
-        );
+        return DescargaExcel::respuesta($libro, 'control-de-tanques-'.$desde.'-a-'.$hasta.'.xlsx');
     }
 
     /**

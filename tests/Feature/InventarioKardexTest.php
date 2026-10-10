@@ -6,6 +6,7 @@ use App\Models\Lubricant;
 use App\Models\Turno;
 use App\Models\User;
 use App\Services\KardexInventarioService;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 
 function compraCombustible(array $atributos = []): Compra
@@ -208,4 +209,27 @@ test('el control de canastilla consolida todas las referencias y sus totales son
             'valor_saldo' => 648500.0,
             'valor_venta' => 134500.0,
         ]);
+});
+
+test('el kardex de canastilla consulta lo mismo sin importar cuántas referencias haya y se reutiliza en la petición', function () {
+    foreach (['A', 'B', 'C', 'D', 'E', 'F'] as $i => $referencia) {
+        CompraLubricante::create(['fecha' => '2026-09-20', 'nombre' => $referencia, 'no_fc' => 'L-'.$i, 'unidades' => 10, 'valor_unitario' => 1000, 'vr_sin_iva' => 10000, 'iva' => 0, 'total' => 10000]);
+        $turno = Turno::create(['fecha' => '2026-09-25', 'numero_turno' => $i + 1]);
+        $turno->lubricantes()->create(['cantidad' => 1, 'producto' => $referencia, 'valor_sin_iva' => 1500, 'iva' => 0, 'total' => 1500]);
+    }
+
+    $kardex = app(KardexInventarioService::class);
+    DB::enableQueryLog();
+
+    $control = $kardex->canastillaControl();
+    foreach ($kardex->referenciasCanastilla() as $referencia) {
+        $kardex->canastilla($referencia);
+    }
+
+    // Compras + líneas de canastilla + sus turnos, sin importar el número de referencias.
+    expect(count(DB::getQueryLog()))->toBeLessThanOrEqual(3)
+        ->and($control['totales']['salidas'])->toBe(6.0)
+        ->and($kardex->referenciasCanastilla())->toBe(['A', 'B', 'C', 'D', 'E', 'F'])
+        // Los informes de la misma petición comparten la instancia (y lo ya calculado).
+        ->and(app(KardexInventarioService::class))->toBe($kardex);
 });

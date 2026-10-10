@@ -2,20 +2,22 @@
 
 namespace App\Http\Controllers;
 
+use App\Concerns\ResuelveRangoFechas;
 use App\Models\Banco;
 use App\Models\ComprobanteRecaudoCuenta;
 use App\Services\RecaudosCarteraExcelService;
 use App\Services\RecaudosCarteraService;
+use App\Support\DescargaExcel;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
-use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class InformeRecaudosCarteraController extends Controller
 {
+    use ResuelveRangoFechas;
+
     public function index(Request $request, RecaudosCarteraService $recaudos): View
     {
         [$desde, $hasta] = $this->rango($request);
@@ -32,11 +34,7 @@ class InformeRecaudosCarteraController extends Controller
 
         $libro = $excel->generar($desde, $hasta);
 
-        return response()->streamDownload(
-            fn () => (new Xlsx($libro))->save('php://output'),
-            'recaudos-cartera-'.$desde.'-a-'.$hasta.'.xlsx',
-            ['Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet']
-        );
+        return DescargaExcel::respuesta($libro, 'recaudos-cartera-'.$desde.'-a-'.$hasta.'.xlsx');
     }
 
     /**
@@ -67,27 +65,5 @@ class InformeRecaudosCarteraController extends Controller
 
         return redirect()->route('informes.recaudos-cartera.index', $request->only('desde', 'hasta'))
             ->with('success', 'Cuentas contables guardadas correctamente.');
-    }
-
-    /**
-     * Por defecto, el mes en curso hasta hoy.
-     *
-     * @return array{0: string, 1: string}
-     */
-    private function rango(Request $request): array
-    {
-        $request->validate([
-            'desde' => ['nullable', 'date'],
-            'hasta' => ['nullable', 'date'],
-        ]);
-
-        $desde = Carbon::parse($request->query('desde') ?: now()->startOfMonth());
-        $hasta = Carbon::parse($request->query('hasta') ?: now());
-
-        if ($hasta->lt($desde)) {
-            [$desde, $hasta] = [$hasta, $desde];
-        }
-
-        return [$desde->format('Y-m-d'), $hasta->format('Y-m-d')];
     }
 }
