@@ -10,6 +10,7 @@ use App\Http\Controllers\ComprobanteContableCompraController;
 use App\Http\Controllers\ControlTanqueController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\FuelPriceController;
+use App\Http\Controllers\InformeComprobanteComprasController;
 use App\Http\Controllers\InventarioAcpmController;
 use App\Http\Controllers\InventarioGasolinaController;
 use App\Http\Controllers\InventarioLubricanteController;
@@ -109,6 +110,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         Route::post('/control-tanques/saldo-inicial', [ControlTanqueController::class, 'guardarSaldoInicial'])
             ->name('control-tanques.saldo-inicial');
+
+        Route::get('/informes/comprobante-contable-compras', [InformeComprobanteComprasController::class, 'index'])
+            ->name('informes.comprobante-contable-compras.index');
+
+        Route::get('/informes/comprobante-contable-compras/exportar', [InformeComprobanteComprasController::class, 'exportar'])
+            ->name('informes.comprobante-contable-compras.exportar');
+
+        Route::post('/informes/comprobante-contable-compras/cuentas', [InformeComprobanteComprasController::class, 'guardarCuentas'])
+            ->name('informes.comprobante-contable-compras.cuentas');
 
         Route::get('/inventarios/acpm/create', [InventarioAcpmController::class, 'create'])
             ->name('inventarios-acpm.create');

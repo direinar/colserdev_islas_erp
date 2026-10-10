@@ -211,7 +211,7 @@
                     {{-- INFORMES --}}
                     @if ($user->canAccessAnticipoBimestral() || $user->canAccessControlTanques())
                         <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle {{ request()->is('anticipo*') || request()->is('control-tanques*') ? 'active' : '' }}"
+                            <a class="nav-link dropdown-toggle {{ request()->is('anticipo*') || request()->is('control-tanques*') || request()->is('informes*') ? 'active' : '' }}"
                                 href="#" data-bs-toggle="dropdown">
                                 Informes
                             </a>
@@ -227,6 +227,13 @@
                                     <li>
                                         <a class="dropdown-item" href="{{ route('control-tanques.index') }}">
                                             Control de Tanques
+                                        </a>
+                                    </li>
+                                @endif
+                                @if ($user->isAdministrador())
+                                    <li>
+                                        <a class="dropdown-item" href="{{ route('informes.comprobante-contable-compras.index') }}">
+                                            Comprobante Contable de Compras
                                         </a>
                                     </li>
                                 @endif
