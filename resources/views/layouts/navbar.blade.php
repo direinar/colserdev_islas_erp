@@ -241,6 +241,11 @@
                                             Comprobante Contable de Compras
                                         </a>
                                     </li>
+                                    <li>
+                                        <a class="dropdown-item" href="{{ route('informes.control-caja.index') }}">
+                                            Informe Control Caja
+                                        </a>
+                                    </li>
                                 @endif
                             </ul>
                         </li>

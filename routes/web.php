@@ -12,6 +12,7 @@ use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\FuelPriceController;
 use App\Http\Controllers\InformeAnticipoBimestralController;
 use App\Http\Controllers\InformeComprobanteComprasController;
+use App\Http\Controllers\InformeControlCajaController;
 use App\Http\Controllers\InventarioAcpmController;
 use App\Http\Controllers\InventarioGasolinaController;
 use App\Http\Controllers\InventarioLubricanteController;
@@ -132,6 +133,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         Route::post('/informes/anticipo-bimestral/margenes', [InformeAnticipoBimestralController::class, 'guardarMargen'])
             ->name('informes.anticipo-bimestral.margenes');
+
+        Route::get('/informes/control-caja', [InformeControlCajaController::class, 'index'])
+            ->name('informes.control-caja.index');
+
+        Route::get('/informes/control-caja/exportar', [InformeControlCajaController::class, 'exportar'])
+            ->name('informes.control-caja.exportar');
+
+        Route::post('/informes/control-caja/cuentas', [InformeControlCajaController::class, 'guardarCuentas'])
+            ->name('informes.control-caja.cuentas');
 
         Route::get('/inventarios/acpm/create', [InventarioAcpmController::class, 'create'])
             ->name('inventarios-acpm.create');
