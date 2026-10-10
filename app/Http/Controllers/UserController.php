@@ -59,6 +59,11 @@ class UserController extends Controller
             'password' => ['nullable', 'string', Password::defaults(), 'confirmed'],
         ]);
 
+        // Quitarle el rol al único administrador dejaría el sistema sin quien lo administre.
+        if ($user->isAdministrador() && $validated['role'] !== User::ROLE_ADMINISTRADOR && $this->esUltimoAdministrador($user)) {
+            return back()->withInput()->withErrors(['role' => 'Es el único administrador: asigne primero el rol de administrador a otro usuario.']);
+        }
+
         if (empty($validated['password'])) {
             unset($validated['password']);
         } else {
@@ -72,12 +77,28 @@ class UserController extends Controller
             ->with('success', 'Usuario actualizado correctamente.');
     }
 
-    public function destroy(User $user)
+    public function destroy(Request $request, User $user)
     {
+        if ($user->is($request->user())) {
+            return redirect()->route('users.index')->with('error', 'No puede eliminar su propio usuario.');
+        }
+
+        if ($user->isAdministrador() && $this->esUltimoAdministrador($user)) {
+            return redirect()->route('users.index')->with('error', 'No se puede eliminar al único administrador.');
+        }
+
         $user->delete();
 
         return redirect()
             ->route('users.index')
             ->with('success', 'Usuario eliminado correctamente.');
+    }
+
+    private function esUltimoAdministrador(User $user): bool
+    {
+        return ! User::query()
+            ->where('role', User::ROLE_ADMINISTRADOR)
+            ->whereKeyNot($user->id)
+            ->exists();
     }
 }

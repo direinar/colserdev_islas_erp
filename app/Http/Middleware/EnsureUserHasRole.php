@@ -13,7 +13,8 @@ class EnsureUserHasRole
      */
     public function handle(Request $request, Closure $next, string ...$roles): Response
     {
-        if (! in_array($request->user()?->role, $roles)) {
+        // Misma comparación que User::hasAnyRole (la que usa el menú), para que menú y rutas no difieran.
+        if (! $request->user()?->hasAnyRole($roles)) {
             abort(403);
         }
 

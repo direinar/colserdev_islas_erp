@@ -21,3 +21,7 @@ yarn-error.log
 /.vscode
 /.zed
 /.claude/settings.local.json
+
+# Scripts y notas temporales de depuración
+/temp_*.php
+/tmp_*.txt

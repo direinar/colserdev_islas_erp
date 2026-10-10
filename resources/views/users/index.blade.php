@@ -8,6 +8,9 @@
             <a href="{{ route('users.create') }}" class="btn btn-primary">Nuevo usuario</a>
         </div>
 
+        @if (session('error'))
+            <div class="alert alert-danger">{{ session('error') }}</div>
+        @endif
         @if (session('success'))
             <div class="alert alert-success">{{ session('success') }}</div>
         @endif

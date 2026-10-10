@@ -30,17 +30,10 @@ class FuelPriceController extends Controller
      */
     public function store(Request $request)
     {
-        $request->validate([
-            'name' => 'required|string|in:Gasolina,ACPM',
-            'price' => 'required|numeric',
-            'effective_date' => 'nullable|date',
-            'active' => 'boolean',
-        ]);
-
-        FuelPrice::create($request->all());
+        FuelPrice::create($this->validar($request));
 
         return redirect()->route('fuel-prices.index')
-            ->with('success', 'Fuel price created successfully.');
+            ->with('success', 'Precio de combustible creado correctamente.');
     }
 
     /**
@@ -64,17 +57,10 @@ class FuelPriceController extends Controller
      */
     public function update(Request $request, FuelPrice $fuelPrice)
     {
-        $request->validate([
-            'name' => 'required|string|in:Gasolina,ACPM',
-            'price' => 'required|numeric',
-            'effective_date' => 'nullable|date',
-            'active' => 'boolean',
-        ]);
-
-        $fuelPrice->update($request->all());
+        $fuelPrice->update($this->validar($request));
 
         return redirect()->route('fuel-prices.index')
-            ->with('success', 'Fuel price updated successfully.');
+            ->with('success', 'Precio de combustible actualizado correctamente.');
     }
 
     /**
@@ -85,6 +71,21 @@ class FuelPriceController extends Controller
         $fuelPrice->delete();
 
         return redirect()->route('fuel-prices.index')
-            ->with('success', 'Fuel price deleted successfully.');
+            ->with('success', 'Precio de combustible eliminado correctamente.');
+    }
+
+    /**
+     * Solo se guardan los campos validados (antes se guardaba todo lo enviado).
+     *
+     * @return array{name: string, price: numeric-string|float, effective_date?: string|null, active?: bool}
+     */
+    private function validar(Request $request): array
+    {
+        return $request->validate([
+            'name' => 'required|string|in:Gasolina,ACPM',
+            'price' => 'required|numeric|min:0',
+            'effective_date' => 'nullable|date',
+            'active' => 'boolean',
+        ]);
     }
 }

@@ -2,7 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\CarteraMovimiento;
 use App\Models\Customer;
+use App\Models\TurnoCartera;
+use App\Models\TurnoRecaudo;
+use App\Models\TurnoRecaudoAdmin;
 use Illuminate\Http\Request;
 
 class CustomerController extends Controller
@@ -59,6 +63,19 @@ class CustomerController extends Controller
 
     public function destroy(Customer $customer)
     {
+        // Un cliente con movimientos de cartera o usado en planillas no se borra:
+        // se perdería su historial y los informes dejarían de cuadrar.
+        $enUso = CarteraMovimiento::query()->where('customer_id', $customer->id)->exists()
+            || TurnoCartera::query()->where('cliente_id', $customer->id)->exists()
+            || TurnoRecaudo::query()->where('cliente_id', $customer->id)->exists()
+            || TurnoRecaudoAdmin::query()->where('responsable_id', $customer->id)->exists();
+
+        if ($enUso) {
+            return redirect()
+                ->route('customers.index')
+                ->with('error', 'No se puede eliminar '.$customer->name.': tiene movimientos de cartera o aparece en planillas de turno.');
+        }
+
         $customer->delete();
 
         return redirect()
