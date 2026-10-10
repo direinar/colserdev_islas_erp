@@ -218,8 +218,13 @@
                             <ul class="dropdown-menu">
                                 @if ($user->canAccessAnticipoBimestral())
                                     <li>
+                                        <a class="dropdown-item" href="{{ route('informes.anticipo-bimestral.index') }}">
+                                            Informe Anticipo Bimestral
+                                        </a>
+                                    </li>
+                                    <li>
                                         <a class="dropdown-item" href="{{ route('anticipo-bimestral.create') }}">
-                                            Anticipo Bimestral
+                                            Anticipo Bimestral (manual)
                                         </a>
                                     </li>
                                 @endif

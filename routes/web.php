@@ -10,6 +10,7 @@ use App\Http\Controllers\ComprobanteContableCompraController;
 use App\Http\Controllers\ControlTanqueController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\FuelPriceController;
+use App\Http\Controllers\InformeAnticipoBimestralController;
 use App\Http\Controllers\InformeComprobanteComprasController;
 use App\Http\Controllers\InventarioAcpmController;
 use App\Http\Controllers\InventarioGasolinaController;
@@ -85,6 +86,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/anticipo-bimestral', [AnticipoBimestralController::class, 'store'])
             ->name('anticipo-bimestral.store');
 
+        Route::get('/informes/anticipo-bimestral', [InformeAnticipoBimestralController::class, 'index'])
+            ->name('informes.anticipo-bimestral.index');
+
+        Route::get('/informes/anticipo-bimestral/exportar', [InformeAnticipoBimestralController::class, 'exportar'])
+            ->name('informes.anticipo-bimestral.exportar');
+
         Route::get('/compras-lubricantes/create', [CompraLubricanteController::class, 'create'])
             ->name('compras-lubricantes.create');
 
@@ -119,6 +126,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         Route::post('/informes/comprobante-contable-compras/cuentas', [InformeComprobanteComprasController::class, 'guardarCuentas'])
             ->name('informes.comprobante-contable-compras.cuentas');
+
+        Route::post('/informes/anticipo-bimestral/ajustes', [InformeAnticipoBimestralController::class, 'guardarAjustes'])
+            ->name('informes.anticipo-bimestral.ajustes');
+
+        Route::post('/informes/anticipo-bimestral/margenes', [InformeAnticipoBimestralController::class, 'guardarMargen'])
+            ->name('informes.anticipo-bimestral.margenes');
 
         Route::get('/inventarios/acpm/create', [InventarioAcpmController::class, 'create'])
             ->name('inventarios-acpm.create');
