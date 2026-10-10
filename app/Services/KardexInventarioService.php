@@ -52,7 +52,8 @@ class KardexInventarioService
             ->get()
             ->map(function (Turno $turno): array {
                 $cantidad = (float) $turno->lubricantes->sum('cantidad');
-                $valorVenta = (float) $turno->lubricantes->sum(fn (TurnoLubricante $linea): float => (float) $linea->total);
+                // La planilla guarda valor_sin_iva ya multiplicado por la cantidad de la línea.
+                $valorVenta = (float) $turno->lubricantes->sum(fn (TurnoLubricante $linea): float => (float) $linea->valor_sin_iva);
 
                 return $this->movimientoVenta(
                     $turno->numero_turno,
@@ -64,6 +65,66 @@ class KardexInventarioService
             });
 
         return $this->calcular($entradas->concat($salidas));
+    }
+
+    /**
+     * Consolidado de canastilla: todos los movimientos de todas las referencias en una sola hoja.
+     * Cada salida conserva el costo promedio de su propia referencia, así la suma de los totales
+     * de cada referencia es igual a los totales del control.
+     *
+     * @return array{rows: list<array<string, mixed>>, totales: array<string, float>}
+     */
+    public function canastillaControl(): array
+    {
+        $referencias = CompraLubricante::query()->distinct()->pluck('nombre')
+            ->concat(TurnoLubricante::query()->whereHas('turno')->distinct()->pluck('producto'))
+            ->filter()
+            ->unique()
+            ->sort()
+            ->values();
+
+        $movimientos = $referencias->flatMap(
+            fn (string $referencia): array => array_map(
+                fn (array $row): array => $row + ['referencia' => $referencia],
+                $this->canastilla($referencia)['rows'],
+            )
+        );
+
+        $saldoUnidades = 0.0;
+        $saldoValor = 0.0;
+
+        $totales = [
+            'entradas' => 0.0,
+            'salidas' => 0.0,
+            'saldo_unidades' => 0.0,
+            'valor_entradas' => 0.0,
+            'valor_salidas' => 0.0,
+            'valor_saldo' => 0.0,
+            'valor_venta' => 0.0,
+        ];
+
+        $rows = $movimientos
+            ->sortBy(fn (array $row): string => ($row['fecha_compra'] ?? $row['fecha_venta'])
+                .'-'.($row['tipo'] === 'compra' ? '0' : '1')
+                .'-'.sprintf('%010d', $row['compra_id'] ?? $row['numero_turno'])
+                .'-'.$row['referencia'])
+            ->values()
+            ->map(function (array $row) use (&$saldoUnidades, &$saldoValor, &$totales): array {
+                $saldoUnidades += $row['entradas'] - $row['salidas'];
+                $saldoValor += $row['valor_entradas'] - $row['valor_salidas'];
+
+                foreach (['entradas', 'salidas', 'valor_entradas', 'valor_salidas', 'valor_venta'] as $columna) {
+                    $totales[$columna] += $row[$columna];
+                }
+
+                return ['saldo_unidades' => $saldoUnidades, 'valor_saldo' => $saldoValor] + $row;
+            })
+            ->all();
+
+        $totales['saldo_unidades'] = $saldoUnidades;
+        $totales['valor_saldo'] = $saldoValor;
+
+        return ['rows' => $rows, 'totales' => $totales];
     }
 
     /**

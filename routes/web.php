@@ -94,6 +94,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/inventarios/lubricantes/create', [InventarioLubricanteController::class, 'create'])
             ->name('inventarios-lubricantes.create');
 
+        Route::get('/inventarios/lubricantes/control', [InventarioLubricanteController::class, 'control'])
+            ->name('inventarios-lubricantes.control');
+
         Route::get('/inventarios/acpm/create', [InventarioAcpmController::class, 'create'])
             ->name('inventarios-acpm.create');
 

@@ -23,4 +23,11 @@ class InventarioLubricanteController extends Controller
             'kardex' => $producto !== null ? $kardexService->canastilla($producto) : null,
         ]);
     }
+
+    public function control(KardexInventarioService $kardexService): View
+    {
+        return view('inventarios.lubricantes.control', [
+            'kardex' => $kardexService->canastillaControl(),
+        ]);
+    }
 }

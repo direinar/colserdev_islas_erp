@@ -2,8 +2,13 @@
     Kardex de solo lectura. Todo se alimenta de la planilla de turnos (ventas) y de compras (entradas);
     las correcciones se hacen allá, no aquí.
 
-    Parámetros: $kardex (KardexInventarioService), $titulo, $unidad ('GALONES' | 'UNIDADES'), $compraRoute.
+    Parámetros: $kardex (KardexInventarioService), $titulo, $unidad ('GALONES' | 'UNIDADES'), $compraRoute,
+    $mostrarReferencia (opcional: columna REFERENCIA para el consolidado de canastilla).
 --}}
+@php
+    $mostrarReferencia = $mostrarReferencia ?? false;
+    $columnas = $mostrarReferencia ? 13 : 12;
+@endphp
 <style>
     .kardex-table th,
     .kardex-table td {
@@ -16,13 +21,16 @@
         <table class="table table-bordered table-sm mb-0 align-middle kardex-table">
             <thead>
                 <tr style="background-color:#000; color:#ff1c1c; letter-spacing:.25rem; font-weight:800;">
-                    <th colspan="12" class="text-center fs-5">{{ $titulo }}</th>
+                    <th colspan="{{ $columnas }}" class="text-center fs-5">{{ $titulo }}</th>
                 </tr>
                 <tr style="background-color:#f6e7d4;">
                     <th class="text-center align-middle">PLANILLA</th>
                     {{-- Una sola FECHA: la de la venta (planilla) o la de la compra (con enlace a la compra). --}}
                     <th rowspan="2" class="text-center align-middle">FECHA</th>
                     <th class="text-center align-middle">COMPRA</th>
+                    @if ($mostrarReferencia)
+                        <th rowspan="2" class="text-center align-middle">REFERENCIA</th>
+                    @endif
                     <th colspan="3" class="text-center align-middle">{{ $unidad }}</th>
                     <th colspan="4" class="text-center align-middle">VALORES AL COSTO PROMEDIO</th>
                     <th colspan="2" class="text-center align-middle">VENTAS</th>
@@ -60,6 +68,9 @@
                             @endif
                         </td>
                         <td>{{ $row['factura'] }}</td>
+                        @if ($mostrarReferencia)
+                            <td>{{ $row['referencia'] }}</td>
+                        @endif
                         <td class="text-end">{{ $row['entradas'] > 0 ? number_format($row['entradas'], 0, ',', '.') : '' }}</td>
                         <td class="text-end">{{ $row['salidas'] > 0 ? number_format($row['salidas'], 2, ',', '.') : '' }}</td>
                         <td class="text-end">{{ number_format($row['saldo_unidades'], 2, ',', '.') }}</td>
@@ -72,14 +83,14 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="12" class="text-center text-muted py-3">No hay compras ni ventas registradas.</td>
+                        <td colspan="{{ $columnas }}" class="text-center text-muted py-3">No hay compras ni ventas registradas.</td>
                     </tr>
                 @endforelse
             </tbody>
 
             <tfoot>
                 <tr class="table-secondary fw-bold">
-                    <td colspan="3" class="text-end">TOTALES</td>
+                    <td colspan="{{ $mostrarReferencia ? 4 : 3 }}" class="text-end">TOTALES</td>
                     <td class="text-end">{{ number_format($kardex['totales']['entradas'], 0, ',', '.') }}</td>
                     <td class="text-end">{{ number_format($kardex['totales']['salidas'], 2, ',', '.') }}</td>
                     <td class="text-end">{{ number_format($kardex['totales']['saldo_unidades'], 2, ',', '.') }}</td>

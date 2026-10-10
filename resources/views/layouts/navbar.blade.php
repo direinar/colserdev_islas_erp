@@ -129,6 +129,11 @@
                                         </a>
                                     </li>
                                     <li>
+                                        <a class="dropdown-item" href="{{ route('inventarios-lubricantes.control') }}">
+                                            Inventario Canastilla – Control
+                                        </a>
+                                    </li>
+                                    <li>
                                         <a class="dropdown-item" href="{{ route('inventarios-acpm.create') }}">
                                             Inventarios ACPM
                                         </a>
