@@ -22,7 +22,7 @@ function compraCombustible(array $atributos = []): Compra
     ]);
 }
 
-test('el inventario de gasolina valora las salidas al costo promedio y trae la venta y el precio de la planilla', function () {
+test('el inventario de gasolina valora al costo promedio las salidas según cortes de IAPROPIADA y trae la venta y el precio de la planilla', function () {
     $admin = User::factory()->create(['role' => User::ROLE_ADMINISTRADOR]);
     $compra = compraCombustible();
 
@@ -30,7 +30,8 @@ test('el inventario de gasolina valora las salidas al costo promedio y trae la v
         'fecha' => '2026-09-25',
         'numero_turno' => 4,
         'precio_corriente' => 16400,
-        'lecturas_galones_corriente' => 60,
+        'tirillas_galones_corriente' => 60,
+        'lecturas_galones_corriente' => 999,
         'tirillas_valor_corriente' => 984000,
     ]);
 
@@ -89,8 +90,10 @@ test('el inventario de ACPM toma los galones, la venta y el precio de ACPM y omi
         'fecha' => '2026-09-25',
         'numero_turno' => 4,
         'precio_acpm' => 10700,
-        'lecturas_galones_corriente' => 60,
-        'lecturas_galones_acpm' => 60,
+        'tirillas_galones_corriente' => 60,
+        'tirillas_galones_acpm' => 60,
+        // Las salidas salen de los cortes de IAPROPIADA, no de las lecturas de surtidores.
+        'lecturas_galones_acpm' => 999,
         'tirillas_valor_acpm' => 642000,
     ]);
 

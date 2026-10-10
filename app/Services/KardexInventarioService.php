@@ -19,7 +19,7 @@ class KardexInventarioService
      */
     public function gasolina(): array
     {
-        return $this->combustible('gasolina', 'distribucion_gasolina', 'lecturas_galones_corriente', 'tirillas_valor_corriente', 'precio_corriente');
+        return $this->combustible('gasolina', 'distribucion_gasolina', 'tirillas_galones_corriente', 'tirillas_valor_corriente', 'precio_corriente');
     }
 
     /**
@@ -27,7 +27,7 @@ class KardexInventarioService
      */
     public function acpm(): array
     {
-        return $this->combustible('acpm', 'distribucion_acpm', 'lecturas_galones_acpm', 'tirillas_valor_acpm', 'precio_acpm');
+        return $this->combustible('acpm', 'distribucion_acpm', 'tirillas_galones_acpm', 'tirillas_valor_acpm', 'precio_acpm');
     }
 
     /**
