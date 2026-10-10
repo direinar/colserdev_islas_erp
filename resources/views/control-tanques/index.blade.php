@@ -83,8 +83,8 @@
         <div class="d-flex flex-column flex-lg-row justify-content-between align-items-start align-items-lg-end gap-2">
             <div>
                 <h4 class="mb-0 text-warning-emphasis fw-bold">INFORME DE CONTROL DE TANQUES</h4>
-                <small class="text-muted">Solo galones. Ingresos desde compras y ventas desde la planilla de turnos
-                    (suma de los turnos de cada fecha); el aforo lo digita el jefe de patios cada noche.</small>
+                <small class="text-muted">Solo galones. Ingresos desde compras y ventas según cortes de IAPROPIADA de la
+                    planilla de turnos (suma de los turnos de cada fecha); el aforo lo digita el jefe de patios cada noche.</small>
             </div>
 
             <form method="GET" action="{{ route('control-tanques.index') }}" class="d-flex flex-wrap gap-2 align-items-end">

@@ -21,17 +21,23 @@ function compraTanques(string $fecha, float $gasolina, float $acpm): Compra
     ]);
 }
 
+/**
+ * Turno con galones vendidos según cortes de IAPROPIADA. Las lecturas de los surtidores
+ * llevan otro valor a propósito: el control de tanques no debe usarlas.
+ */
 function turnoTanques(string $fecha, int $numero, float $corriente, float $acpm): Turno
 {
     return Turno::create([
         'fecha' => $fecha,
         'numero_turno' => $numero,
-        'lecturas_galones_corriente' => $corriente,
-        'lecturas_galones_acpm' => $acpm,
+        'tirillas_galones_corriente' => $corriente,
+        'tirillas_galones_acpm' => $acpm,
+        'lecturas_galones_corriente' => $corriente + 1000,
+        'lecturas_galones_acpm' => $acpm + 1000,
     ]);
 }
 
-test('el control de tanques arma el saldo diario con compras, la suma de los turnos de cada fecha y el aforo', function () {
+test('el control de tanques arma el saldo diario con compras, los cortes de IAPROPIADA de los turnos de cada fecha y el aforo', function () {
     $jefe = User::factory()->create(['role' => User::ROLE_JEFE_PATIOS]);
     TanqueSaldoInicial::create(['combustible' => 'corriente', 'fecha_corte' => '2026-09-01', 'galones' => 3350]);
     TanqueSaldoInicial::create(['combustible' => 'acpm', 'fecha_corte' => '2026-09-01', 'galones' => 4265]);

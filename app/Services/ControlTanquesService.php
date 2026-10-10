@@ -11,8 +11,9 @@ use Illuminate\Support\Collection;
 
 /**
  * Informe de control de tanques, solo en galones. Ingresos y ventas no se digitan:
- * salen de compras y de la planilla de turnos (suma de los turnos de cada fecha).
- * Lo único que se registra aquí es el aforo nocturno del jefe de patios.
+ * el ingreso sale de compras y la venta de los galones según cortes de IAPROPIADA
+ * de la planilla de turnos (suma de los turnos de cada fecha), no de las lecturas
+ * de los surtidores. Lo único que se registra aquí es el aforo nocturno del jefe de patios.
  *
  * Saldo = saldo anterior + ingreso - venta, arrancando del saldo inicial del tanque.
  * Faltante = saldo en libros - galones según tabla de aforo (negativo = sobrante).
@@ -25,8 +26,8 @@ class ControlTanquesService
      * @var array<string, array{compra: string, venta: string}>
      */
     private const COLUMNAS = [
-        TanqueSaldoInicial::CORRIENTE => ['compra' => 'gasolina', 'venta' => 'lecturas_galones_corriente'],
-        TanqueSaldoInicial::ACPM => ['compra' => 'acpm', 'venta' => 'lecturas_galones_acpm'],
+        TanqueSaldoInicial::CORRIENTE => ['compra' => 'gasolina', 'venta' => 'tirillas_galones_corriente'],
+        TanqueSaldoInicial::ACPM => ['compra' => 'acpm', 'venta' => 'tirillas_galones_acpm'],
     ];
 
     /**
