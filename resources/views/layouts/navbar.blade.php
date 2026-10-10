@@ -235,6 +235,13 @@
                                         </a>
                                     </li>
                                 @endif
+                                @if ($user->canAccessCartera())
+                                    <li>
+                                        <a class="dropdown-item" href="{{ route('informes.recaudos-cartera.index') }}">
+                                            Informe Recaudos de Cartera
+                                        </a>
+                                    </li>
+                                @endif
                                 @if ($user->isAdministrador())
                                     <li>
                                         <a class="dropdown-item" href="{{ route('informes.comprobante-contable-compras.index') }}">

@@ -14,6 +14,7 @@ use App\Http\Controllers\InformeAnticipoBimestralController;
 use App\Http\Controllers\InformeComprobanteComprasController;
 use App\Http\Controllers\InformeControlCajaController;
 use App\Http\Controllers\InformeMargenMayoristaController;
+use App\Http\Controllers\InformeRecaudosCarteraController;
 use App\Http\Controllers\InventarioAcpmController;
 use App\Http\Controllers\InventarioGasolinaController;
 use App\Http\Controllers\InventarioLubricanteController;
@@ -94,6 +95,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/informes/anticipo-bimestral/exportar', [InformeAnticipoBimestralController::class, 'exportar'])
             ->name('informes.anticipo-bimestral.exportar');
 
+        Route::get('/informes/recaudos-cartera', [InformeRecaudosCarteraController::class, 'index'])
+            ->name('informes.recaudos-cartera.index');
+
+        Route::get('/informes/recaudos-cartera/exportar', [InformeRecaudosCarteraController::class, 'exportar'])
+            ->name('informes.recaudos-cartera.exportar');
+
         Route::get('/compras-lubricantes/create', [CompraLubricanteController::class, 'create'])
             ->name('compras-lubricantes.create');
 
@@ -152,6 +159,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         Route::post('/informes/margen-mayorista/parametros', [InformeMargenMayoristaController::class, 'guardarParametros'])
             ->name('informes.margen-mayorista.parametros');
+
+        Route::post('/informes/recaudos-cartera/cuentas', [InformeRecaudosCarteraController::class, 'guardarCuentas'])
+            ->name('informes.recaudos-cartera.cuentas');
 
         Route::get('/inventarios/acpm/create', [InventarioAcpmController::class, 'create'])
             ->name('inventarios-acpm.create');

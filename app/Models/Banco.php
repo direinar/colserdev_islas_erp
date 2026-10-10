@@ -8,5 +8,6 @@ class Banco extends Model
 {
     protected $fillable = [
         'name',
+        'cuenta_contable',
     ];
 }
