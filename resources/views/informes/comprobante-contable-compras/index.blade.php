@@ -197,6 +197,6 @@
 
     <div class="small text-muted mt-2">Se arma factura por factura desde el módulo de compras. Combustible: inventario
         contra proveedor por el valor total de la factura. Canastilla: inventario por el valor sin IVA, IVA y proveedor
-        por el total con IVA. La línea de descuentos compras (ingreso por mayorista) se agregará con el módulo de margen
-        mayorista.</div>
+        por el total con IVA. Descuentos compras: proveedor de combustibles contra descuentos compras por el margen
+        mayorista del periodo (Informe Margen Mayorista).</div>
 @endsection

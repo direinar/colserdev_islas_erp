@@ -16,6 +16,8 @@ class ComprobanteCompraCuenta extends Model
 
     public const PROVEEDOR_CANASTILLA = 'proveedor_canastilla';
 
+    public const DESCUENTOS_COMPRAS = 'descuentos_compras';
+
     protected $table = 'comprobante_compras_cuentas';
 
     protected $fillable = [

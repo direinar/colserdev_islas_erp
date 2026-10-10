@@ -16,11 +16,13 @@ use Illuminate\Support\Collection;
  * - Canastilla (cada factura): débito inventario por el valor sin IVA, débito IVA si
  *   lo tiene y crédito proveedor por el total con IVA.
  *
- * La línea de descuentos compras (ingreso por mayorista) queda pendiente del módulo
- * de margen mayorista.
+ * - Descuentos compras: débito proveedor de combustibles / crédito descuentos compras por
+ *   el margen mayorista del periodo (informe de margen mayorista).
  */
 class ComprobanteContableComprasService
 {
+    public function __construct(private MargenMayoristaService $margenMayorista) {}
+
     /**
      * @return array{
      *     lineas: list<array{fecha: string, cuenta: string, concepto: string, tercero: string, nit: string, debito: float, credito: float}>,
@@ -34,6 +36,7 @@ class ComprobanteContableComprasService
 
         $lineas = $this->combustibles($cuentas, $desde, $hasta)
             ->concat($this->canastilla($cuentas, $desde, $hasta))
+            ->concat($this->descuentosCompras($cuentas, $desde, $hasta))
             ->values()
             ->all();
 
@@ -116,6 +119,34 @@ class ComprobanteContableComprasService
                     $this->linea($base, $cuentas, ComprobanteCompraCuenta::PROVEEDOR_CANASTILLA, 0.0, $total),
                 ]));
             });
+    }
+
+    /**
+     * Ingreso por mayorista del periodo: el proveedor de combustibles queda debiéndolo.
+     *
+     * @param  Collection<string, ComprobanteCompraCuenta>  $cuentas
+     * @return list<array<string, mixed>>
+     */
+    private function descuentosCompras(Collection $cuentas, string $desde, string $hasta): array
+    {
+        $valor = $this->margenMayorista->informe($desde, $hasta)['margen_mayorista'];
+
+        if ($valor <= 0) {
+            return [];
+        }
+
+        $proveedor = $cuentas->get(ComprobanteCompraCuenta::PROVEEDOR_COMBUSTIBLES)?->proveedor;
+        $base = [
+            'fecha' => $hasta,
+            'concepto' => 'DESCUENTOS COMPRAS',
+            'tercero' => (string) $proveedor?->name,
+            'nit' => (string) $proveedor?->document,
+        ];
+
+        return [
+            $this->linea($base, $cuentas, ComprobanteCompraCuenta::PROVEEDOR_COMBUSTIBLES, $valor, 0.0),
+            $this->linea($base, $cuentas, ComprobanteCompraCuenta::DESCUENTOS_COMPRAS, 0.0, $valor),
+        ];
     }
 
     /**

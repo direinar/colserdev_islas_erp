@@ -246,6 +246,11 @@
                                             Informe Control Caja
                                         </a>
                                     </li>
+                                    <li>
+                                        <a class="dropdown-item" href="{{ route('informes.margen-mayorista.index') }}">
+                                            Informe Margen Mayorista
+                                        </a>
+                                    </li>
                                 @endif
                             </ul>
                         </li>

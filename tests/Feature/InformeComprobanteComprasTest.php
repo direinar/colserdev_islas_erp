@@ -79,8 +79,11 @@ test('el comprobante arma débito y crédito por cada factura de compras con su 
         ['143509', 'FC 2150', 'SOLUB', '830104556', 654000.0, 0.0],
         ['23670506', 'FC 2150', 'SOLUB', '830104556', 124260.0, 0.0],
         ['233501', 'FC 2150', 'SOLUB', '830104556', 0.0, 778260.0],
+        // Margen mayorista del periodo: 6.230 galones x 0,3 x 585,71.
+        ['230505', 'DESCUENTOS COMPRAS', 'CHEVRON PETROLEUM', '860023560', 1094692.0, 0.0],
+        ['421040', 'DESCUENTOS COMPRAS', 'CHEVRON PETROLEUM', '860023560', 0.0, 1094692.0],
     ])
-        ->and($response->viewData('totales'))->toBe(['debito' => 84980929.0, 'credito' => 84980929.0]);
+        ->and($response->viewData('totales'))->toBe(['debito' => 86075621.0, 'credito' => 86075621.0]);
 });
 
 test('el administrador cambia las cuentas contables y el proveedor de combustibles', function () {
@@ -130,7 +133,8 @@ test('el comprobante contable de compras se exporta a Excel', function () {
         ->and($hoja->getCell('B5')->getValue())->toBe('FC 46-1238070')
         ->and($hoja->getCell('D5')->getValue())->toBe('860023560')
         ->and((float) $hoja->getCell('E5')->getValue())->toBe(83974669.0)
-        ->and($hoja->getCell('B12')->getValue())->toBe('TOTALES')
-        ->and((float) $hoja->getCell('E12')->getValue())->toBe(84980929.0)
-        ->and((float) $hoja->getCell('F12')->getValue())->toBe(84980929.0);
+        ->and($hoja->getCell('B12')->getValue())->toBe('DESCUENTOS COMPRAS')
+        ->and($hoja->getCell('B14')->getValue())->toBe('TOTALES')
+        ->and((float) $hoja->getCell('E14')->getValue())->toBe(86075621.0)
+        ->and((float) $hoja->getCell('F14')->getValue())->toBe(86075621.0);
 });
