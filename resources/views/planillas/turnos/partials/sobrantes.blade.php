@@ -41,12 +41,14 @@
 
     <div class="row g-2 mt-3">
         <div class="col-md-6">
-            <label class="form-label fw-bold">NOMBRE DEL VENDEDOR:</label>
+            <label class="form-label fw-bold" for="nombre-vendedor">NOMBRE DEL VENDEDOR:</label>
+            {{-- Quien registró la planilla; si otro usuario la corrige, el vendedor no cambia. --}}
             <input type="text" class="form-control form-control-sm" name="nombre_vendedor" id="nombre-vendedor"
-                value="{{ auth()->user()->name }}" readonly />
+                value="{{ optional($turno ?? null)->nombre_vendedor ?: auth()->user()->name }}" readonly />
         </div>
         <div class="col-md-6">
-            <label class="form-label fw-bold d-block">REVISADO:</label>
+            {{-- No es un campo sino el estado de la planilla: por eso no lleva etiqueta de formulario. --}}
+            <div class="form-label fw-bold d-block">REVISADO:</div>
             @php
                 $turnoActual = $turno ?? null;
                 $estaRevisado = (bool) optional($turnoActual)->revisado;

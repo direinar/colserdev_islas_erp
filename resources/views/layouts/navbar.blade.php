@@ -63,7 +63,7 @@
                             <ul class="dropdown-menu">
                                 <li>
                                     <a class="dropdown-item" href="{{ route('turnos.create') }}">
-                                        Turnos
+                                        Planilla de turnos
                                     </a>
                                 </li>
                                 @if ($user->isAdministrador())
@@ -123,34 +123,37 @@
                             </a>
                             <ul class="dropdown-menu">
                                 @if ($user->isAdministrador())
+                                    <li><h6 class="dropdown-header">Inventarios (kardex)</h6></li>
                                     <li>
-                                        <a class="dropdown-item" href="{{ route('inventarios-lubricantes.create') }}">
-                                            Inventarios Canastilla
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a class="dropdown-item" href="{{ route('inventarios-lubricantes.control') }}">
-                                            Inventario Canastilla – Control
+                                        <a class="dropdown-item" href="{{ route('inventarios-gasolina.create') }}">
+                                            Gasolina
                                         </a>
                                     </li>
                                     <li>
                                         <a class="dropdown-item" href="{{ route('inventarios-acpm.create') }}">
-                                            Inventarios ACPM
+                                            ACPM
                                         </a>
                                     </li>
                                     <li>
-                                        <a class="dropdown-item" href="{{ route('inventarios-gasolina.create') }}">
-                                            Inventarios Gasolina
+                                        <a class="dropdown-item" href="{{ route('inventarios-lubricantes.create') }}">
+                                            Canastilla por referencia
                                         </a>
                                     </li>
+                                    <li>
+                                        <a class="dropdown-item" href="{{ route('inventarios-lubricantes.control') }}">
+                                            Canastilla – control
+                                        </a>
+                                    </li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><h6 class="dropdown-header">Catálogos</h6></li>
                                     <li>
                                         <a class="dropdown-item" href="{{ route('fuel-prices.index') }}">
-                                            Combustibles
+                                            Precios de combustible
                                         </a>
                                     </li>
                                     <li>
                                         <a class="dropdown-item" href="{{ route('lubricants.index') }}">
-                                            Lubricantes
+                                            Canastilla (precios)
                                         </a>
                                     </li>
                                     <li>
@@ -173,9 +176,9 @@
 
 
                     {{-- COMPRAS --}}
-                    @if ($user->canAccessCompras() || $user->canAccessComprasLubricantes() || $user->canAccessComprobanteContableCompras())
+                    @if ($user->canAccessCompras() || $user->canAccessComprasLubricantes() || $user->canAccessComprobanteContableCompras() || $user->canAccessAnticipoBimestral())
                         <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle {{ request()->is('compras*') || request()->is('comprobante*') ? 'active' : '' }}"
+                            <a class="nav-link dropdown-toggle {{ request()->is('compras*') || request()->is('comprobante*') || request()->is('anticipo-bimestral*') ? 'active' : '' }}"
                                 href="#" data-bs-toggle="dropdown">
                                 Compras
                             </a>
@@ -183,7 +186,7 @@
                                 @if ($user->canAccessCompras())
                                     <li>
                                         <a class="dropdown-item" href="{{ route('compras.create') }}">
-                                            Compras Combustible
+                                            Compras de combustible
                                         </a>
                                     </li>
                                 @endif
@@ -191,15 +194,27 @@
                                 @if ($user->canAccessComprasLubricantes())
                                     <li>
                                         <a class="dropdown-item" href="{{ route('compras-lubricantes.create') }}">
-                                            Compras Lubricantes
+                                            Compras de lubricantes
                                         </a>
                                     </li>
                                 @endif
 
+                                {{-- Formularios de captura manual: los informes automáticos están en Informes. --}}
+                                @if ($user->canAccessComprobanteContableCompras() || $user->canAccessAnticipoBimestral())
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><h6 class="dropdown-header">Registros manuales</h6></li>
+                                @endif
                                 @if ($user->canAccessComprobanteContableCompras())
                                     <li>
                                         <a class="dropdown-item" href="{{ route('comprobante-contable-compras.create') }}">
-                                            Comprobante Contable
+                                            Comprobante contable (manual)
+                                        </a>
+                                    </li>
+                                @endif
+                                @if ($user->canAccessAnticipoBimestral())
+                                    <li>
+                                        <a class="dropdown-item" href="{{ route('anticipo-bimestral.create') }}">
+                                            Anticipo bimestral (manual)
                                         </a>
                                     </li>
                                 @endif
@@ -208,64 +223,73 @@
                     @endif
 
 
-                    {{-- INFORMES --}}
+                    {{-- INFORMES: solo consulta; los registros manuales están en Compras. --}}
                     @if ($user->canAccessAnticipoBimestral() || $user->canAccessControlTanques())
                         <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle {{ request()->is('anticipo*') || request()->is('control-tanques*') || request()->is('informes*') ? 'active' : '' }}"
+                            <a class="nav-link dropdown-toggle {{ request()->is('control-tanques*') || request()->is('informes*') ? 'active' : '' }}"
                                 href="#" data-bs-toggle="dropdown">
                                 Informes
                             </a>
                             <ul class="dropdown-menu">
-                                @if ($user->canAccessAnticipoBimestral())
-                                    <li>
-                                        <a class="dropdown-item" href="{{ route('informes.anticipo-bimestral.index') }}">
-                                            Informe Anticipo Bimestral
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a class="dropdown-item" href="{{ route('anticipo-bimestral.create') }}">
-                                            Anticipo Bimestral (manual)
-                                        </a>
-                                    </li>
-                                @endif
+                                <li><h6 class="dropdown-header">Operación</h6></li>
                                 @if ($user->canAccessControlTanques())
                                     <li>
                                         <a class="dropdown-item" href="{{ route('control-tanques.index') }}">
-                                            Control de Tanques
-                                        </a>
-                                    </li>
-                                @endif
-                                @if ($user->canAccessCartera())
-                                    <li>
-                                        <a class="dropdown-item" href="{{ route('informes.recaudos-cartera.index') }}">
-                                            Informe Recaudos de Cartera
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a class="dropdown-item" href="{{ route('informes.saldos.index') }}">
-                                            Informes de Saldos
+                                            Control de tanques
                                         </a>
                                     </li>
                                 @endif
                                 @if ($user->isAdministrador())
                                     <li>
-                                        <a class="dropdown-item" href="{{ route('informes.comprobante-contable-compras.index') }}">
-                                            Comprobante Contable de Compras
+                                        <a class="dropdown-item" href="{{ route('informes.control-caja.index') }}">
+                                            Control caja
+                                        </a>
+                                    </li>
+                                @endif
+
+                                @if ($user->canAccessCartera())
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><h6 class="dropdown-header">Cartera y saldos</h6></li>
+                                    <li>
+                                        <a class="dropdown-item" href="{{ route('informes.recaudos-cartera.index') }}">
+                                            Recaudos de cartera
                                         </a>
                                     </li>
                                     <li>
-                                        <a class="dropdown-item" href="{{ route('informes.control-caja.index') }}">
-                                            Informe Control Caja
+                                        <a class="dropdown-item" href="{{ route('informes.saldos.index') }}">
+                                            Saldos (cartera, canastilla y precios)
+                                        </a>
+                                    </li>
+                                @endif
+
+                                @if ($user->isAdministrador())
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><h6 class="dropdown-header">Contables</h6></li>
+                                    <li>
+                                        <a class="dropdown-item" href="{{ route('informes.comprobante-contable-compras.index') }}">
+                                            Comprobante contable de compras
                                         </a>
                                     </li>
                                     <li>
                                         <a class="dropdown-item" href="{{ route('informes.margen-mayorista.index') }}">
-                                            Informe Margen Mayorista
+                                            Margen mayorista
                                         </a>
                                     </li>
+                                @endif
+
+                                <li><hr class="dropdown-divider"></li>
+                                <li><h6 class="dropdown-header">Fiscales y de gestión</h6></li>
+                                @if ($user->canAccessAnticipoBimestral())
+                                    <li>
+                                        <a class="dropdown-item" href="{{ route('informes.anticipo-bimestral.index') }}">
+                                            Anticipo bimestral
+                                        </a>
+                                    </li>
+                                @endif
+                                @if ($user->isAdministrador())
                                     <li>
                                         <a class="dropdown-item" href="{{ route('informes.cierre.index') }}">
-                                            Informe de Cierre
+                                            Informe de cierre
                                         </a>
                                     </li>
                                 @endif

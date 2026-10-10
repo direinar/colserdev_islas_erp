@@ -18,12 +18,6 @@
             vertical-align: middle;
         }
 
-        .cc-titulo {
-            color: #ff0000;
-            font-weight: 800;
-            font-size: 1.5rem;
-        }
-
         @page {
             size: portrait;
             margin: 8mm;
@@ -54,37 +48,13 @@
         }
     </style>
 
-    <div class="card mb-3">
-        <div class="card-body py-2 d-flex flex-column flex-lg-row justify-content-between align-items-start align-items-lg-center gap-2">
-            <div>
-                <div class="cc-titulo">COMPROBANTE CONTABLE DE COMPRAS</div>
-                <div class="small">
-                    DESDE {{ Carbon::parse($desde)->format('d/m/Y') }} — HASTA {{ Carbon::parse($hasta)->format('d/m/Y') }}
-                </div>
-            </div>
-
-            <form method="GET" action="{{ route('informes.comprobante-contable-compras.index') }}"
-                class="d-flex flex-wrap gap-2 align-items-end d-print-none">
-                <div>
-                    <label class="form-label small fw-semibold mb-1" for="desde">DESDE</label>
-                    <input type="date" name="desde" id="desde" class="form-control form-control-sm" value="{{ $desde }}"
-                        onchange="this.form.submit()">
-                </div>
-                <div>
-                    <label class="form-label small fw-semibold mb-1" for="hasta">HASTA</label>
-                    <input type="date" name="hasta" id="hasta" class="form-control form-control-sm" value="{{ $hasta }}"
-                        onchange="this.form.submit()">
-                </div>
-                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="window.print()">
-                    <i class="bi bi-printer"></i> IMPRIMIR
-                </button>
-                <a href="{{ route('informes.comprobante-contable-compras.exportar', ['desde' => $desde, 'hasta' => $hasta]) }}"
-                    class="btn btn-outline-success btn-sm">
-                    <i class="bi bi-file-earmark-excel"></i> EXCEL
-                </a>
-            </form>
-        </div>
-    </div>
+    <x-page-header title="Comprobante contable de compras" icon="receipt"
+        :subtitle="'Desde '.Carbon::parse($desde)->format('d/m/Y').' — hasta '.Carbon::parse($hasta)->format('d/m/Y')">
+        @include('informes.partials.filtro-rango', [
+            'ruta' => 'informes.comprobante-contable-compras.index',
+            'rutaExportar' => 'informes.comprobante-contable-compras.exportar',
+        ])
+    </x-page-header>
 
     @if (session('success'))
         <div class="alert alert-success d-print-none">{{ session('success') }}</div>

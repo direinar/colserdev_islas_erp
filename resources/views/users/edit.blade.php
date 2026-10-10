@@ -3,10 +3,9 @@
 @section('content')
     <div class="container">
 
-        <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center mb-3">
-            <h3>Editar usuario</h3>
-            <a href="{{ route('users.index') }}" class="btn btn-secondary">Volver</a>
-        </div>
+        <x-page-header title="Editar usuario" icon="person-gear">
+            <a href="{{ route('users.index') }}" class="btn btn-light">Volver</a>
+        </x-page-header>
 
         @if ($errors->any())
             <div class="alert alert-danger">

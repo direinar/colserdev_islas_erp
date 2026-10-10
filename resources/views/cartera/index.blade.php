@@ -96,27 +96,23 @@
         }
     </style>
 
-    <div class="pastel-section mb-3 d-print-none">
-        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
-            <h4 class="mb-0 text-danger fw-bold">ESTADO DE CUENTA</h4>
-            @if ($customer)
-                <div class="d-flex flex-wrap gap-2">
-                    @if ($hayDatosVehiculo)
-                        <button type="submit" form="cartera-form" class="btn btn-primary btn-sm">
-                            <i class="bi bi-truck"></i> Guardar datos del vehículo
-                        </button>
-                    @endif
-                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="window.print()">
-                        <i class="bi bi-printer"></i> Imprimir
-                    </button>
-                    <a href="{{ route('cartera.exportar', ['customer_id' => $customer->id, 'fecha_inicial' => $fechaInicial, 'fecha_final' => $fechaFinal]) }}"
-                        class="btn btn-outline-success btn-sm">
-                        <i class="bi bi-file-earmark-excel"></i> Excel
-                    </a>
-                </div>
+    <x-page-header title="Estado de cuenta" icon="journal-text" class="d-print-none"
+        subtitle="Créditos, abonos y saldo de cada cliente de cartera.">
+        @if ($customer)
+            @if ($hayDatosVehiculo)
+                <button type="submit" form="cartera-form" class="btn btn-light btn-sm">
+                    <i class="bi bi-truck" aria-hidden="true"></i> Guardar datos del vehículo
+                </button>
             @endif
-        </div>
-    </div>
+            <button type="button" class="btn btn-outline-light btn-sm" onclick="window.print()">
+                <i class="bi bi-printer" aria-hidden="true"></i> Imprimir
+            </button>
+            <a href="{{ route('cartera.exportar', ['customer_id' => $customer->id, 'fecha_inicial' => $fechaInicial, 'fecha_final' => $fechaFinal]) }}"
+                class="btn btn-outline-light btn-sm">
+                <i class="bi bi-file-earmark-excel" aria-hidden="true"></i> Excel
+            </a>
+        @endif
+    </x-page-header>
 
     @if (session('success'))
         <div class="alert alert-success d-print-none">{{ session('success') }}</div>

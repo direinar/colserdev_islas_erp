@@ -49,7 +49,7 @@ test('el informe de cierre arma el estado de resultados del periodo', function (
     $response = $this->actingAs($admin)
         ->get(route('informes.cierre.index', ['desde' => '2026-09-01', 'hasta' => '2026-09-30']))
         ->assertOk()
-        ->assertSee('INFORME DE CIERRE')
+        ->assertSee('Informe de cierre')
         ->assertSee('UTILIDAD BRUTA TOTAL EDS')
         ->assertSee('$ 1.106.426')
         ->assertSee('Falta registrar los saldos iniciales del contrato de galonaje');

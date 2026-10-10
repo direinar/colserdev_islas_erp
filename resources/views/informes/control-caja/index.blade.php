@@ -65,12 +65,6 @@
             background: #fff2cc;
         }
 
-        .cc-titulo {
-            color: #ff0000;
-            font-weight: 800;
-            font-size: 1.6rem;
-        }
-
         @page {
             size: landscape;
             margin: 6mm;
@@ -101,36 +95,13 @@
         }
     </style>
 
-    <div class="card mb-3">
-        <div class="card-body py-2 d-flex flex-column flex-lg-row justify-content-between align-items-start align-items-lg-center gap-2">
-            <div>
-                <div class="cc-titulo">INFORME CONTROL CAJA</div>
-                <div class="small">
-                    DESDE {{ Carbon::parse($desde)->format('d/m/Y') }} — HASTA {{ Carbon::parse($hasta)->format('d/m/Y') }}.
-                    Toda la información viene de la planilla de turnos.
-                </div>
-            </div>
-
-            <form method="GET" action="{{ route('informes.control-caja.index') }}" class="d-flex flex-wrap gap-2 align-items-end d-print-none">
-                <div>
-                    <label class="form-label small fw-semibold mb-1" for="desde">DESDE</label>
-                    <input type="date" name="desde" id="desde" class="form-control form-control-sm" value="{{ $desde }}"
-                        onchange="this.form.submit()">
-                </div>
-                <div>
-                    <label class="form-label small fw-semibold mb-1" for="hasta">HASTA</label>
-                    <input type="date" name="hasta" id="hasta" class="form-control form-control-sm" value="{{ $hasta }}"
-                        onchange="this.form.submit()">
-                </div>
-                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="window.print()">
-                    <i class="bi bi-printer"></i> IMPRIMIR
-                </button>
-                <a href="{{ route('informes.control-caja.exportar', $rango) }}" class="btn btn-outline-success btn-sm">
-                    <i class="bi bi-file-earmark-excel"></i> EXCEL
-                </a>
-            </form>
-        </div>
-    </div>
+    <x-page-header title="Informe control caja" icon="cash-stack"
+        :subtitle="'Desde '.Carbon::parse($desde)->format('d/m/Y').' — hasta '.Carbon::parse($hasta)->format('d/m/Y').'. Toda la información viene de la planilla de turnos.'">
+        @include('informes.partials.filtro-rango', [
+            'ruta' => 'informes.control-caja.index',
+            'rutaExportar' => 'informes.control-caja.exportar',
+        ])
+    </x-page-header>
 
     @if (session('success'))
         <div class="alert alert-success d-print-none">{{ session('success') }}</div>

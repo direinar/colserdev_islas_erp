@@ -3,15 +3,12 @@
 @section('title', 'Comprobante Contable - Compras')
 
 @section('content')
-    <div class="pastel-section mb-3">
-        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
-            <div>
-                <h4 class="mb-0 text-danger fw-bold">COMPROBANTE CONTABLE - COMPRAS</h4>
-                <small class="text-muted">Informe contable de compras con control de debito y credito.</small>
-            </div>
-            <button type="submit" form="comprobante-form" class="btn btn-primary btn-sm">Guardar comprobante</button>
-        </div>
-    </div>
+    <x-page-header title="Comprobante contable de compras (manual)" icon="pencil-square"
+        subtitle="Registro manual de líneas contables. El comprobante automático está en Informes → Comprobante contable de compras.">
+        <button type="submit" form="comprobante-form" class="btn btn-light">
+            <i class="bi bi-save" aria-hidden="true"></i> Guardar comprobante
+        </button>
+    </x-page-header>
 
     @if (session('success'))
         <div class="alert alert-success">{{ session('success') }}</div>
@@ -34,13 +31,13 @@
             <div class="p-3 pb-2">
                 <div class="row g-2 align-items-end">
                     <div class="col-md-3">
-                        <label class="form-label small mb-1">Fecha inicial</label>
-                        <input type="date" name="fecha_inicial" class="form-control form-control-sm"
+                        <label for="campo-fecha_inicial" class="form-label small mb-1">Fecha inicial</label>
+                        <input id="campo-fecha_inicial" type="date" name="fecha_inicial" class="form-control form-control-sm"
                             value="{{ old('fecha_inicial', date('Y-m-01')) }}">
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label small mb-1">Fecha final</label>
-                        <input type="date" name="fecha_final" class="form-control form-control-sm"
+                        <label for="campo-fecha_final" class="form-label small mb-1">Fecha final</label>
+                        <input id="campo-fecha_final" type="date" name="fecha_final" class="form-control form-control-sm"
                             value="{{ old('fecha_final', date('Y-m-t')) }}">
                     </div>
                     <div class="col-md-6 d-flex justify-content-md-end">

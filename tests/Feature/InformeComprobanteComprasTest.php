@@ -63,7 +63,7 @@ test('el comprobante arma débito y crédito por cada factura de compras con su 
     $response = $this->actingAs($admin)
         ->get(route('informes.comprobante-contable-compras.index', ['desde' => '2026-03-01', 'hasta' => '2026-03-31']))
         ->assertOk()
-        ->assertSee('COMPROBANTE CONTABLE DE COMPRAS')
+        ->assertSee('Comprobante contable de compras')
         ->assertDontSee('Los débitos y los créditos no cuadran');
 
     $lineas = collect($response->viewData('lineas'))

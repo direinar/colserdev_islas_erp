@@ -5,10 +5,9 @@
 @section('content')
     <div class="container">
 
-        <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center mb-3">
-            <h3>Editar saldo inicial</h3>
-            <a href="{{ route('cartera-saldos-iniciales.index') }}" class="btn btn-secondary">Volver</a>
-        </div>
+        <x-page-header title="Editar saldo inicial" icon="journal-text">
+            <a href="{{ route('cartera-saldos-iniciales.index') }}" class="btn btn-light">Volver</a>
+        </x-page-header>
 
         @if ($errors->any())
             <div class="alert alert-danger">
@@ -26,8 +25,8 @@
 
             <div class="row">
                 <div class="col-md-6 mb-3">
-                    <label class="form-label">Cliente</label>
-                    <input type="text" class="form-control" readonly
+                    <label class="form-label" for="cliente">Cliente</label>
+                    <input type="text" id="cliente" class="form-control" readonly
                         value="{{ $saldoInicial->customer?->name }} - {{ $saldoInicial->customer?->document }}">
                 </div>
                 <div class="col-md-3 mb-3">

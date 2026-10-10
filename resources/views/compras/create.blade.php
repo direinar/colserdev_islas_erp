@@ -3,16 +3,12 @@
 @section('title', 'Compras')
 
 @section('content')
-    <div class="pastel-section mb-3">
-        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
-            <div>
-                <h4 class="mb-0 text-danger fw-bold">COMPRAS DE COMBUSTIBLE</h4>
-                <small class="text-muted">Registre compras por factura con distribución de costo entre gasolina y
-                    ACPM.</small>
-            </div>
-            <button type="submit" form="compras-form" class="btn btn-primary btn-sm">Guardar factura</button>
-        </div>
-    </div>
+    <x-page-header title="Compras de combustible" icon="fuel-pump"
+        subtitle="Registre compras por factura con distribución de costo entre gasolina y ACPM.">
+        <button type="submit" form="compras-form" class="btn btn-light">
+            <i class="bi bi-save" aria-hidden="true"></i> Guardar factura
+        </button>
+    </x-page-header>
 
     @if (session('success'))
         <div class="alert alert-success">{{ session('success') }}</div>

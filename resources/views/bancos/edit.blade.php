@@ -4,10 +4,9 @@
 
     <div class="container">
 
-        <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center mb-3">
-            <h3>Editar banco</h3>
-            <a href="{{ route('bancos.index') }}" class="btn btn-secondary">Volver</a>
-        </div>
+        <x-page-header title="Editar banco" icon="bank">
+            <a href="{{ route('bancos.index') }}" class="btn btn-light">Volver</a>
+        </x-page-header>
 
         @if ($errors->any())
             <div class="alert alert-danger">

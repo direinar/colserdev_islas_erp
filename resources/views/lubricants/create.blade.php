@@ -4,11 +4,11 @@
 
 <div class="container">
 
-    <div class="card">
+    <x-page-header title="Nueva referencia de canastilla" icon="box-seam">
+        <a href="{{ route('lubricants.index') }}" class="btn btn-light">Volver</a>
+    </x-page-header>
 
-        <div class="card-header">
-            Nuevo Lubricante
-        </div>
+    <div class="card">
 
         <div class="card-body">
 

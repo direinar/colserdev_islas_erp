@@ -9,15 +9,10 @@
 @section('content')
     <div class="container">
 
-        <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center mb-3">
-            <div>
-                <h3 class="mb-0">Saldos iniciales de cartera</h3>
-                <small class="text-muted">
-                    Saldo de cada cliente al arrancar el sistema. Positivo = el cliente debe; negativo = saldo a favor.
-                </small>
-            </div>
-            <a href="{{ route('cartera.index') }}" class="btn btn-secondary align-self-start">Estado de cuenta</a>
-        </div>
+        <x-page-header title="Saldos iniciales de cartera" icon="journal-text"
+            subtitle="Saldo de cada cliente al arrancar el sistema. Positivo = el cliente debe; negativo = saldo a favor.">
+            <a href="{{ route('cartera.index') }}" class="btn btn-light">Estado de cuenta</a>
+        </x-page-header>
 
         @if (session('success'))
             <div class="alert alert-success">{{ session('success') }}</div>

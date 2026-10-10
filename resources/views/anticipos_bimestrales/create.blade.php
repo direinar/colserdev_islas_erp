@@ -3,15 +3,12 @@
 @section('title', 'Anticipo Bimestral')
 
 @section('content')
-    <div class="pastel-section mb-3">
-        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
-            <div>
-                <h4 class="mb-0 text-danger fw-bold">ANTICIPO BIMESTRAL</h4>
-                <small class="text-muted">Informe bimestral con cálculo por fila y totales de galones y pesos.</small>
-            </div>
-            <button type="submit" form="anticipo-form" class="btn btn-primary btn-sm">Guardar informe</button>
-        </div>
-    </div>
+    <x-page-header title="Anticipo bimestral (manual)" icon="pencil-square"
+        subtitle="Registro manual por filas. El informe automático está en Informes → Informe anticipo bimestral.">
+        <button type="submit" form="anticipo-form" class="btn btn-light">
+            <i class="bi bi-save" aria-hidden="true"></i> Guardar informe
+        </button>
+    </x-page-header>
 
     @if (session('success'))
         <div class="alert alert-success">{{ session('success') }}</div>
@@ -34,13 +31,13 @@
             <div class="p-3 pb-2">
                 <div class="row g-2 align-items-end">
                     <div class="col-md-2">
-                        <label class="form-label small mb-1">Bimestre</label>
-                        <input type="number" min="1" max="6" name="bimestre"
+                        <label for="campo-bimestre" class="form-label small mb-1">Bimestre</label>
+                        <input id="campo-bimestre" type="number" min="1" max="6" name="bimestre"
                             class="form-control form-control-sm" value="{{ old('bimestre', 2) }}" required>
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label small mb-1">Periodo</label>
-                        <input type="text" name="periodo" class="form-control form-control-sm"
+                        <label for="campo-periodo" class="form-label small mb-1">Periodo</label>
+                        <input id="campo-periodo" type="text" name="periodo" class="form-control form-control-sm"
                             value="{{ old('periodo', 'MARZO Y ABRIL') }}" required>
                     </div>
                     <div class="col-md-4 d-flex justify-content-md-end">

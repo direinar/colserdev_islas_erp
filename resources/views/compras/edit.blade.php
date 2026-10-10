@@ -3,19 +3,14 @@
 @section('title', 'Editar compra')
 
 @section('content')
-    <div class="pastel-section mb-3">
-        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
-            <div>
-                <h4 class="mb-0 text-danger fw-bold">EDITAR COMPRA DE COMBUSTIBLE</h4>
-                <small class="text-muted">Los inventarios de gasolina y ACPM se recalculan con los cambios.</small>
-            </div>
-            <div class="d-flex gap-2">
-                <a href="{{ route('compras.create', ['desde' => $compra->fecha->copy()->startOfMonth()->toDateString(), 'hasta' => $compra->fecha->copy()->endOfMonth()->toDateString()]) }}"
-                    class="btn btn-outline-secondary btn-sm">Volver</a>
-                <button type="submit" form="compra-edit-form" class="btn btn-primary btn-sm">Guardar cambios</button>
-            </div>
-        </div>
-    </div>
+    <x-page-header title="Editar compra de combustible" icon="fuel-pump"
+        subtitle="Los inventarios de gasolina y ACPM se recalculan con los cambios.">
+        <a href="{{ route('compras.create', ['desde' => $compra->fecha->copy()->startOfMonth()->toDateString(), 'hasta' => $compra->fecha->copy()->endOfMonth()->toDateString()]) }}"
+            class="btn btn-outline-light">Volver</a>
+        <button type="submit" form="compra-edit-form" class="btn btn-light">
+            <i class="bi bi-save" aria-hidden="true"></i> Guardar cambios
+        </button>
+    </x-page-header>
 
     @if ($errors->any())
         <div class="alert alert-danger">

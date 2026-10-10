@@ -11,8 +11,23 @@
         $puedeGuardar = ! $turnoRevisado && ! $turnoDeOtro;
     @endphp
 
+    <x-page-header title="Planilla de turnos" icon="journal-check"
+        subtitle="Ventas, lecturas, formas de pago y cuadre de cada turno.">
+        <a href="{{ route('turnos.create') }}" class="btn btn-outline-light btn-sm">
+            <i class="bi bi-file-earmark-plus" aria-hidden="true"></i> Nuevo
+        </a>
+        @if ($puedeGuardar)
+            <button type="button" class="btn btn-outline-light btn-sm" onclick="limpiarPlanilla()">
+                <i class="bi bi-eraser" aria-hidden="true"></i> Limpiar
+            </button>
+            <button type="submit" form="turno-form" class="btn btn-light btn-sm">
+                <i class="bi bi-save" aria-hidden="true"></i> Guardar
+            </button>
+        @endif
+    </x-page-header>
+
     {{-- BÚSQUEDA: por fecha (lista las planillas del día) o por número de turno --}}
-    <div class="mb-3 pastel-section">
+    <div class="mb-3 pastel-section d-print-none">
         <div class="d-flex flex-wrap justify-content-between align-items-end gap-3">
 
             <div class="d-flex flex-wrap align-items-end gap-3">
@@ -32,14 +47,6 @@
                     </div>
                     <button type="submit" class="btn btn-sm btn-outline-primary">Buscar por turno</button>
                 </form>
-            </div>
-
-            <div class="d-flex flex-wrap align-items-end gap-2">
-                <a href="{{ route('turnos.create') }}" class="btn btn-sm btn-outline-secondary">Nuevo</a>
-                @if ($puedeGuardar)
-                    <button type="button" class="btn btn-sm btn-outline-warning" onclick="limpiarPlanilla()">Limpiar</button>
-                    <button type="submit" form="turno-form" class="btn btn-sm btn-primary">Guardar</button>
-                @endif
             </div>
         </div>
 
@@ -275,27 +282,27 @@
 
                 <div class="col-md-6">
 
-                    <h4 class="mb-0">
-                        PLANILLA DE TURNOS
-                    </h4>
+                    <h2 class="h5 mb-0 fw-bold">
+                        DATOS DEL TURNO
+                    </h2>
 
                 </div>
 
                 <div class="col-md-6 d-flex flex-wrap align-items-center gap-2 justify-content-md-end">
 
-                    FECHA:
+                    <label class="fw-semibold mb-0" for="turno-fecha">FECHA:</label>
 
-                    <input type="date" name="fecha" class="form-control form-control-sm d-inline-block w-auto"
+                    <input type="date" name="fecha" id="turno-fecha" class="form-control form-control-sm d-inline-block w-auto"
                         value="{{ old('fecha', isset($turno) && $turno ? $turno->fecha->toDateString() : request('fecha', date('Y-m-d'))) }}" required>
 
-                    TURNO:
+                    <label class="fw-semibold mb-0" for="turno-numero">TURNO:</label>
 
                     {{-- Mostrar turno formateado y bloquear edición; enviar valor entero en campo hidden --}}
                     @php
                         $displayNumber = isset($turno) && $turno ? $turno->numero_turno : $nextNumber ?? 1;
                     @endphp
                     <input type="hidden" name="numero_turno" value="{{ $displayNumber }}">
-                    <input type="text" class="form-control form-control-sm d-inline-block" style="width: 80px"
+                    <input type="text" id="turno-numero" class="form-control form-control-sm d-inline-block" style="width: 80px"
                         value="{{ str_pad($displayNumber, 3, '0', STR_PAD_LEFT) }}" readonly>
 
                 </div>

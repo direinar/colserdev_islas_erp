@@ -3,20 +3,12 @@
 @section('content')
     <div class="container">
 
-        <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center mb-4">
-
-            <h2 class="mb-0">
-                Precios de Combustible
-            </h2>
-
-            <a href="{{ route('fuel-prices.create') }}" class="btn btn-primary">
-
-                <i class="bi bi-plus-circle"></i>
-                Nuevo Registro
-
+        <x-page-header title="Precios de combustible" icon="fuel-pump"
+            subtitle="Precio de venta vigente de gasolina y ACPM según su fecha de vigencia.">
+            <a href="{{ route('fuel-prices.create') }}" class="btn btn-light">
+                <i class="bi bi-plus-circle" aria-hidden="true"></i> Nuevo registro
             </a>
-
-        </div>
+        </x-page-header>
 
         @if (session('success'))
             <div class="alert alert-success">

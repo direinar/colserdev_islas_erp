@@ -2,14 +2,14 @@
 
     <div class="col-md-6 mb-3">
 
-        <label class="form-label">
+        <label for="campo-name" class="form-label">
             Nombre
         </label>
 
         {{-- Fijo a "Gasolina"/"ACPM": son los nombres que FuelPrice::activePriceOn()
              busca al calcular el precio vigente de cada turno (ver TurnoController
              y planillas/turnos/create.blade.php). Un nombre libre rompería ese cálculo. --}}
-        <select name="name" class="form-select" required>
+        <select id="campo-name" name="name" class="form-select" required>
 
             <option value="">Seleccione...</option>
 
@@ -31,11 +31,11 @@
 
     <div class="col-md-6 mb-3">
 
-        <label class="form-label">
+        <label for="campo-price" class="form-label">
             Precio
         </label>
 
-        <input type="number" step="0.01" name="price" class="form-control"
+        <input id="campo-price" type="number" step="0.01" name="price" class="form-control"
             value="{{ old('price', $fuelPrice->price ?? '') }}" required>
 
     </div>
@@ -46,22 +46,22 @@
 
     <div class="col-md-6 mb-3">
 
-        <label class="form-label">
+        <label for="campo-effective_date" class="form-label">
             Fecha Vigencia
         </label>
 
-        <input type="date" name="effective_date" class="form-control"
+        <input id="campo-effective_date" type="date" name="effective_date" class="form-control"
             value="{{ old('effective_date', $fuelPrice->effective_date ?? '') }}">
 
     </div>
 
     <div class="col-md-6 mb-3">
 
-        <label class="form-label">
+        <label for="campo-active" class="form-label">
             Estado
         </label>
 
-        <select name="active" class="form-select">
+        <select id="campo-active" name="active" class="form-select">
 
             <option value="1" {{ old('active', $fuelPrice->active ?? 1) == 1 ? 'selected' : '' }}>
 

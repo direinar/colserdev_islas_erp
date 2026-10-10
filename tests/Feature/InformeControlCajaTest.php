@@ -63,7 +63,7 @@ test('el control caja arma una fila por planilla con ventas, formas de pago y to
     $response = $this->actingAs($admin)
         ->get(route('informes.control-caja.index', ['desde' => '2026-09-25', 'hasta' => '2026-09-30']))
         ->assertOk()
-        ->assertSee('INFORME CONTROL CAJA')
+        ->assertSee('Informe control caja')
         ->assertSee('COMPROBANTE CONTABLE DE VENTAS');
 
     [$turno10, $turno11] = $response->viewData('filas');

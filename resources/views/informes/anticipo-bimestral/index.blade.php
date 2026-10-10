@@ -81,12 +81,6 @@
             background: #fff;
         }
 
-        .ab-titulo {
-            color: #ff0000;
-            font-weight: 800;
-            font-size: 1.6rem;
-        }
-
         @page {
             size: landscape;
             margin: 7mm 6mm 8mm;
@@ -117,24 +111,17 @@
         }
     </style>
 
-    <div class="card mb-3">
-        <div class="card-body py-2 d-flex flex-column flex-lg-row justify-content-between align-items-start align-items-lg-center gap-2">
-            <div>
-                <div class="ab-titulo">INFORME ANTICIPO BIMESTRAL</div>
-                <div class="small">
-                    DESDE {{ Carbon::parse($desde)->format('d/m/Y') }} — HASTA {{ Carbon::parse($hasta)->format('d/m/Y') }}
-                </div>
-            </div>
-
+    <x-page-header title="Informe anticipo bimestral" icon="calendar2-range"
+        :subtitle="'Desde '.Carbon::parse($desde)->format('d/m/Y').' — hasta '.Carbon::parse($hasta)->format('d/m/Y')">
             <form method="GET" action="{{ route('informes.anticipo-bimestral.index') }}"
-                class="d-flex flex-wrap gap-2 align-items-end d-print-none">
+                class="d-flex flex-wrap gap-2 align-items-end">
                 <div>
-                    <label class="form-label small fw-semibold mb-1" for="anio">AÑO</label>
+                    <label class="form-label" for="anio">AÑO</label>
                     <input type="number" name="anio" id="anio" class="form-control form-control-sm" style="width:6rem;"
                         min="2000" max="2100" value="{{ $anio }}" onchange="this.form.submit()">
                 </div>
                 <div>
-                    <label class="form-label small fw-semibold mb-1" for="bimestre">BIMESTRE</label>
+                    <label class="form-label" for="bimestre">BIMESTRE</label>
                     <select name="bimestre" id="bimestre" class="form-select form-select-sm" onchange="this.form.submit()">
                         @foreach (range(1, 6) as $numero)
                             <option value="{{ $numero }}" @selected($numero === $bimestre)>
@@ -143,15 +130,14 @@
                         @endforeach
                     </select>
                 </div>
-                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="window.print()">
-                    <i class="bi bi-printer"></i> IMPRIMIR
-                </button>
-                <a href="{{ route('informes.anticipo-bimestral.exportar', $periodo) }}" class="btn btn-outline-success btn-sm">
-                    <i class="bi bi-file-earmark-excel"></i> EXCEL
-                </a>
             </form>
-        </div>
-    </div>
+            <button type="button" class="btn btn-outline-light btn-sm" onclick="window.print()">
+                <i class="bi bi-printer" aria-hidden="true"></i> IMPRIMIR
+            </button>
+            <a href="{{ route('informes.anticipo-bimestral.exportar', $periodo) }}" class="btn btn-outline-light btn-sm">
+                <i class="bi bi-file-earmark-excel" aria-hidden="true"></i> EXCEL
+            </a>
+    </x-page-header>
 
     @if (session('success'))
         <div class="alert alert-success d-print-none">{{ session('success') }}</div>
@@ -383,12 +369,12 @@
                             <input type="hidden" name="anio" value="{{ $anio }}">
                             <input type="hidden" name="bimestre" value="{{ $bimestre }}">
                             <div>
-                                <label class="form-label small mb-1">Vigente desde</label>
-                                <input type="date" name="vigente_desde" class="form-control form-control-sm" required>
+                                <label for="campo-vigente_desde" class="form-label small mb-1">Vigente desde</label>
+                                <input id="campo-vigente_desde" type="date" name="vigente_desde" class="form-control form-control-sm" required>
                             </div>
                             <div>
-                                <label class="form-label small mb-1">Valor (coma para decimales)</label>
-                                <input type="text" name="valor" class="form-control form-control-sm text-end" inputmode="decimal"
+                                <label for="campo-valor" class="form-label small mb-1">Valor (coma para decimales)</label>
+                                <input id="campo-valor" type="text" name="valor" class="form-control form-control-sm text-end" inputmode="decimal"
                                     placeholder="1155,10" required>
                             </div>
                             <button type="submit" class="btn btn-outline-primary btn-sm">Guardar margen</button>

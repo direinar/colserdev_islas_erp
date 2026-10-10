@@ -4,22 +4,11 @@
 
 <div class="container">
 
+    <x-page-header title="Detalle del precio de combustible" icon="fuel-pump">
+        <a href="{{ route('fuel-prices.index') }}" class="btn btn-light">Volver</a>
+    </x-page-header>
+
     <div class="card shadow-sm">
-
-        <div class="card-header d-flex justify-content-between">
-
-            <h4 class="mb-0">
-                Detalle Precio Combustible
-            </h4>
-
-            <a href="{{ route('fuel-prices.index') }}"
-               class="btn btn-secondary btn-sm">
-
-                Volver
-
-            </a>
-
-        </div>
 
         <div class="card-body">
 

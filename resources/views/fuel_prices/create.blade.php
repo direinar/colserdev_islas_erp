@@ -3,15 +3,11 @@
 @section('content')
     <div class="container">
 
+        <x-page-header title="Nuevo precio de combustible" icon="fuel-pump">
+            <a href="{{ route('fuel-prices.index') }}" class="btn btn-light">Volver</a>
+        </x-page-header>
+
         <div class="card shadow-sm">
-
-            <div class="card-header">
-
-                <h4 class="mb-0">
-                    Nuevo Precio Combustible
-                </h4>
-
-            </div>
 
             <div class="card-body">
 

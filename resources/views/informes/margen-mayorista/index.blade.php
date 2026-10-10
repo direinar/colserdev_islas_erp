@@ -54,12 +54,6 @@
             font-size: 1.05rem;
         }
 
-        .mm-titulo {
-            color: #ff0000;
-            font-weight: 800;
-            font-size: 1.6rem;
-        }
-
         @page {
             size: portrait;
             margin: 8mm;
@@ -90,36 +84,13 @@
         }
     </style>
 
-    <div class="card mb-3">
-        <div class="card-body py-2 d-flex flex-column flex-lg-row justify-content-between align-items-start align-items-lg-center gap-2">
-            <div>
-                <div class="mm-titulo">INFORME MARGEN MAYORISTA</div>
-                <div class="small">
-                    DESDE {{ Carbon::parse($desde)->format('d/m/Y') }} — HASTA {{ Carbon::parse($hasta)->format('d/m/Y') }}
-                </div>
-            </div>
-
-            <form method="GET" action="{{ route('informes.margen-mayorista.index') }}"
-                class="d-flex flex-wrap gap-2 align-items-end d-print-none">
-                <div>
-                    <label class="form-label small fw-semibold mb-1" for="desde">DESDE</label>
-                    <input type="date" name="desde" id="desde" class="form-control form-control-sm" value="{{ $desde }}"
-                        onchange="this.form.submit()">
-                </div>
-                <div>
-                    <label class="form-label small fw-semibold mb-1" for="hasta">HASTA</label>
-                    <input type="date" name="hasta" id="hasta" class="form-control form-control-sm" value="{{ $hasta }}"
-                        onchange="this.form.submit()">
-                </div>
-                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="window.print()">
-                    <i class="bi bi-printer"></i> IMPRIMIR
-                </button>
-                <a href="{{ route('informes.margen-mayorista.exportar', $rango) }}" class="btn btn-outline-success btn-sm">
-                    <i class="bi bi-file-earmark-excel"></i> EXCEL
-                </a>
-            </form>
-        </div>
-    </div>
+    <x-page-header title="Informe margen mayorista" icon="percent"
+        :subtitle="'Desde '.Carbon::parse($desde)->format('d/m/Y').' — hasta '.Carbon::parse($hasta)->format('d/m/Y')">
+        @include('informes.partials.filtro-rango', [
+            'ruta' => 'informes.margen-mayorista.index',
+            'rutaExportar' => 'informes.margen-mayorista.exportar',
+        ])
+    </x-page-header>
 
     @if (session('success'))
         <div class="alert alert-success d-print-none">{{ session('success') }}</div>
@@ -247,17 +218,17 @@
                             <input type="hidden" name="desde" value="{{ $desde }}">
                             <input type="hidden" name="hasta" value="{{ $hasta }}">
                             <div>
-                                <label class="form-label small mb-1">Vigente desde</label>
-                                <input type="date" name="vigente_desde" class="form-control form-control-sm" required>
+                                <label for="campo-vigente_desde" class="form-label small mb-1">Vigente desde</label>
+                                <input id="campo-vigente_desde" type="date" name="vigente_desde" class="form-control form-control-sm" required>
                             </div>
                             <div>
-                                <label class="form-label small mb-1">% mayorista</label>
-                                <input type="text" name="porcentaje" class="form-control form-control-sm text-end" style="width:6rem;"
+                                <label for="campo-porcentaje" class="form-label small mb-1">% mayorista</label>
+                                <input id="campo-porcentaje" type="text" name="porcentaje" class="form-control form-control-sm text-end" style="width:6rem;"
                                     inputmode="decimal" placeholder="0,3" required>
                             </div>
                             <div>
-                                <label class="form-label small mb-1">Margen (coma decimal)</label>
-                                <input type="text" name="margen" class="form-control form-control-sm text-end" style="width:8rem;"
+                                <label for="campo-margen" class="form-label small mb-1">Margen (coma decimal)</label>
+                                <input id="campo-margen" type="text" name="margen" class="form-control form-control-sm text-end" style="width:8rem;"
                                     inputmode="decimal" placeholder="585,71" required>
                             </div>
                             <button type="submit" class="btn btn-outline-primary btn-sm">Guardar</button>

@@ -2,11 +2,11 @@
 
     <div class="col-md-6 mb-3">
 
-        <label class="form-label">
+        <label for="campo-reference" class="form-label">
             Referencia
         </label>
 
-        <input type="text"
+        <input id="campo-reference" type="text"
                name="reference"
                class="form-control"
                value="{{ old('reference', $lubricant->reference ?? '') }}"
@@ -16,7 +16,7 @@
 
     <div class="col-md-3 mb-3">
 
-        <label class="form-label">
+        <label for="sale_price" class="form-label">
             Precio Venta
         </label>
 
@@ -32,7 +32,7 @@
 
     <div class="col-md-3 mb-3">
 
-        <label class="form-label">
+        <label for="iva" class="form-label">
             IVA
         </label>
 
@@ -52,7 +52,7 @@
 
     <div class="col-md-4 mb-3">
 
-        <label class="form-label">
+        <label for="total" class="form-label">
             Total
         </label>
 
@@ -68,11 +68,11 @@
 
     <div class="col-md-4 mb-3">
 
-        <label class="form-label">
+        <label for="campo-cost_price" class="form-label">
             Costo
         </label>
 
-        <input type="number"
+        <input id="campo-cost_price" type="number"
                step="0.01"
                name="cost_price"
                class="form-control"
@@ -83,11 +83,11 @@
 
     <div class="col-md-4 mb-3">
 
-        <label class="form-label">
+        <label for="campo-supplier" class="form-label">
             Proveedor
         </label>
 
-        <input type="text"
+        <input id="campo-supplier" type="text"
                name="supplier"
                class="form-control"
                value="{{ old('supplier', $lubricant->supplier ?? '') }}">
@@ -98,11 +98,11 @@
 
 <div class="mb-3">
 
-    <label class="form-label">
+    <label for="campo-active" class="form-label">
         Estado
     </label>
 
-    <select name="active"
+    <select id="campo-active" name="active"
             class="form-select">
 
         <option value="1">

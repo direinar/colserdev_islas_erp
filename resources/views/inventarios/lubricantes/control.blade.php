@@ -3,11 +3,8 @@
 @section('title', 'Inventario Canastilla – Control')
 
 @section('content')
-    <div class="pastel-section mb-3">
-        <h4 class="mb-0 text-warning-emphasis fw-bold">INVENTARIO CANASTILLA – CONTROL</h4>
-        <small class="text-muted">Consolidado de todas las referencias de lubricantes y urea. Cada salida se valora al
-            costo promedio de su referencia, así los totales de esta hoja son la suma de los totales de cada referencia.</small>
-    </div>
+    <x-page-header title="Inventario canastilla – control" icon="clipboard-data"
+        subtitle="Consolidado de todas las referencias de lubricantes y urea. Cada salida se valora al costo promedio de su referencia, así los totales de esta hoja son la suma de los totales de cada referencia." />
 
     @include('inventarios.partials.kardex', [
         'titulo' => 'INVENTARIO CANASTILLA – CONTROL',

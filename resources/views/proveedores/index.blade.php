@@ -3,10 +3,9 @@
 @section('content')
     <div class="container">
 
-        <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center mb-3">
-            <h3>Proveedores</h3>
-            <a href="{{ route('proveedores.create') }}" class="btn btn-primary">Nuevo proveedor</a>
-        </div>
+        <x-page-header title="Proveedores" icon="truck">
+            <a href="{{ route('proveedores.create') }}" class="btn btn-light">Nuevo proveedor</a>
+        </x-page-header>
 
         @if (session('success'))
             <div class="alert alert-success">{{ session('success') }}</div>

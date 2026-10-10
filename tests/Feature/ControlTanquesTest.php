@@ -55,7 +55,7 @@ test('el control de tanques arma el saldo diario con compras, los cortes de IAPR
     $response = $this->actingAs($jefe)
         ->get(route('control-tanques.index', ['desde' => '2026-09-25', 'hasta' => '2026-09-27']))
         ->assertOk()
-        ->assertSee('INFORME DE CONTROL DE TANQUES')
+        ->assertSee('Informe de control de tanques')
         ->assertSee('VIENEN');
 
     expect($response->viewData('vienen'))->toBe(['corriente' => 4150.0, 'acpm' => 4665.0]);

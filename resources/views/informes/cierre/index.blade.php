@@ -38,15 +38,6 @@
 
 @section('content')
     <style>
-        .ic-encabezado {
-            background: linear-gradient(135deg, #1f4e78 0%, #2e75b6 100%);
-            color: #fff;
-            border-radius: .6rem;
-        }
-
-        .ic-encabezado .form-label {
-            color: #dbe9f7;
-        }
 
         .ic-kpi {
             border: 0;
@@ -164,51 +155,25 @@
                 padding: 0 !important;
             }
 
-            .ic-encabezado {
-                background: none !important;
-                color: #000 !important;
-            }
-
             .card {
                 box-shadow: none !important;
             }
 
             .ic-estado,
-            .ic-kpi,
-            .ic-encabezado {
+            .ic-kpi {
                 -webkit-print-color-adjust: exact;
                 print-color-adjust: exact;
             }
         }
     </style>
 
-    <div class="ic-encabezado p-3 mb-3 d-flex flex-column flex-lg-row justify-content-between align-items-start align-items-lg-end gap-2">
-        <div>
-            <div class="fs-3 fw-bold" style="letter-spacing:.15rem;">INFORME DE CIERRE</div>
-            <div class="small opacity-75">
-                Periodo del {{ Carbon::parse($desde)->format('d/m/Y') }} al {{ Carbon::parse($hasta)->format('d/m/Y') }}
-            </div>
-        </div>
-
-        <form method="GET" action="{{ route('informes.cierre.index') }}" class="d-flex flex-wrap gap-2 align-items-end d-print-none">
-            <div>
-                <label class="form-label small fw-semibold mb-1" for="desde">DESDE</label>
-                <input type="date" name="desde" id="desde" class="form-control form-control-sm" value="{{ $desde }}"
-                    onchange="this.form.submit()">
-            </div>
-            <div>
-                <label class="form-label small fw-semibold mb-1" for="hasta">HASTA</label>
-                <input type="date" name="hasta" id="hasta" class="form-control form-control-sm" value="{{ $hasta }}"
-                    onchange="this.form.submit()">
-            </div>
-            <button type="button" class="btn btn-light btn-sm" onclick="window.print()">
-                <i class="bi bi-printer"></i> IMPRIMIR
-            </button>
-            <a href="{{ route('informes.cierre.exportar', $rango) }}" class="btn btn-success btn-sm">
-                <i class="bi bi-file-earmark-excel"></i> EXCEL
-            </a>
-        </form>
-    </div>
+    <x-page-header title="Informe de cierre" icon="bar-chart-line"
+        :subtitle="'Periodo del '.Carbon::parse($desde)->format('d/m/Y').' al '.Carbon::parse($hasta)->format('d/m/Y')">
+        @include('informes.partials.filtro-rango', [
+            'ruta' => 'informes.cierre.index',
+            'rutaExportar' => 'informes.cierre.exportar',
+        ])
+    </x-page-header>
 
     @if (session('success'))
         <div class="alert alert-success d-print-none">{{ session('success') }}</div>
@@ -323,18 +288,18 @@
                     <p class="small text-muted mb-2">Desde la fecha de corte, los galones vendidos (gasolina + ACPM) se suman al
                         acumulado y se restan del saldo del contrato. Escriba los galones sin puntos de miles.</p>
                     <div class="mb-2">
-                        <label class="form-label small mb-1">Fecha de corte</label>
-                        <input type="date" name="fecha_corte" class="form-control form-control-sm" required
+                        <label for="campo-fecha_corte" class="form-label small mb-1">Fecha de corte</label>
+                        <input id="campo-fecha_corte" type="date" name="fecha_corte" class="form-control form-control-sm" required
                             value="{{ $contrato?->fecha_corte->format('Y-m-d') }}">
                     </div>
                     <div class="mb-2">
-                        <label class="form-label small mb-1">Galonaje acumulado a esa fecha</label>
-                        <input type="text" name="galonaje_acumulado_inicial" class="form-control form-control-sm text-end" required
+                        <label for="campo-galonaje_acumulado_inicial" class="form-label small mb-1">Galonaje acumulado a esa fecha</label>
+                        <input id="campo-galonaje_acumulado_inicial" type="text" name="galonaje_acumulado_inicial" class="form-control form-control-sm text-end" required
                             inputmode="decimal" value="{{ $contrato ? rtrim(rtrim(number_format((float) $contrato->galonaje_acumulado_inicial, 3, ',', ''), '0'), ',') : '' }}">
                     </div>
                     <div class="mb-2">
-                        <label class="form-label small mb-1">Saldo del contrato a esa fecha</label>
-                        <input type="text" name="saldo_contrato_inicial" class="form-control form-control-sm text-end" required
+                        <label for="campo-saldo_contrato_inicial" class="form-label small mb-1">Saldo del contrato a esa fecha</label>
+                        <input id="campo-saldo_contrato_inicial" type="text" name="saldo_contrato_inicial" class="form-control form-control-sm text-end" required
                             inputmode="decimal" value="{{ $contrato ? rtrim(rtrim(number_format((float) $contrato->saldo_contrato_inicial, 3, ',', ''), '0'), ',') : '' }}">
                     </div>
                     <button type="submit" class="btn btn-outline-primary btn-sm">Guardar</button>

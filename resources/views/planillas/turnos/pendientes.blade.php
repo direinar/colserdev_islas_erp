@@ -1,10 +1,9 @@
 @extends('layouts.app')
 
 @section('content')
-    <div class="pastel-section mb-3 d-flex flex-wrap gap-2 justify-content-between align-items-center">
-        <h4 class="mb-0">Planillas pendientes de revisión</h4>
-        <a href="{{ route('turnos.create') }}" class="btn btn-sm btn-outline-secondary">Volver a turnos</a>
-    </div>
+    <x-page-header title="Planillas pendientes de revisión" icon="hourglass-split">
+        <a href="{{ route('turnos.create') }}" class="btn btn-light">Volver a turnos</a>
+    </x-page-header>
 
     @if (session('success'))
         <div class="alert alert-success">{{ session('success') }}</div>

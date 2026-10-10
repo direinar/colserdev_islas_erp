@@ -42,7 +42,7 @@ test('el primer bimestre liquida enero con el margen anterior y febrero con el d
     $response = $this->actingAs($jefe)
         ->get(route('informes.anticipo-bimestral.index', ['anio' => 2026, 'bimestre' => 1]))
         ->assertOk()
-        ->assertSee('INFORME ANTICIPO BIMESTRAL')
+        ->assertSee('Informe anticipo bimestral')
         ->assertSee('LIQUIDACIÓN PRIMER BIMESTRE')
         ->assertSee('48.377.983')
         ->assertSee('35.057.285')

@@ -41,7 +41,7 @@ test('el margen mayorista del periodo es total de galones por porcentaje por mar
     $response = $this->actingAs($admin)
         ->get(route('informes.margen-mayorista.index', ['desde' => '2026-03-01', 'hasta' => '2026-03-31']))
         ->assertOk()
-        ->assertSee('INFORME MARGEN MAYORISTA')
+        ->assertSee('Informe margen mayorista')
         ->assertSee('7.734.535');
 
     expect($response->viewData('facturas'))->toHaveCount(7)

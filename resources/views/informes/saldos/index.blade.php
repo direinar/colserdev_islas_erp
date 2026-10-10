@@ -18,15 +18,6 @@
 
 @section('content')
     <style>
-        .is-encabezado {
-            background: linear-gradient(135deg, #1f4e78 0%, #2e75b6 100%);
-            color: #fff;
-            border-radius: .6rem;
-        }
-
-        .is-encabezado .form-label {
-            color: #dbe9f7;
-        }
 
         .is-pestanas .nav-link {
             color: #1f4e78;
@@ -117,11 +108,6 @@
                 padding: 0 !important;
             }
 
-            .is-encabezado {
-                background: none !important;
-                color: #000 !important;
-            }
-
             .is-kpi {
                 box-shadow: none !important;
                 border: 1px solid #ccc !important;
@@ -136,19 +122,13 @@
         }
     </style>
 
-    <div class="is-encabezado p-3 mb-3 d-flex flex-column flex-lg-row justify-content-between align-items-start align-items-lg-end gap-2">
-        <div>
-            <div class="fs-4 fw-bold"><i class="bi {{ $titulos[$seccion][2] }} me-1"></i> {{ $titulos[$seccion][0] }}</div>
-            <div class="small opacity-75">
-                {{ $titulos[$seccion][1] }}{{ $seccion === 'precios' ? '' : ' — fecha de corte '.Carbon::parse($corte)->format('d/m/Y') }}
-            </div>
-        </div>
-
-        <form method="GET" action="{{ route('informes.saldos.index') }}" class="d-flex flex-wrap gap-2 align-items-end d-print-none">
+    <x-page-header :title="$titulos[$seccion][0]" :icon="str_replace('bi-', '', $titulos[$seccion][2])"
+        :subtitle="$titulos[$seccion][1].($seccion === 'precios' ? '' : ' — fecha de corte '.Carbon::parse($corte)->format('d/m/Y'))">
+        <form method="GET" action="{{ route('informes.saldos.index') }}" class="d-flex flex-wrap gap-2 align-items-end">
             <input type="hidden" name="seccion" value="{{ $seccion }}">
             @if ($seccion !== 'precios')
                 <div>
-                    <label class="form-label small fw-semibold mb-1" for="corte">FECHA DE CORTE</label>
+                    <label class="form-label" for="corte">FECHA DE CORTE</label>
                     <input type="date" name="corte" id="corte" class="form-control form-control-sm" value="{{ $corte }}"
                         onchange="this.form.submit()">
                 </div>
@@ -157,17 +137,17 @@
                 <div class="form-check form-switch mb-1 ms-1">
                     <input class="form-check-input" type="checkbox" role="switch" id="todos" name="todos" value="1"
                         @checked(! $soloConSaldo) onchange="this.form.submit()">
-                    <label class="form-check-label small" for="todos">Incluir clientes en cero</label>
+                    <label class="form-check-label" for="todos">Incluir clientes en cero</label>
                 </div>
             @endif
-            <button type="button" class="btn btn-light btn-sm" onclick="window.print()">
-                <i class="bi bi-printer"></i> IMPRIMIR
-            </button>
-            <a href="{{ route('informes.saldos.exportar', $filtros) }}" class="btn btn-success btn-sm">
-                <i class="bi bi-file-earmark-excel"></i> EXCEL
-            </a>
         </form>
-    </div>
+        <button type="button" class="btn btn-outline-light btn-sm" onclick="window.print()">
+            <i class="bi bi-printer" aria-hidden="true"></i> IMPRIMIR
+        </button>
+        <a href="{{ route('informes.saldos.exportar', $filtros) }}" class="btn btn-outline-light btn-sm">
+            <i class="bi bi-file-earmark-excel" aria-hidden="true"></i> EXCEL
+        </a>
+    </x-page-header>
 
     <ul class="nav nav-pills is-pestanas mb-3 d-print-none">
         @foreach ($pestanas as $clave => $nombre)

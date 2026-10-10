@@ -3,15 +3,12 @@
 @section('title', 'Compras de Lubricantes')
 
 @section('content')
-    <div class="pastel-section mb-3">
-        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
-            <div>
-                <h4 class="mb-0 text-danger fw-bold">COMPRAS DE LUBRICANTES</h4>
-                <small class="text-muted">Registre cada compra y el sistema calculará VR sin IVA y total por fila.</small>
-            </div>
-            <button type="submit" form="compras-lubricantes-form" class="btn btn-primary btn-sm">Guardar compras</button>
-        </div>
-    </div>
+    <x-page-header title="Compras de lubricantes" icon="box-seam"
+        subtitle="Registre cada compra y el sistema calculará VR sin IVA y total por fila.">
+        <button type="submit" form="compras-lubricantes-form" class="btn btn-light">
+            <i class="bi bi-save" aria-hidden="true"></i> Guardar compras
+        </button>
+    </x-page-header>
 
     @if (session('success'))
         <div class="alert alert-success">{{ session('success') }}</div>

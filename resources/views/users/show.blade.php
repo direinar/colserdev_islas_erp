@@ -3,10 +3,9 @@
 @section('content')
     <div class="container">
 
-        <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center mb-3">
-            <h3>Detalle de usuario</h3>
-            <a href="{{ route('users.index') }}" class="btn btn-secondary">Volver</a>
-        </div>
+        <x-page-header title="Detalle de usuario" icon="person-gear">
+            <a href="{{ route('users.index') }}" class="btn btn-light">Volver</a>
+        </x-page-header>
 
         <div class="card">
             <div class="card-body">

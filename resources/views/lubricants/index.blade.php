@@ -3,10 +3,10 @@
 @section('content')
     <div class="container">
 
-        <div class="crud-create-wrap">
-            <h3>Canastilla</h3>
-            <a href="{{ route('lubricants.create') }}" class="btn btn-primary">Nuevo</a>
-        </div>
+        <x-page-header title="Canastilla" icon="box-seam"
+            subtitle="Tabla de precios de lubricantes, urea y aditivos.">
+            <a href="{{ route('lubricants.create') }}" class="btn btn-light">Nueva referencia</a>
+        </x-page-header>
 
         <div class="table-responsive">
         <table class="crud-table">

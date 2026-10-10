@@ -44,7 +44,7 @@ test('el informe lista cada recaudo del periodo con su banco y concepto', functi
     $response = $this->actingAs($jefe)
         ->get(route('informes.recaudos-cartera.index', ['desde' => '2026-09-01', 'hasta' => '2026-09-30']))
         ->assertOk()
-        ->assertSee('INFORME DE RECAUDOS DE CARTERA')
+        ->assertSee('Informe de recaudos de cartera')
         ->assertSee('COMPROBANTE CONTABLE - RECAUDOS DE CARTERA')
         // El jefe de patios consulta, pero no cambia las cuentas.
         ->assertDontSee('Guardar cuentas');
