@@ -201,8 +201,11 @@ test('el candado del estado de cuenta indica si la planilla esta revisada', func
     $admin = User::factory()->create(['role' => User::ROLE_ADMINISTRADOR]);
     $cliente = Customer::create(['name' => 'Cliente A', 'document' => '1']);
 
+    // La venta de canastilla cuadra con el crédito, para que la planilla se pueda revisar.
     guardarTurnoConCartera($admin, 5, '2026-09-10', [
         ['cartera_factura_no' => 'F-5', 'cliente_id' => $cliente->id, 'cartera_valor' => '10.000'],
+    ], [
+        'urea_lubricantes' => [['producto' => 'UREA', 'cantidad' => '1', 'valor_sin_iva' => '10.000', 'iva' => '0', 'total' => '10.000']],
     ]);
 
     $url = route('cartera.index', ['customer_id' => $cliente->id, 'fecha_inicial' => '2026-09-01', 'fecha_final' => '2026-09-30']);

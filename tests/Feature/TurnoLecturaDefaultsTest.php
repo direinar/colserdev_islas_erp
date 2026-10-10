@@ -137,8 +137,8 @@ test('saving an already existing turno updates it instead of creating a duplicat
 
     $response->assertRedirect();
     expect(Turno::count())->toBe(1);
-    // El vendedor de la planilla es siempre el usuario que la guarda.
-    expect(Turno::first()->nombre_vendedor)->toBe($admin->name);
+    // El vendedor es quien registró la planilla: si el administrador la corrige, no se reemplaza.
+    expect(Turno::first()->nombre_vendedor)->toBe('Ana');
     expect(Turno::first()->id)->toBe($turno->id);
 });
 

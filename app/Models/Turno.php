@@ -28,6 +28,8 @@ class Turno extends Model
         'traslado_sobrante',
         'traslado_faltante',
         'sobrante_pendiente',
+        'observaciones',
+        'user_id',
     ];
 
     protected $casts = [
@@ -50,6 +52,27 @@ class Turno extends Model
         'traslado_faltante' => 'decimal:2',
         'sobrante_pendiente' => 'decimal:2',
     ];
+
+    /**
+     * Quién creó la planilla.
+     */
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    /**
+     * Una planilla revisada no la modifica nadie. El islero solo modifica las planillas
+     * que él creó; el jefe de patios y el administrador, cualquiera.
+     */
+    public function editablePor(User $user): bool
+    {
+        if ($this->revisado) {
+            return false;
+        }
+
+        return ! $user->isIslero() || ! $this->exists || $this->user_id === $user->id;
+    }
 
     // Relaciones — todas correctas, solo agregar las que faltaban
     public function ventas()

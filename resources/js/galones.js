@@ -359,6 +359,11 @@ function initDecimalFormatters() {
         if (input.dataset.decInit) return;
         input.dataset.decInit = '1';
 
+        // Galones y lecturas los formatea initGalones con punto decimal (igual que Blade).
+        // Reformatearlos aquí en es-CO hacía que el valor se viera distinto antes y
+        // después de guardar, y "1.250" podía terminar leído como 1,25 galones.
+        if (input.matches('.galones-input, .lectura-inicial, .lectura-final')) return;
+
         const decimalsAttr = input.dataset.decimals;
         const decimals = typeof decimalsAttr !== 'undefined' ? parseInt(decimalsAttr, 10) : (/(galon|gls|lectura|galones|galon)/i.test(input.name || input.className) ? 3 : 0);
 

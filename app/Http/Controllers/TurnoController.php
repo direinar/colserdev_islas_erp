@@ -7,14 +7,31 @@ use App\Models\Customer;
 use App\Models\FuelPrice;
 use App\Models\Lubricant;
 use App\Models\Turno;
+use App\Models\TurnoCartera;
+use App\Models\TurnoConsignacion;
+use App\Models\TurnoDescuento;
+use App\Models\TurnoGasolinaEds;
+use App\Models\TurnoLubricante;
+use App\Models\TurnoQrPago;
+use App\Models\TurnoRecaudo;
+use App\Models\TurnoRecaudoAdmin;
+use App\Models\TurnoSurtidor;
+use App\Models\TurnoTransferencia;
+use App\Models\TurnoVarios;
+use App\Models\TurnoVenta;
 use App\Services\CarteraTurnoSyncService;
+use App\Services\CuadreTurnoService;
 use App\Support\NumberParser;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
 class TurnoController extends Controller
 {
+    public const CONCEPTOS_QR = ['TC', 'QR', 'NEQUI', 'DAVIPLATA', 'TRANSFERENCIA'];
+
     public function create(Request $request)
     {
         $lubricants = Lubricant::orderBy('reference', 'asc')->get();
@@ -74,10 +91,95 @@ class TurnoController extends Controller
                 ->first();
         }
 
+        // Si el guardado falló (validación), se vuelve a mostrar lo que se había digitado
+        // en lugar de la planilla vacía o de la última versión guardada.
+        if ($request->session()->hasOldInput('numero_turno')) {
+            $turno = $this->borradorDesdeEnvio($request, $turno);
+        }
+
         return view('planillas.turnos.create', compact('lubricants', 'customers', 'bancos', 'nextNumber', 'turno', 'previousTurno', 'turnosDeFecha', 'buscarFecha', 'searchFecha', 'searchNumero'));
     }
 
-    public function store(Request $request, CarteraTurnoSyncService $carteraSync)
+    /**
+     * Arma la planilla con los datos enviados en el intento de guardado que no pasó la
+     * validación, con las mismas filas y atributos que usan las secciones para mostrar
+     * una planilla guardada. No se guarda nada.
+     */
+    private function borradorDesdeEnvio(Request $request, ?Turno $turno): Turno
+    {
+        $old = fn (string $seccion): array => array_values(array_filter(
+            (array) $request->old($seccion, []),
+            'is_array',
+        ));
+
+        $numero = (int) $request->old('numero_turno');
+        $borrador = $turno?->numero_turno === $numero
+            ? $turno
+            : (Turno::query()->where('numero_turno', $numero)->first() ?? new Turno([
+                'numero_turno' => $numero,
+                'precio_corriente' => (float) FuelPrice::activePriceOn('Gasolina', $request->old('fecha')),
+                'precio_acpm' => (float) FuelPrice::activePriceOn('ACPM', $request->old('fecha')),
+            ]));
+
+        $borrador->fill([
+            'fecha' => $request->old('fecha') ?: now()->toDateString(),
+            'observaciones' => $request->old('observaciones'),
+        ]);
+
+        $filas = fn (string $clase, array $filas): Collection => collect($filas)->map(fn (array $atributos) => new $clase($atributos));
+
+        $borrador->setRelation('ventas', $filas(TurnoVenta::class, array_map(fn (array $r): array => [
+            'surtidor' => $r['surtidor'] ?? '', 'combustible' => $r['combustible'] ?? null,
+            'galones' => NumberParser::quantity($r['galones'] ?? null), 'valor' => 0,
+        ], $old('ventas'))));
+        $borrador->setRelation('surtidores', $filas(TurnoSurtidor::class, array_map(fn (array $r): array => [
+            'manguera' => $r['manguera'] ?? '', 'combustible' => $r['combustible'] ?? null,
+            'lectura_inicial' => NumberParser::quantity($r['lectura_inicial'] ?? null),
+            'lectura_final' => NumberParser::quantity($r['lectura_final'] ?? null),
+            'galones' => max(0, NumberParser::quantity($r['lectura_final'] ?? null) - NumberParser::quantity($r['lectura_inicial'] ?? null)),
+        ], $old('lecturas'))));
+        $borrador->setRelation('lubricantes', $filas(TurnoLubricante::class, array_map(fn (array $r): array => [
+            'cantidad' => (int) ($r['cantidad'] ?? 0), 'producto' => $r['producto'] ?? null,
+            'valor_sin_iva' => NumberParser::money($r['valor_sin_iva'] ?? null), 'iva' => NumberParser::money($r['iva'] ?? null),
+            'total' => NumberParser::money($r['total'] ?? null),
+        ], $old('urea_lubricantes'))));
+        $borrador->setRelation('consignaciones', $filas(TurnoConsignacion::class, array_map(fn (array $r): array => [
+            'consignacion_no' => $r['consignacion_no'] ?? null, 'valor' => NumberParser::money($r['consignacion_valor'] ?? null),
+        ], $old('consignaciones'))));
+        $borrador->setRelation('descuentos', $filas(TurnoDescuento::class, array_map(fn (array $r): array => [
+            'descuento_no' => $r['descuento_no'] ?? null, 'valor' => NumberParser::money($r['descuento'] ?? null),
+        ], $old('descuentos'))));
+        $borrador->setRelation('cartera', $filas(TurnoCartera::class, array_map(fn (array $r): array => [
+            'factura_no' => $r['cartera_factura_no'] ?? null, 'cliente_id' => $r['cliente_id'] ?? null,
+            'valor' => NumberParser::money($r['cartera_valor'] ?? null),
+        ], $old('cartera'))));
+        $borrador->setRelation('qrPagos', $filas(TurnoQrPago::class, array_map(fn (array $r): array => [
+            'concepto' => $r['concepto'] ?? null, 'valor' => NumberParser::money($r['valor'] ?? null),
+        ], $old('qr_pagos'))));
+        $borrador->setRelation('recaudos', $filas(TurnoRecaudo::class, array_map(fn (array $r): array => [
+            'cliente_id' => $r['cliente_id'] ?? null, 'valor' => NumberParser::money($r['valor'] ?? null),
+        ], $old('recaudos'))));
+        $borrador->setRelation('transferencias', $filas(TurnoTransferencia::class, array_map(fn (array $r): array => [
+            'puntos_redimidos' => NumberParser::money($r['puntos'] ?? null),
+        ], $old('transferencias'))));
+        $borrador->setRelation('gasolinaEds', $filas(TurnoGasolinaEds::class, array_map(fn (array $r): array => [
+            'valor' => NumberParser::money($r['puntos'] ?? null),
+        ], $old('gasolina_eds'))));
+        $borrador->setRelation('varios', $filas(TurnoVarios::class, array_map(fn (array $r): array => [
+            'concepto' => $r['concepto'] ?? null, 'valor' => NumberParser::money($r['valor'] ?? null),
+        ], $old('varios'))));
+
+        if (! $request->user()->isIslero()) {
+            $borrador->setRelation('recaudosAdmin', $filas(TurnoRecaudoAdmin::class, array_map(fn (array $r): array => [
+                'banco' => $r['banco'] ?? null, 'responsable_id' => $r['responsable_id'] ?? null,
+                'valor' => NumberParser::money($r['valor'] ?? null),
+            ], $old('recaudos_admin'))));
+        }
+
+        return $borrador;
+    }
+
+    public function store(Request $request, CarteraTurnoSyncService $carteraSync, CuadreTurnoService $cuadre)
     {
         $request->validate([
             'fecha' => ['required', 'date'],
@@ -98,31 +200,49 @@ class TurnoController extends Controller
             'recaudos_admin' => ['nullable', 'array'],
             'traslado_sobrante' => ['nullable'],
             'traslado_faltante' => ['nullable'],
-            'sobrante_pendiente' => ['nullable', 'numeric'],
+            'observaciones' => ['nullable', 'string', 'max:2000'],
+            'qr_pagos.*.concepto' => ['nullable', Rule::in(self::CONCEPTOS_QR)],
         ]);
+
+        // numero_turno es un consecutivo único en toda la tabla, así que basta
+        // con buscarlo por ese campo para detectar si ya existe y actualizarlo
+        // en vez de intentar crear uno duplicado (violaría el unique numero_turno).
+        $existente = Turno::query()->where('numero_turno', $request->input('numero_turno'))->first();
+
+        // Una planilla revisada no se modifica ni se alimenta (ni siquiera el
+        // administrador): primero debe volverla a PENDIENTE DE REVISIÓN.
+        if ($existente && $existente->revisado) {
+            abort(403, 'Esta planilla está REVISADA y no se puede modificar. El administrador debe volverla a Pendiente de revisión.');
+        }
+
+        if ($existente && ! $existente->editablePor($request->user())) {
+            abort(403, 'Esta planilla la registró otro usuario; solo él, el jefe de patios o el administrador la pueden modificar.');
+        }
+
+        // Cambiar la fecha de una planilla ya guardada la movería de día en todos los informes.
+        if ($existente && ! $request->user()->isAdministrador()
+            && $existente->fecha->format('Y-m-d') !== date('Y-m-d', strtotime((string) $request->input('fecha')))) {
+            throw ValidationException::withMessages(['fecha' => 'Solo el administrador puede cambiar la fecha de una planilla ya guardada.']);
+        }
 
         $this->validarClientes($request);
 
-        DB::transaction(function () use ($request, $carteraSync) {
-            // numero_turno es un consecutivo único en toda la tabla, así que basta
-            // con buscarlo por ese campo para detectar si ya existe y actualizarlo
-            // en vez de intentar crear uno duplicado (violaría el unique numero_turno).
+        DB::transaction(function () use ($request, $carteraSync, $cuadre) {
             $turno = Turno::query()
                 ->where('numero_turno', $request->input('numero_turno'))
+                ->lockForUpdate()
                 ->first();
-
-            // Una planilla revisada no se modifica ni se alimenta (ni siquiera el
-            // administrador): primero debe volverla a PENDIENTE DE REVISIÓN.
-            if ($turno && $turno->revisado) {
-                abort(403, 'Esta planilla está REVISADA y no se puede modificar. El administrador debe volverla a Pendiente de revisión.');
-            }
 
             // Solo el administrador puede reversar un traslado ya guardado; para
             // los demás roles se conserva el traslado registrado.
             $trasladoSobrante = $this->trasladoValue($request->input('traslado_sobrante'));
             $trasladoFaltante = $this->trasladoValue($request->input('traslado_faltante'));
 
-            if ($turno && ! $request->user()->isAdministrador()
+            // Reversar = enviar el traslado en cero cuando ya había uno guardado. Ajustarlo
+            // (trasladar una diferencia nueva) sí lo puede hacer quien modifica la planilla.
+            $reversa = $trasladoSobrante === 0.0 && $trasladoFaltante === 0.0;
+
+            if ($turno && $reversa && ! $request->user()->isAdministrador()
                 && ((float) $turno->traslado_sobrante !== 0.0 || (float) $turno->traslado_faltante !== 0.0)) {
                 $trasladoSobrante = (float) $turno->traslado_sobrante;
                 $trasladoFaltante = (float) $turno->traslado_faltante;
@@ -131,7 +251,9 @@ class TurnoController extends Controller
             $atributos = [
                 'fecha' => $request->input('fecha'),
                 'numero_turno' => $request->input('numero_turno'),
-                'nombre_vendedor' => $request->user()->name,
+                // El vendedor es quien registró la planilla; si otro la corrige, no se reemplaza.
+                'nombre_vendedor' => $turno?->nombre_vendedor ?: $request->user()->name,
+                'observaciones' => $request->input('observaciones'),
                 // Sin fallback a config(): el precio debe salir de un registro vigente
                 // en Precios de Combustible; si no existe, queda en 0.
                 'precio_corriente' => (float) FuelPrice::activePriceOn('Gasolina', $request->input('fecha')),
@@ -141,11 +263,6 @@ class TurnoController extends Controller
                 // vuelva a mostrar el faltante/sobrante original al recargar.
                 'traslado_sobrante' => $trasladoSobrante,
                 'traslado_faltante' => $trasladoFaltante,
-                // Sobrante/faltante que quedó sin trasladar (lo calcula el navegador);
-                // impide marcar la planilla como revisada mientras no sea cero.
-                'sobrante_pendiente' => $request->filled('sobrante_pendiente')
-                    ? round((float) $request->input('sobrante_pendiente'))
-                    : null,
             ];
 
             if ($turno) {
@@ -167,7 +284,7 @@ class TurnoController extends Controller
                     $turno->recaudosAdmin()->delete();
                 }
             } else {
-                $turno = Turno::create($atributos);
+                $turno = Turno::create($atributos + ['user_id' => $request->user()->id]);
             }
 
             $this->saveVentas($turno, $request->input('ventas', []));
@@ -186,6 +303,11 @@ class TurnoController extends Controller
             }
             $this->saveVentasTotales($turno);
             $this->saveVentaLecturasTotales($turno);
+
+            // Sobrante/faltante sin trasladar, calculado aquí y no en el navegador:
+            // impide marcar la planilla como revisada mientras no sea cero.
+            $turno->update(['sobrante_pendiente' => $cuadre->pendiente($turno->fresh())]);
+
             // Al final: la cartera lee créditos y recaudos ya guardados del turno.
             $carteraSync->sincronizar($turno);
         });
@@ -273,6 +395,12 @@ class TurnoController extends Controller
 
             if (! empty($row['cliente_id']) || NumberParser::money($row['cartera_valor'] ?? null) != 0) {
                 $errores['cartera'] = 'En CARTERA - CRÉDITO DIRECTO hay filas sin No. de FACTURA. Digite la factura antes del cliente y el valor.';
+            }
+        }
+
+        foreach ((array) $request->input('qr_pagos', []) as $row) {
+            if (is_array($row) && ! $this->filaVacia($row, ['valor']) && trim((string) ($row['concepto'] ?? '')) === '') {
+                $errores['qr_pagos'] = 'En PAGOS ELECTRÓNICOS Y TRANSFERENCIAS hay valores sin CONCEPTO. Seleccione el concepto de cada fila.';
             }
         }
 
@@ -419,6 +547,24 @@ class TurnoController extends Controller
         ]);
     }
 
+    /**
+     * Una fila de la planilla solo se descarta cuando todos sus campos están en blanco.
+     * Un 0 digitado es un dato y se guarda (antes las filas en 0 se perdían al guardar).
+     *
+     * @param  array<string, mixed>  $row
+     * @param  list<string>  $campos
+     */
+    private function filaVacia(array $row, array $campos): bool
+    {
+        foreach ($campos as $campo) {
+            if (trim((string) ($row[$campo] ?? '')) !== '') {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     private function saveUreaLubricantes(Turno $turno, array $rows): void
     {
         foreach ($rows as $row) {
@@ -428,7 +574,8 @@ class TurnoController extends Controller
             $iva = NumberParser::money($row['iva'] ?? null);
             $total = NumberParser::money($row['total'] ?? ($cantidad * ($valorSinIva + $iva)));
 
-            if (! $producto || $cantidad <= 0) {
+            // Sin producto no hay venta de canastilla; con producto se conserva aunque la cantidad sea 0.
+            if (! $producto) {
                 continue;
             }
 
@@ -444,10 +591,12 @@ class TurnoController extends Controller
 
     private function saveConsignaciones(Turno $turno, array $rows): void
     {
-        $values = collect($rows)->map(fn (array $row): array => [
-            'consignacion_no' => $row['consignacion_no'] ?? null,
-            'valor' => NumberParser::money($row['consignacion_valor'] ?? null),
-        ])->filter(fn (array $row): bool => $row['valor'] !== 0.0 || $row['consignacion_no'])->values();
+        $values = collect($rows)
+            ->reject(fn (array $row): bool => $this->filaVacia($row, ['consignacion_no', 'consignacion_valor']))
+            ->map(fn (array $row): array => [
+                'consignacion_no' => $row['consignacion_no'] ?? null,
+                'valor' => NumberParser::money($row['consignacion_valor'] ?? null),
+            ])->values();
         $total = $values->sum('valor');
 
         foreach ($values as $row) {
@@ -461,10 +610,12 @@ class TurnoController extends Controller
 
     private function saveDescuentos(Turno $turno, array $rows): void
     {
-        $values = collect($rows)->map(fn (array $row): array => [
-            'descuento_no' => $row['descuento_no'] ?? null,
-            'valor' => NumberParser::money($row['descuento'] ?? null),
-        ])->filter(fn (array $row): bool => $row['valor'] !== 0.0 || $row['descuento_no'])->values();
+        $values = collect($rows)
+            ->reject(fn (array $row): bool => $this->filaVacia($row, ['descuento_no', 'descuento']))
+            ->map(fn (array $row): array => [
+                'descuento_no' => $row['descuento_no'] ?? null,
+                'valor' => NumberParser::money($row['descuento'] ?? null),
+            ])->values();
         $total = $values->sum('valor');
 
         foreach ($values as $row) {
@@ -478,11 +629,13 @@ class TurnoController extends Controller
 
     private function saveCartera(Turno $turno, array $rows): void
     {
-        $values = collect($rows)->map(fn (array $row): array => [
-            'factura_no' => $row['cartera_factura_no'] ?? null,
-            'cliente_id' => $row['cliente_id'] ?? null,
-            'valor' => NumberParser::money($row['cartera_valor'] ?? null),
-        ])->filter(fn (array $row): bool => $row['valor'] !== 0.0 || $row['factura_no'] || $row['cliente_id'])->values();
+        $values = collect($rows)
+            ->reject(fn (array $row): bool => $this->filaVacia($row, ['cartera_factura_no', 'cliente_id', 'cartera_valor']))
+            ->map(fn (array $row): array => [
+                'factura_no' => $row['cartera_factura_no'] ?? null,
+                'cliente_id' => ($row['cliente_id'] ?? null) ?: null,
+                'valor' => NumberParser::money($row['cartera_valor'] ?? null),
+            ])->values();
         $total = $values->sum('valor');
 
         foreach ($values as $row) {
@@ -497,10 +650,13 @@ class TurnoController extends Controller
 
     private function saveQrPagos(Turno $turno, array $rows): void
     {
-        $values = collect($rows)->map(fn (array $row): array => [
-            'concepto' => $row['concepto'] ?? null,
-            'valor' => NumberParser::money($row['valor'] ?? null),
-        ])->filter(fn (array $row): bool => $row['concepto'] && $row['valor'] > 0)->values();
+        // El concepto trae un valor por defecto en las filas nuevas: la fila cuenta si tiene valor.
+        $values = collect($rows)
+            ->reject(fn (array $row): bool => $this->filaVacia($row, ['valor']))
+            ->map(fn (array $row): array => [
+                'concepto' => $row['concepto'] ?? null,
+                'valor' => NumberParser::money($row['valor'] ?? null),
+            ])->values();
         $total = $values->sum('valor');
 
         foreach ($values as $row) {
@@ -518,9 +674,9 @@ class TurnoController extends Controller
 
         foreach ($rows as $row) {
             $valor = NumberParser::money($row['valor'] ?? null);
-            $clienteId = $row['cliente_id'] ?? null;
+            $clienteId = ($row['cliente_id'] ?? null) ?: null;
 
-            if ($valor <= 0) {
+            if ($this->filaVacia($row, ['cliente_id', 'valor'])) {
                 continue;
             }
 
@@ -539,7 +695,7 @@ class TurnoController extends Controller
         foreach ($rows as $row) {
             $puntos = NumberParser::money($row['puntos'] ?? null);
 
-            if ($puntos === 0) {
+            if ($this->filaVacia($row, ['puntos'])) {
                 continue;
             }
 
@@ -557,7 +713,7 @@ class TurnoController extends Controller
         foreach ($rows as $row) {
             $valor = NumberParser::money($row['puntos'] ?? null);
 
-            if ($valor <= 0) {
+            if ($this->filaVacia($row, ['puntos'])) {
                 continue;
             }
 
@@ -573,10 +729,10 @@ class TurnoController extends Controller
         $total = collect($rows)->sum(fn (array $row): float => NumberParser::money($row['valor'] ?? null));
 
         foreach ($rows as $row) {
-            $concepto = $row['concepto'] ?? null;
+            $concepto = trim((string) ($row['concepto'] ?? ''));
             $valor = NumberParser::money($row['valor'] ?? null);
 
-            if (! $concepto || $valor <= 0) {
+            if ($this->filaVacia($row, ['concepto', 'valor'])) {
                 continue;
             }
 
@@ -594,10 +750,10 @@ class TurnoController extends Controller
 
         foreach ($rows as $row) {
             $banco = $row['banco'] ?? null;
-            $responsableId = $row['responsable_id'] ?? null;
+            $responsableId = ($row['responsable_id'] ?? null) ?: null;
             $valor = NumberParser::money($row['valor'] ?? null);
 
-            if (! $banco && ! $responsableId && $valor <= 0) {
+            if ($this->filaVacia($row, ['banco', 'responsable_id', 'valor'])) {
                 continue;
             }
 

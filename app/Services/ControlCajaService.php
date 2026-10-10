@@ -34,7 +34,10 @@ class ControlCajaService
      */
     public const CASILLAS_VARIOS = 4;
 
-    public function __construct(private KardexInventarioService $kardex) {}
+    public function __construct(
+        private KardexInventarioService $kardex,
+        private CuadreTurnoService $cuadre,
+    ) {}
 
     /**
      * @return array{filas: list<array<string, mixed>>, totales: array<string, mixed>, comprobante: array<string, mixed>, cuentas: Collection<string, ComprobanteVentaCuenta>}
@@ -89,8 +92,8 @@ class ControlCajaService
         $sobrantes = (float) $turno->traslado_sobrante;
         $recaudos = -(float) $turno->recaudos->sum('valor');
 
-        $total = $consignaciones + $pagosElectronicos + $puntos + $gasolinaEds + $descuentos + $cartera
-            + array_sum(array_column($varios, 'valor')) + $faltantes + $sobrantes + $recaudos;
+        // Misma fórmula del resumen de la planilla y del cuadre que bloquea la revisión.
+        $total = $this->cuadre->totalRecibido($turno);
 
         return [
             'turno_id' => $turno->id,

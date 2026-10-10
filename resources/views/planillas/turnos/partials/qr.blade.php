@@ -25,7 +25,8 @@
                             <td>
                                 <select name="qr_pagos[{{ $i }}][concepto]"
                                     class="form-select form-select-sm border-0 bg-transparent">
-                                    @foreach (['TC', 'QR', 'NEQUI', 'DAVIPLATA', 'TRANSFERENCIA'] as $concepto)
+                                    <option value="" @selected(! $q->concepto)>Seleccione concepto</option>
+                                    @foreach (\App\Http\Controllers\TurnoController::CONCEPTOS_QR as $concepto)
                                         <option value="{{ $concepto }}" @selected($q->concepto === $concepto)>
                                             {{ $concepto }}
                                         </option>
@@ -52,7 +53,7 @@
                             <td>
                                 <select name="qr_pagos[{{ $index }}][concepto]"
                                     class="form-select form-select-sm border-0 bg-transparent">
-                                    <option value="Concepto" selected>Seleccione concepto</option>
+                                    <option value="" selected>Seleccione concepto</option>
                                     <option value="TC">TC</option>
                                     <option value="QR">QR</option>
                                     <option value="NEQUI">NEQUI</option>

@@ -6,7 +6,9 @@
         // Una planilla revisada queda bloqueada para todos; el administrador puede
         // devolverla a PENDIENTE DE REVISIÓN para corregirla.
         $turnoRevisado = isset($turno) && $turno && $turno->revisado;
-        $puedeGuardar = ! $turnoRevisado;
+        // El islero solo modifica las planillas que él registró.
+        $turnoDeOtro = isset($turno) && $turno && ! $turnoRevisado && ! $turno->editablePor(auth()->user());
+        $puedeGuardar = ! $turnoRevisado && ! $turnoDeOtro;
     @endphp
 
     {{-- BÚSQUEDA: por fecha (lista las planillas del día) o por número de turno --}}
@@ -398,16 +400,21 @@
 
         </fieldset>
 
-        @if (! $puedeGuardar)
+        @if ($turnoRevisado)
             <div class="alert alert-danger mt-3 mb-0 text-center fs-4 fw-bold text-danger border-2 border-danger">
                 <i class="bi bi-lock-fill"></i> Planilla REVISADA: el registro está bloqueado
+            </div>
+        @elseif ($turnoDeOtro)
+            <div class="alert alert-warning mt-3 mb-0 text-center fw-bold">
+                <i class="bi bi-lock-fill"></i> Esta planilla la registró otro usuario: solo la puede consultar.
+                Si necesita una corrección, solicítela al jefe de patios o al administrador.
             </div>
         @endif
 
     </form>
 
     {{-- Formulario independiente (no anidado) para marcar el turno como revisado --}}
-    @if (isset($turno) && $turno && !$turno->revisado && auth()->user()->isAdministrador())
+    @if (isset($turno) && $turno && $turno->exists && !$turno->revisado && auth()->user()->isAdministrador())
         <form method="POST" action="{{ route('turnos.revisar', $turno) }}" id="form-marcar-revisado" class="d-none">
             @csrf
         </form>

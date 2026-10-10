@@ -15,7 +15,10 @@ function guardarTurno(User $user, int $numero, array $extra = [])
 
 test('no se marca como revisada una planilla con sobrante o faltante sin trasladar', function () {
     $admin = User::factory()->create(['role' => User::ROLE_ADMINISTRADOR]);
-    guardarTurno($admin, 3, ['sobrante_pendiente' => '-20600']);
+    // Venta de canastilla de 20.600 sin nada recibido: el servidor calcula el faltante,
+    // aunque el navegador envíe que no hay pendiente.
+    $venta = ['urea_lubricantes' => [['producto' => 'UREA', 'cantidad' => '1', 'valor_sin_iva' => '20.600', 'iva' => '0', 'total' => '20.600']]];
+    guardarTurno($admin, 3, $venta + ['sobrante_pendiente' => '0']);
     $turno = Turno::firstOrFail();
 
     $this->actingAs($admin)->from(route('turnos.pendientes'))->post(route('turnos.revisar', $turno))
@@ -25,7 +28,7 @@ test('no se marca como revisada una planilla con sobrante o faltante sin traslad
     expect($turno->fresh()->revisado)->toBeFalse();
 
     // Después de trasladar y guardar, el pendiente queda en cero y ya se puede revisar.
-    guardarTurno($admin, 3, ['traslado_faltante' => '20600', 'sobrante_pendiente' => '0']);
+    guardarTurno($admin, 3, $venta + ['traslado_faltante' => '20600']);
     $this->actingAs($admin)->post(route('turnos.revisar', $turno))->assertSessionHasNoErrors();
 
     expect($turno->fresh()->revisado)->toBeTrue();
@@ -33,8 +36,8 @@ test('no se marca como revisada una planilla con sobrante o faltante sin traslad
 
 test('una planilla que no se ha vuelto a guardar no se puede revisar', function () {
     $admin = User::factory()->create(['role' => User::ROLE_ADMINISTRADOR]);
-    guardarTurno($admin, 3, ['sobrante_pendiente' => null]);
-    $turno = Turno::firstOrFail();
+    // Planilla anterior al cálculo del pendiente: nunca se volvió a guardar.
+    $turno = Turno::create(['fecha' => '2026-09-25', 'numero_turno' => 3, 'sobrante_pendiente' => null]);
 
     $this->actingAs($admin)->post(route('turnos.revisar', $turno))->assertSessionHasErrors('revisar');
 
@@ -94,7 +97,7 @@ test('una planilla revisada no se puede modificar ni por el administrador', func
 test('el administrador vuelve una planilla revisada a pendiente de revision', function () {
     $admin = User::factory()->create(['role' => User::ROLE_ADMINISTRADOR]);
     $islero = User::factory()->create(['role' => User::ROLE_ISLERO]);
-    guardarTurno($admin, 3);
+    guardarTurno($islero, 3);
     $turno = Turno::firstOrFail();
     $this->actingAs($admin)->post(route('turnos.revisar', $turno));
 

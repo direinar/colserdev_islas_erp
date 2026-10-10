@@ -119,7 +119,9 @@
                     .textContent) : 0;
                 const totalSurtidores = totalSurtidoresCell ? parseNumber(totalSurtidoresCell.textContent) : 0;
 
-                const sobranteIapropiada = trasladoAplicado ? 0 : totalRecibido - totalVentasIapropiada;
+                // El total recibido ya incluye el traslado aplicado: si después se modifica la
+                // planilla, la nueva diferencia vuelve a aparecer en vez de quedar congelada en 0.
+                const sobranteIapropiada = totalRecibido - totalVentasIapropiada;
                 const sobranteSurtidores = trasladoAplicado ? 0 : totalRecibido - totalSurtidores;
 
                 if (sobranteCell) {
