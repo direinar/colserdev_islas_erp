@@ -241,6 +241,11 @@
                                             Informe Recaudos de Cartera
                                         </a>
                                     </li>
+                                    <li>
+                                        <a class="dropdown-item" href="{{ route('informes.saldos.index') }}">
+                                            Informes de Saldos
+                                        </a>
+                                    </li>
                                 @endif
                                 @if ($user->isAdministrador())
                                     <li>

@@ -16,6 +16,7 @@ use App\Http\Controllers\InformeComprobanteComprasController;
 use App\Http\Controllers\InformeControlCajaController;
 use App\Http\Controllers\InformeMargenMayoristaController;
 use App\Http\Controllers\InformeRecaudosCarteraController;
+use App\Http\Controllers\InformeSaldosController;
 use App\Http\Controllers\InventarioAcpmController;
 use App\Http\Controllers\InventarioGasolinaController;
 use App\Http\Controllers\InventarioLubricanteController;
@@ -101,6 +102,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         Route::get('/informes/recaudos-cartera/exportar', [InformeRecaudosCarteraController::class, 'exportar'])
             ->name('informes.recaudos-cartera.exportar');
+
+        Route::get('/informes/saldos', [InformeSaldosController::class, 'index'])
+            ->name('informes.saldos.index');
+
+        Route::get('/informes/saldos/exportar', [InformeSaldosController::class, 'exportar'])
+            ->name('informes.saldos.exportar');
 
         Route::get('/compras-lubricantes/create', [CompraLubricanteController::class, 'create'])
             ->name('compras-lubricantes.create');
