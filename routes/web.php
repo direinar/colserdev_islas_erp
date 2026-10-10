@@ -11,6 +11,7 @@ use App\Http\Controllers\ControlTanqueController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\FuelPriceController;
 use App\Http\Controllers\InformeAnticipoBimestralController;
+use App\Http\Controllers\InformeCierreController;
 use App\Http\Controllers\InformeComprobanteComprasController;
 use App\Http\Controllers\InformeControlCajaController;
 use App\Http\Controllers\InformeMargenMayoristaController;
@@ -162,6 +163,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         Route::post('/informes/recaudos-cartera/cuentas', [InformeRecaudosCarteraController::class, 'guardarCuentas'])
             ->name('informes.recaudos-cartera.cuentas');
+
+        Route::get('/informes/cierre', [InformeCierreController::class, 'index'])
+            ->name('informes.cierre.index');
+
+        Route::get('/informes/cierre/exportar', [InformeCierreController::class, 'exportar'])
+            ->name('informes.cierre.exportar');
+
+        Route::post('/informes/cierre/contrato', [InformeCierreController::class, 'guardarContrato'])
+            ->name('informes.cierre.contrato');
 
         Route::get('/inventarios/acpm/create', [InventarioAcpmController::class, 'create'])
             ->name('inventarios-acpm.create');

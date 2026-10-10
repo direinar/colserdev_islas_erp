@@ -258,6 +258,11 @@
                                             Informe Margen Mayorista
                                         </a>
                                     </li>
+                                    <li>
+                                        <a class="dropdown-item" href="{{ route('informes.cierre.index') }}">
+                                            Informe de Cierre
+                                        </a>
+                                    </li>
                                 @endif
                             </ul>
                         </li>
