@@ -9,6 +9,7 @@ use App\Http\Controllers\CompraLubricanteController;
 use App\Http\Controllers\ComprobanteContableCompraController;
 use App\Http\Controllers\ControlTanqueController;
 use App\Http\Controllers\CustomerController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\FuelPriceController;
 use App\Http\Controllers\InformeAnticipoBimestralController;
 use App\Http\Controllers\InformeCierreController;
@@ -30,7 +31,7 @@ use Illuminate\Support\Facades\Route;
 Route::redirect('/', '/dashboard')->name('home');
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::view('dashboard', 'dashboard.index')->name('dashboard');
+    Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     Route::middleware('role:'.implode(',', [User::ROLE_ISLERO, User::ROLE_JEFE_PATIOS, User::ROLE_ADMINISTRADOR]))->group(function () {
         Route::get('/turnos/create', [TurnoController::class, 'create'])

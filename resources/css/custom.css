@@ -993,16 +993,69 @@ input[inputmode="decimal"] {
     font-family: 'Courier New', monospace;
 }
 
-/* Dashboard charts */
-.dashboard-line-chart-wrap {
-    height: 210px;
+/* Dashboard: indicadores, gráficas y estados (los colores de estado siempre van con ícono y texto) */
+.dashboard-kpi {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    height: 100%;
+    padding: 1rem 1.25rem;
+    background: #fff;
+    border-radius: 0.75rem;
+    border-top: 3px solid var(--mint-mid);
+    box-shadow: 0 1px 3px rgba(17, 21, 26, 0.08);
 }
 
-.dashboard-donut-chart-wrap {
-    width: 100%;
-    max-width: 320px;
-    height: 210px;
-    margin: 0 auto;
+.dashboard-kpi-titulo {
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: var(--ink-mute);
+}
+
+.dashboard-kpi-valor {
+    font-size: 1.6rem;
+    font-weight: 700;
+    line-height: 1.2;
+    color: var(--ink);
+    font-variant-numeric: tabular-nums;
+}
+
+.dashboard-kpi-detalle {
+    font-size: 0.8rem;
+    color: var(--ink-soft);
+}
+
+.dashboard-chart {
+    position: relative;
+    height: 280px;
+}
+
+.dashboard-tabla summary {
+    font-size: 0.85rem;
+    color: var(--ink-mute);
+    cursor: pointer;
+}
+
+.estado {
+    white-space: nowrap;
+}
+
+.estado-bien {
+    color: #0ca30c;
+}
+
+.estado-advertencia {
+    color: #c98a00;
+}
+
+.estado-critico {
+    color: #d03b3b;
+}
+
+.estado-neutro {
+    color: var(--ink-mute);
 }
 
 /* Lubricantes table small rules */
