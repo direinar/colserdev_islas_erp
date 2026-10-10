@@ -6,6 +6,7 @@ use App\Models\TanqueSaldoInicial;
 use Illuminate\Support\Carbon;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
 
 /**
@@ -15,6 +16,19 @@ use PhpOffice\PhpSpreadsheet\Style\Fill;
 class ControlTanquesExcelService
 {
     private const FORMATO_GALONES = '#,##0.00;[Red]-#,##0.00';
+
+    /**
+     * @var array<string, string>
+     */
+    private const COLORES = [
+        'B:D' => 'E2EFDA',
+        'E:F' => 'BFBFBF',
+        'G:G' => 'E2EFDA',
+        'H:J' => 'C6E0B4',
+        'K:L' => '92D050',
+        'M:M' => 'C6E0B4',
+        'N:O' => 'D6DCE4',
+    ];
 
     public function __construct(private ControlTanquesService $controlTanques) {}
 
@@ -37,13 +51,16 @@ class ControlTanquesExcelService
             'FECHA DE VENTA',
             'INGRESO', 'VENTA', 'SALDO', 'AFORO S/VARA', 'SALDO FINAL S/TABLA AFORO', 'FALTANTE (SOBRANTE)',
             'INGRESO', 'VENTA', 'SALDO', 'AFORO S/VARA', 'SALDO FINAL S/TABLA AFORO', 'FALTANTE (SOBRANTE)',
-            'VENTA DIARIA (GAL)', 'VENTA ACUMULADA (GAL)',
+            'VR. VENTA DIARIA', 'VR. VENTA ACUMULADA',
         ], null, 'A5');
 
+        $hoja->getStyle('A1')->getFont()->getColor()->setRGB('FF0000');
         $encabezado = $hoja->getStyle('A4:O5');
         $encabezado->getFont()->setBold(true);
         $encabezado->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setWrapText(true);
-        $encabezado->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('F6E7D4');
+        $hoja->getStyle('B4:O4')->getFont()->setSize(14);
+        $hoja->getStyle('G5')->getFont()->getColor()->setRGB('FF0000');
+        $hoja->getStyle('M5')->getFont()->getColor()->setRGB('FF0000');
 
         $hoja->fromArray([
             'VIENEN', null, null, $informe['vienen'][TanqueSaldoInicial::CORRIENTE], null, null, null,
@@ -74,6 +91,18 @@ class ControlTanquesExcelService
         $hoja->getStyle("A{$fila}:O{$fila}")->getFont()->setBold(true);
 
         $hoja->getStyle("B6:O{$fila}")->getNumberFormat()->setFormatCode(self::FORMATO_GALONES);
+
+        // Mismos colores por bloque que la plantilla: movimiento, aforo y saldos.
+        foreach (self::COLORES as $rango => $color) {
+            [$desdeColumna, $hastaColumna] = explode(':', $rango);
+            $hoja->getStyle("{$desdeColumna}4:{$hastaColumna}{$fila}")->getFill()
+                ->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB($color);
+        }
+
+        $hoja->getStyle("A4:O{$fila}")->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
+        foreach (['B', 'E', 'H', 'K', 'N'] as $columna) {
+            $hoja->getStyle("{$columna}4:{$columna}{$fila}")->getBorders()->getLeft()->setBorderStyle(Border::BORDER_THICK);
+        }
         $hoja->getColumnDimension('A')->setWidth(14);
         foreach (range('B', 'O') as $columna) {
             $hoja->getColumnDimension($columna)->setWidth(13);

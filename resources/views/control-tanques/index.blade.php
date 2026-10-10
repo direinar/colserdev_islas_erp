@@ -7,40 +7,117 @@
     use Illuminate\Support\Carbon;
 
     $combustibles = [TanqueSaldoInicial::CORRIENTE => 'CORRIENTE', TanqueSaldoInicial::ACPM => 'A C P M'];
-    $galones = fn (?float $valor): string => $valor === null ? '' : number_format($valor, 2, ',', '.');
-    $galonesOVacio = fn (?float $valor): string => $valor ? number_format($valor, 2, ',', '.') : '';
-    // FALTANTE (SOBRANTE): el sobrante (negativo) va entre paréntesis, como en la plantilla.
-    $faltante = fn (?float $valor): string => $valor === null
+    // Como en la plantilla: galones enteros sin decimales (3.350) y con dos decimales solo si los tienen.
+    $galones = fn (?float $valor): string => $valor === null
         ? ''
-        : ($valor < 0 ? '('.number_format(abs($valor), 2, ',', '.').')' : number_format($valor, 2, ',', '.'));
+        : number_format($valor, fmod(round($valor, 2), 1.0) == 0.0 ? 0 : 2, ',', '.');
+    $galonesOVacio = fn (?float $valor): string => $valor ? $galones($valor) : '';
     // Campos editables sin separador de miles: NumberParser::quantity lee un punto solo como
     // decimal, así que "3.350" volvería como 3,35 al guardar. Coma = decimales.
     $aforoInput = fn (?float $valor, int $decimales): string => $valor === null
         ? ''
         : rtrim(rtrim(number_format($valor, $decimales, ',', ''), '0'), ',');
+    $varaInput = fn (?float $valor): string => $valor === null ? '' : number_format($valor, 2, ',', '');
     $esAdministrador = auth()->user()->isAdministrador();
     $sinSaldoInicial = collect(array_keys($combustibles))->reject(fn ($c) => $saldosIniciales->has($c));
 @endphp
 
 @section('content')
     <style>
-        .control-tanques-table th,
-        .control-tanques-table td {
+        /* Colores y separadores de la plantilla "INFORME DE CONTROL TANQUES". */
+        .ct-tabla {
+            --ct-corriente: #e2efda;
+            --ct-corriente-aforo: #bfbfbf;
+            --ct-acpm: #c6e0b4;
+            --ct-acpm-aforo: #92d050;
+            --ct-saldos: #d6dce4;
+            --ct-separador: #262626;
+            border-collapse: collapse;
+            width: 100%;
+            font-size: .85rem;
+            color: #000;
+        }
+
+        .ct-tabla th,
+        .ct-tabla td {
+            border: 1px solid #8c8c8c;
+            padding: .2rem .4rem;
             white-space: nowrap;
             vertical-align: middle;
         }
 
-        .control-tanques-table input.form-control-sm {
-            min-width: 5.5rem;
+        .ct-tabla thead th {
+            text-align: center;
+            font-weight: 700;
+            font-size: .72rem;
+            line-height: 1.15;
+        }
+
+        .ct-tabla thead .ct-bloque {
+            font-size: 1.35rem;
+            letter-spacing: .05rem;
+            padding: .3rem;
+        }
+
+        .ct-tabla td {
             text-align: right;
+            height: 1.9rem;
         }
 
-        .control-tanques-table .bloque-corriente {
-            background-color: #fff8ec;
+        .ct-tabla .ct-fecha {
+            text-align: center;
+            background: #fff;
+            min-width: 6rem;
         }
 
-        .control-tanques-table .bloque-acpm {
-            background-color: #eef6ff;
+        .ct-tabla .ct-vienen {
+            font-weight: 700;
+        }
+
+        .ct-tabla .ct-corriente { background: var(--ct-corriente); }
+        .ct-tabla .ct-corriente-aforo { background: var(--ct-corriente-aforo); }
+        .ct-tabla .ct-acpm { background: var(--ct-acpm); }
+        .ct-tabla .ct-acpm-aforo { background: var(--ct-acpm-aforo); }
+        .ct-tabla .ct-saldos { background: var(--ct-saldos); }
+
+        /* Separador grueso al inicio de cada bloque y antes del aforo, como en el Excel. */
+        .ct-tabla .ct-inicio-bloque { border-left: 5px solid var(--ct-separador); }
+        .ct-tabla .ct-inicio-aforo { border-left: 3px solid var(--ct-separador); }
+
+        .ct-tabla .ct-saldo { font-weight: 700; }
+        .ct-tabla .ct-faltante { font-weight: 700; font-size: 1rem; }
+        .ct-tabla .ct-negativo { color: #ff0000; }
+        .ct-tabla .ct-sobrante-titulo { color: #ff0000; }
+
+        /* El aforo se digita en la celda, como en una hoja de cálculo. */
+        .ct-tabla .ct-celda-input { padding: 0; }
+
+        .ct-tabla .ct-input {
+            width: 100%;
+            min-width: 5.5rem;
+            border: 0;
+            background: transparent;
+            text-align: right;
+            padding: .2rem .4rem;
+            font-weight: 600;
+        }
+
+        .ct-tabla .ct-input:focus {
+            outline: 2px solid #1f6feb;
+            outline-offset: -2px;
+            background: #fff;
+        }
+
+        .ct-tabla tfoot td {
+            font-weight: 700;
+            background: #f2f2f2;
+        }
+
+        .ct-titulo {
+            color: #ff0000;
+            font-weight: 800;
+            font-size: 1.6rem;
+            letter-spacing: .03rem;
         }
 
         @page {
@@ -65,48 +142,48 @@
                 box-shadow: none !important;
             }
 
-            .control-tanques-table input.form-control-sm {
-                border: 0 !important;
-                padding: 0 !important;
-                background: transparent !important;
-            }
-
-            .control-tanques-table {
+            .ct-tabla {
                 font-size: 9px;
                 -webkit-print-color-adjust: exact;
                 print-color-adjust: exact;
             }
+
+            .ct-tabla .ct-input {
+                min-width: 0;
+                padding: 0 .2rem;
+            }
         }
     </style>
 
-    <div class="pastel-section mb-3 d-print-none">
-        <div class="d-flex flex-column flex-lg-row justify-content-between align-items-start align-items-lg-end gap-2">
+    <div class="card mb-3">
+        <div class="card-body py-2 d-flex flex-column flex-lg-row justify-content-between align-items-start align-items-lg-center gap-2">
             <div>
-                <h4 class="mb-0 text-warning-emphasis fw-bold">INFORME DE CONTROL DE TANQUES</h4>
-                <small class="text-muted">Solo galones. Ingresos desde compras y ventas según cortes de IAPROPIADA de la
-                    planilla de turnos (suma de los turnos de cada fecha); el aforo lo digita el jefe de patios cada noche.</small>
+                <div class="ct-titulo">INFORME DE CONTROL DE TANQUES</div>
+                <div class="small d-none d-print-block">
+                    FECHA DESDE {{ Carbon::parse($desde)->format('d/m/Y') }} — FECHA HASTA {{ Carbon::parse($hasta)->format('d/m/Y') }}
+                </div>
             </div>
 
-            <form method="GET" action="{{ route('control-tanques.index') }}" class="d-flex flex-wrap gap-2 align-items-end">
+            <form method="GET" action="{{ route('control-tanques.index') }}" class="d-flex flex-wrap gap-2 align-items-end d-print-none">
                 <div>
-                    <label class="form-label small mb-1" for="desde">Fecha desde</label>
+                    <label class="form-label small fw-semibold mb-1" for="desde">FECHA DESDE</label>
                     <input type="date" name="desde" id="desde" class="form-control form-control-sm" value="{{ $desde }}"
                         onchange="this.form.submit()">
                 </div>
                 <div>
-                    <label class="form-label small mb-1" for="hasta">Fecha hasta</label>
+                    <label class="form-label small fw-semibold mb-1" for="hasta">FECHA HASTA</label>
                     <input type="date" name="hasta" id="hasta" class="form-control form-control-sm" value="{{ $hasta }}"
                         onchange="this.form.submit()">
                 </div>
                 <button type="submit" form="aforos-form" class="btn btn-primary btn-sm">
-                    <i class="bi bi-save"></i> Guardar aforos
+                    <i class="bi bi-save"></i> GUARDAR AFOROS
                 </button>
                 <button type="button" class="btn btn-outline-secondary btn-sm" onclick="window.print()">
-                    <i class="bi bi-printer"></i> Imprimir
+                    <i class="bi bi-printer"></i> IMPRIMIR
                 </button>
                 <a href="{{ route('control-tanques.exportar', ['desde' => $desde, 'hasta' => $hasta]) }}"
                     class="btn btn-outline-success btn-sm">
-                    <i class="bi bi-file-earmark-excel"></i> Excel
+                    <i class="bi bi-file-earmark-excel"></i> EXCEL
                 </a>
             </form>
         </div>
@@ -167,11 +244,6 @@
         </div>
     @endif
 
-    <div class="d-none d-print-block mb-2">
-        <div class="fw-bold">INFORME DE CONTROL DE TANQUES</div>
-        <div class="small">Periodo: {{ Carbon::parse($desde)->format('d/m/Y') }} al {{ Carbon::parse($hasta)->format('d/m/Y') }}</div>
-    </div>
-
     <form method="POST" action="{{ route('control-tanques.aforos') }}" id="aforos-form">
         @csrf
         <input type="hidden" name="desde" value="{{ $desde }}">
@@ -179,88 +251,94 @@
 
         <div class="card">
             <div class="table-responsive">
-                <table class="table table-bordered table-sm mb-0 control-tanques-table">
+                <table class="ct-tabla">
                     <thead>
-                        <tr style="background-color:#f6e7d4;">
-                            <th rowspan="3" class="text-center">FECHA DE<br>VENTA</th>
+                        <tr>
+                            <th class="ct-fecha"></th>
                             @foreach ($combustibles as $combustible => $nombre)
-                                <th colspan="6" class="text-center bloque-{{ $combustible }}">{{ $nombre }}</th>
+                                <th colspan="6" class="ct-bloque ct-{{ $combustible }} ct-inicio-bloque">{{ $nombre }}</th>
                             @endforeach
-                            <th colspan="2" class="text-center">SALDOS</th>
+                            <th colspan="2" class="ct-bloque ct-saldos ct-inicio-bloque">SALDOS</th>
                         </tr>
-                        <tr style="background-color:#f6e7d4;">
+                        <tr>
+                            <th rowspan="2" class="ct-fecha">FECHA DE<br>VENTA</th>
                             @foreach ($combustibles as $combustible => $nombre)
-                                <th colspan="3" class="text-center bloque-{{ $combustible }}">MOVIMIENTO DE GALONES</th>
-                                <th class="text-center bloque-{{ $combustible }}">AFORO</th>
-                                <th class="text-center bloque-{{ $combustible }}">SALDO FINAL</th>
-                                <th class="text-center bloque-{{ $combustible }}">FALTANTE</th>
+                                <th colspan="3" class="ct-{{ $combustible }} ct-inicio-bloque">MOVIMIENTO DE GALONES</th>
+                                <th class="ct-{{ $combustible }}-aforo ct-inicio-aforo">AFORO</th>
+                                <th class="ct-{{ $combustible }}-aforo">SALDO FINAL</th>
+                                <th class="ct-{{ $combustible }}">FALTANTE</th>
                             @endforeach
-                            <th colspan="2" class="text-center">VENTA (GALONES)</th>
+                            <th class="ct-saldos ct-inicio-bloque">VR. VENTA</th>
+                            <th class="ct-saldos">VR. VENTA</th>
                         </tr>
-                        <tr style="background-color:#f6e7d4;">
+                        <tr>
                             @foreach ($combustibles as $combustible => $nombre)
-                                <th class="text-center bloque-{{ $combustible }}">INGRESO</th>
-                                <th class="text-center bloque-{{ $combustible }}">VENTA</th>
-                                <th class="text-center bloque-{{ $combustible }}">SALDO</th>
-                                <th class="text-center bloque-{{ $combustible }}">S/VARA</th>
-                                <th class="text-center bloque-{{ $combustible }}">S/TABLA AFORO</th>
-                                <th class="text-center bloque-{{ $combustible }}">(SOBRANTE)</th>
+                                <th class="ct-{{ $combustible }} ct-inicio-bloque">INGRESO</th>
+                                <th class="ct-{{ $combustible }}">VENTA</th>
+                                <th class="ct-{{ $combustible }}">SALDO</th>
+                                <th class="ct-{{ $combustible }}-aforo ct-inicio-aforo">S/VARA</th>
+                                <th class="ct-{{ $combustible }}-aforo">S/TABLA AFORO</th>
+                                <th class="ct-{{ $combustible }} ct-sobrante-titulo">(SOBRANTE)</th>
                             @endforeach
-                            <th class="text-center">DIARIA</th>
-                            <th class="text-center">ACUMULADA</th>
+                            <th class="ct-saldos ct-inicio-bloque">DIARIA</th>
+                            <th class="ct-saldos">ACUMULADA</th>
                         </tr>
                     </thead>
 
                     <tbody>
-                        <tr class="fw-bold">
-                            <td></td>
+                        {{-- Saldo con el que arranca el periodo: va en la columna de fecha, no en VENTA. --}}
+                        <tr>
+                            <td class="ct-fecha ct-vienen">VIENEN</td>
                             @foreach ($combustibles as $combustible => $nombre)
-                                <td class="bloque-{{ $combustible }}"></td>
-                                <td class="text-end bloque-{{ $combustible }}">VIENEN</td>
-                                <td class="text-end bloque-{{ $combustible }}">{{ $galones($vienen[$combustible]) }}</td>
-                                <td class="bloque-{{ $combustible }}" colspan="3"></td>
+                                <td class="ct-{{ $combustible }} ct-inicio-bloque"></td>
+                                <td class="ct-{{ $combustible }}"></td>
+                                <td class="ct-{{ $combustible }} ct-saldo" data-vienen="{{ $combustible }}">{{ $galones($vienen[$combustible]) }}</td>
+                                <td class="ct-{{ $combustible }}-aforo ct-inicio-aforo"></td>
+                                <td class="ct-{{ $combustible }}-aforo"></td>
+                                <td class="ct-{{ $combustible }}"></td>
                             @endforeach
-                            <td></td>
-                            <td class="text-end">{{ $galones(0) }}</td>
+                            <td class="ct-saldos ct-inicio-bloque"></td>
+                            <td class="ct-saldos">0</td>
                         </tr>
 
                         @foreach ($filas as $fila)
                             <tr>
-                                <td class="text-center">{{ Carbon::parse($fila['fecha'])->format('d/m/Y') }}</td>
+                                <td class="ct-fecha">{{ Carbon::parse($fila['fecha'])->format('d/m/Y') }}</td>
                                 @foreach ($combustibles as $combustible => $nombre)
                                     @php($dato = $fila[$combustible])
-                                    <td class="text-end bloque-{{ $combustible }}">{{ $galonesOVacio($dato['ingreso']) }}</td>
-                                    <td class="text-end bloque-{{ $combustible }}">{{ $galonesOVacio($dato['venta']) }}</td>
-                                    <td class="text-end fw-semibold bloque-{{ $combustible }}">{{ $galones($dato['saldo']) }}</td>
-                                    <td class="bloque-{{ $combustible }}">
-                                        <input type="text" class="form-control form-control-sm" inputmode="decimal"
+                                    <td class="ct-{{ $combustible }} ct-inicio-bloque">{{ $galonesOVacio($dato['ingreso']) }}</td>
+                                    <td class="ct-{{ $combustible }}">{{ $galonesOVacio($dato['venta']) }}</td>
+                                    <td class="ct-{{ $combustible }} ct-saldo">{{ $galones($dato['saldo']) }}</td>
+                                    <td class="ct-{{ $combustible }}-aforo ct-inicio-aforo ct-celda-input">
+                                        <input type="text" class="ct-input" inputmode="decimal"
                                             name="aforos[{{ $fila['fecha'] }}][vara_{{ $combustible }}]"
-                                            value="{{ $aforoInput($dato['vara'], 2) }}" aria-label="Aforo vara {{ $nombre }} {{ $fila['fecha'] }}">
+                                            value="{{ $varaInput($dato['vara']) }}" aria-label="Aforo vara {{ $nombre }} {{ $fila['fecha'] }}">
                                     </td>
-                                    <td class="bloque-{{ $combustible }}">
-                                        <input type="text" class="form-control form-control-sm" inputmode="decimal"
+                                    <td class="ct-{{ $combustible }}-aforo ct-celda-input">
+                                        <input type="text" class="ct-input" inputmode="decimal"
                                             name="aforos[{{ $fila['fecha'] }}][tabla_{{ $combustible }}]"
                                             value="{{ $aforoInput($dato['tabla'], 3) }}" aria-label="Galones tabla de aforo {{ $nombre }} {{ $fila['fecha'] }}">
                                     </td>
-                                    <td class="text-end bloque-{{ $combustible }} {{ ($dato['faltante'] ?? 0) > 0 ? 'text-danger fw-bold' : '' }}">
-                                        {{ $faltante($dato['faltante']) }}
-                                    </td>
+                                    <td class="ct-{{ $combustible }} ct-faltante {{ ($dato['faltante'] ?? 0) < 0 ? 'ct-negativo' : '' }}">{{ $galones($dato['faltante']) }}</td>
                                 @endforeach
-                                <td class="text-end">{{ $galonesOVacio($fila['venta_diaria']) }}</td>
-                                <td class="text-end">{{ $galones($fila['venta_acumulada']) }}</td>
+                                <td class="ct-saldos ct-inicio-bloque">{{ $galones($fila['venta_diaria']) }}</td>
+                                <td class="ct-saldos">{{ $galones($fila['venta_acumulada']) }}</td>
                             </tr>
                         @endforeach
                     </tbody>
 
                     <tfoot>
-                        <tr class="table-secondary fw-bold">
-                            <td class="text-end">TOTALES</td>
+                        <tr>
+                            <td class="ct-fecha">TOTALES</td>
                             @foreach ($combustibles as $combustible => $nombre)
-                                <td class="text-end">{{ $galones($totales['ingreso_'.$combustible]) }}</td>
-                                <td class="text-end">{{ $galones($totales['venta_'.$combustible]) }}</td>
-                                <td colspan="4"></td>
+                                <td class="ct-inicio-bloque">{{ $galones($totales['ingreso_'.$combustible]) }}</td>
+                                <td>{{ $galones($totales['venta_'.$combustible]) }}</td>
+                                <td></td>
+                                <td class="ct-inicio-aforo"></td>
+                                <td></td>
+                                <td></td>
                             @endforeach
-                            <td class="text-end">{{ $galones($totales['venta_diaria']) }}</td>
+                            <td class="ct-inicio-bloque">{{ $galones($totales['venta_diaria']) }}</td>
                             <td></td>
                         </tr>
                     </tfoot>
@@ -269,6 +347,7 @@
         </div>
     </form>
 
-    <div class="small text-muted mt-2">ESTE INFORME SOLO CONTIENE GALONES. Faltante = saldo en libros − saldo final
-        según tabla de aforo; entre paréntesis es sobrante.</div>
+    <div class="small text-muted mt-2">ESTE INFORME SOLO CONTIENE GALONES. Ingresos desde compras y ventas según cortes de
+        IAPROPIADA de la planilla de turnos (suma de los turnos de cada fecha). FALTANTE = saldo en libros − saldo final
+        según tabla de aforo; en rojo (negativo) es sobrante.</div>
 @endsection

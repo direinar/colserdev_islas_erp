@@ -78,7 +78,13 @@ test('el control de tanques arma el saldo diario con compras, los cortes de IAPR
         ]);
 
     // Los aforos se muestran sin separador de miles para que al volver a guardar no cambien.
-    $response->assertSee('(54,00)')
+    // VIENEN va en la columna de fecha y su saldo en SALDO; nunca como valor de VENTA.
+    $response->assertSee('<td class="ct-fecha ct-vienen">VIENEN</td>', false)
+        ->assertSee('data-vienen="corriente">4.150<', false)
+        ->assertDontSee('ct-corriente">VIENEN', false)
+        ->assertDontSee('ct-acpm">VIENEN', false)
+        // Sobrante (negativo) en rojo, como en la plantilla.
+        ->assertSee('ct-negativo">-54<', false)
         ->assertSee('name="aforos[2026-09-26][tabla_corriente]"', false)
         ->assertSee('value="7800"', false)
         ->assertSee('value="92,26"', false);
