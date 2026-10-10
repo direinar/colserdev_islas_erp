@@ -7,6 +7,7 @@ use App\Http\Controllers\CarteraSaldoInicialController;
 use App\Http\Controllers\CompraController;
 use App\Http\Controllers\CompraLubricanteController;
 use App\Http\Controllers\ComprobanteContableCompraController;
+use App\Http\Controllers\ControlTanqueController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\FuelPriceController;
 use App\Http\Controllers\InventarioAcpmController;
@@ -53,6 +54,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/cartera/exportar', [CarteraController::class, 'exportar'])
             ->name('cartera.exportar');
 
+        Route::get('/control-tanques', [ControlTanqueController::class, 'index'])
+            ->name('control-tanques.index');
+
+        Route::post('/control-tanques/aforos', [ControlTanqueController::class, 'guardarAforos'])
+            ->name('control-tanques.aforos');
+
+        Route::get('/control-tanques/exportar', [ControlTanqueController::class, 'exportar'])
+            ->name('control-tanques.exportar');
+
         Route::get('/compras/create', [CompraController::class, 'create'])
             ->name('compras.create');
 
@@ -96,6 +106,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         Route::get('/inventarios/lubricantes/control', [InventarioLubricanteController::class, 'control'])
             ->name('inventarios-lubricantes.control');
+
+        Route::post('/control-tanques/saldo-inicial', [ControlTanqueController::class, 'guardarSaldoInicial'])
+            ->name('control-tanques.saldo-inicial');
 
         Route::get('/inventarios/acpm/create', [InventarioAcpmController::class, 'create'])
             ->name('inventarios-acpm.create');

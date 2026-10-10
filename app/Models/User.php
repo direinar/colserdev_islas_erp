@@ -17,7 +17,9 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
 class User extends Authenticatable
 {
     public const ROLE_ISLERO = 'islero';
+
     public const ROLE_JEFE_PATIOS = 'jefe_patios';
+
     public const ROLE_ADMINISTRADOR = 'administrador';
 
     /** @use HasFactory<UserFactory> */
@@ -96,6 +98,14 @@ class User extends Authenticatable
     }
 
     public function canAccessAnticipoBimestral(): bool
+    {
+        return $this->hasAnyRole([
+            self::ROLE_JEFE_PATIOS,
+            self::ROLE_ADMINISTRADOR,
+        ]);
+    }
+
+    public function canAccessControlTanques(): bool
     {
         return $this->hasAnyRole([
             self::ROLE_JEFE_PATIOS,

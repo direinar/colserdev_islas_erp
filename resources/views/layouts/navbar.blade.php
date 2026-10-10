@@ -209,18 +209,27 @@
 
 
                     {{-- INFORMES --}}
-                    @if ($user->canAccessAnticipoBimestral())
+                    @if ($user->canAccessAnticipoBimestral() || $user->canAccessControlTanques())
                         <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle {{ request()->is('anticipo*') ? 'active' : '' }}"
+                            <a class="nav-link dropdown-toggle {{ request()->is('anticipo*') || request()->is('control-tanques*') ? 'active' : '' }}"
                                 href="#" data-bs-toggle="dropdown">
                                 Informes
                             </a>
                             <ul class="dropdown-menu">
-                                <li>
-                                    <a class="dropdown-item" href="{{ route('anticipo-bimestral.create') }}">
-                                        Anticipo Bimestral
-                                    </a>
-                                </li>
+                                @if ($user->canAccessAnticipoBimestral())
+                                    <li>
+                                        <a class="dropdown-item" href="{{ route('anticipo-bimestral.create') }}">
+                                            Anticipo Bimestral
+                                        </a>
+                                    </li>
+                                @endif
+                                @if ($user->canAccessControlTanques())
+                                    <li>
+                                        <a class="dropdown-item" href="{{ route('control-tanques.index') }}">
+                                            Control de Tanques
+                                        </a>
+                                    </li>
+                                @endif
                             </ul>
                         </li>
                     @endif
