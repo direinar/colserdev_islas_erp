@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 
 class Turno extends Model
@@ -62,8 +63,8 @@ class Turno extends Model
     }
 
     /**
-     * Una planilla revisada no la modifica nadie. El islero solo modifica las planillas
-     * que él creó; el jefe de patios y el administrador, cualquiera.
+     * Una planilla revisada no la modifica nadie. El islero y el jefe de patios solo
+     * modifican las planillas que ellos crearon; el administrador, cualquiera.
      */
     public function editablePor(User $user): bool
     {
@@ -71,7 +72,40 @@ class Turno extends Model
             return false;
         }
 
-        return ! $user->isIslero() || ! $this->exists || $this->user_id === $user->id;
+        return $user->isAdministrador() || ! $this->exists || $this->user_id === $user->id;
+    }
+
+    /**
+     * El islero solo ve sus planillas; el jefe de patios, las suyas y las de los isleros;
+     * el administrador, todas.
+     */
+    public function visiblePara(User $user): bool
+    {
+        if ($user->isAdministrador() || ! $this->exists || $this->user_id === $user->id) {
+            return true;
+        }
+
+        return $user->isJefePatios() && (bool) $this->user?->isIslero();
+    }
+
+    /**
+     * Misma regla que visiblePara(), para listados.
+     *
+     * @param  Builder<Turno>  $query
+     */
+    public function scopeVisiblePara(Builder $query, User $user): void
+    {
+        if ($user->isAdministrador()) {
+            return;
+        }
+
+        $query->where(function (Builder $visibles) use ($user) {
+            $visibles->where('user_id', $user->id);
+
+            if ($user->isJefePatios()) {
+                $visibles->orWhereHas('user', fn (Builder $creador) => $creador->where('role', User::ROLE_ISLERO));
+            }
+        });
     }
 
     // Relaciones — todas correctas, solo agregar las que faltaban

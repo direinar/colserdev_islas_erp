@@ -46,6 +46,72 @@ test('nadie se elimina a sí mismo ni deja el sistema sin administradores', func
     expect(User::query()->where('role', User::ROLE_ADMINISTRADOR)->count())->toBe(1);
 });
 
+test('el jefe de patios solo entra a la planilla, cartera - estado de cuenta y control de tanques', function () {
+    $jefe = User::factory()->create(['role' => User::ROLE_JEFE_PATIOS]);
+
+    foreach (['turnos.create', 'cartera.index', 'control-tanques.index'] as $ruta) {
+        $this->actingAs($jefe)->get(route($ruta))->assertOk();
+    }
+
+    foreach (['compras.create', 'compras-lubricantes.create', 'comprobante-contable-compras.create', 'anticipo-bimestral.create', 'informes.anticipo-bimestral.index', 'informes.recaudos-cartera.index', 'informes.saldos.index', 'turnos.pendientes', 'customers.index', 'users.index'] as $ruta) {
+        $this->actingAs($jefe)->get(route($ruta))->assertForbidden();
+    }
+});
+
+test('el islero solo entra a la planilla de turnos', function () {
+    $islero = User::factory()->create(['role' => User::ROLE_ISLERO]);
+
+    $this->actingAs($islero)->get(route('turnos.create'))->assertOk();
+
+    foreach (['cartera.index', 'control-tanques.index', 'compras.create', 'turnos.pendientes', 'users.index'] as $ruta) {
+        $this->actingAs($islero)->get(route($ruta))->assertForbidden();
+    }
+});
+
+test('el gerente y el super administrador tienen el acceso del administrador', function (string $role) {
+    $usuario = User::factory()->create(['role' => $role]);
+
+    foreach (['turnos.pendientes', 'compras.create', 'informes.cierre.index', 'customers.index', 'users.index'] as $ruta) {
+        $this->actingAs($usuario)->get(route($ruta))->assertOk();
+    }
+})->with([User::ROLE_GERENTE, User::ROLE_SUPERADMIN]);
+
+test('solo el gerente o el super administrador gestionan esas cuentas y asignan esos roles', function () {
+    $gerente = User::factory()->create(['role' => User::ROLE_GERENTE]);
+    $superadmin = User::factory()->create(['role' => User::ROLE_SUPERADMIN]);
+    $admin = User::factory()->create(['role' => User::ROLE_ADMINISTRADOR]);
+    $islero = User::factory()->create(['role' => User::ROLE_ISLERO]);
+
+    $this->actingAs($admin)->get(route('users.edit', $gerente))->assertForbidden();
+    $this->actingAs($admin)->put(route('users.update', $gerente), [
+        'name' => $gerente->name, 'email' => $gerente->email, 'role' => User::ROLE_ISLERO,
+    ])->assertForbidden();
+    $this->actingAs($admin)->delete(route('users.destroy', $superadmin))->assertForbidden();
+    $this->actingAs($admin)->put(route('users.update', $islero), [
+        'name' => $islero->name, 'email' => $islero->email, 'role' => User::ROLE_GERENTE,
+    ])->assertSessionHasErrors('role');
+
+    expect($gerente->fresh()->role)->toBe(User::ROLE_GERENTE)
+        ->and($islero->fresh()->role)->toBe(User::ROLE_ISLERO);
+
+    $this->actingAs($gerente)->put(route('users.update', $admin), [
+        'name' => $admin->name, 'email' => $admin->email, 'role' => User::ROLE_SUPERADMIN,
+    ])->assertSessionHasNoErrors();
+
+    expect($admin->fresh()->role)->toBe(User::ROLE_SUPERADMIN);
+});
+
+test('no se le quita el rol al único gerente o super administrador', function () {
+    $gerente = User::factory()->create(['role' => User::ROLE_GERENTE]);
+    User::factory()->create(['role' => User::ROLE_ADMINISTRADOR]);
+
+    $this->actingAs($gerente)->put(route('users.update', $gerente), [
+        'name' => $gerente->name, 'email' => $gerente->email, 'role' => User::ROLE_ADMINISTRADOR,
+    ])->assertSessionHasErrors('role');
+
+    expect($gerente->fresh()->role)->toBe(User::ROLE_GERENTE);
+});
+
 test('las rutas por rol comparan el rol igual que el menú, sin importar mayúsculas', function () {
     $admin = User::factory()->create(['role' => 'Administrador']);
 

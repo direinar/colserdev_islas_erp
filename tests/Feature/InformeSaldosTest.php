@@ -35,10 +35,10 @@ function carteraConSaldos(): void
 }
 
 test('el informe de saldos de cartera da el saldo de cada cliente a la fecha de corte', function () {
-    $jefe = User::factory()->create(['role' => User::ROLE_JEFE_PATIOS]);
+    $admin = User::factory()->create(['role' => User::ROLE_ADMINISTRADOR]);
     carteraConSaldos();
 
-    $response = $this->actingAs($jefe)
+    $response = $this->actingAs($admin)
         ->get(route('informes.saldos.index', ['corte' => '2026-09-30']))
         ->assertOk()
         ->assertSee('INFORME DE SALDOS DE CARTERA')
@@ -54,7 +54,7 @@ test('el informe de saldos de cartera da el saldo de cada cliente a la fecha de 
     ])
         ->and($datos)->toMatchArray(['por_cobrar' => 1300000.0, 'anticipos' => -50000.0, 'neto' => 1250000.0, 'con_saldo' => 3]);
 
-    $todos = $this->actingAs($jefe)
+    $todos = $this->actingAs($admin)
         ->get(route('informes.saldos.index', ['corte' => '2026-09-30', 'todos' => 1]))
         ->viewData('datos');
 
@@ -62,7 +62,7 @@ test('el informe de saldos de cartera da el saldo de cada cliente a la fecha de 
 });
 
 test('el informe de saldos de canastilla da las existencias de cada referencia a la fecha de corte', function () {
-    $jefe = User::factory()->create(['role' => User::ROLE_JEFE_PATIOS]);
+    $admin = User::factory()->create(['role' => User::ROLE_ADMINISTRADOR]);
     Lubricant::create(['reference' => 'MOBIL 20W50', 'sale_price' => 42000, 'iva' => 0, 'total' => 42000, 'cost_price' => 30000, 'active' => true]);
     Lubricant::create(['reference' => 'UREA', 'sale_price' => 1700, 'iva' => 0, 'total' => 1700, 'cost_price' => 1500, 'active' => true]);
     Lubricant::create(['reference' => 'ADITIVO VIEJO', 'sale_price' => 5000, 'iva' => 950, 'total' => 5950, 'cost_price' => 3000, 'active' => false]);
@@ -75,7 +75,7 @@ test('el informe de saldos de canastilla da las existencias de cada referencia a
     $turno->lubricantes()->create(['cantidad' => 3, 'producto' => 'MOBIL 20W50', 'valor_sin_iva' => 126000, 'iva' => 0, 'total' => 126000]);
     $turno->lubricantes()->create(['cantidad' => 5, 'producto' => 'UREA', 'valor_sin_iva' => 8500, 'iva' => 0, 'total' => 8500]);
 
-    $datos = $this->actingAs($jefe)
+    $datos = $this->actingAs($admin)
         ->get(route('informes.saldos.index', ['seccion' => 'canastilla', 'corte' => '2026-09-30']))
         ->assertOk()
         ->assertSee('INFORME DE SALDOS DE CANASTILLA')
@@ -92,12 +92,12 @@ test('el informe de saldos de canastilla da las existencias de cada referencia a
 });
 
 test('el informe de precios de canastilla lista solo las referencias activas', function () {
-    $jefe = User::factory()->create(['role' => User::ROLE_JEFE_PATIOS]);
+    $admin = User::factory()->create(['role' => User::ROLE_ADMINISTRADOR]);
     Lubricant::create(['reference' => 'UREA', 'sale_price' => 1700, 'iva' => 0, 'total' => 1700, 'cost_price' => 1500, 'active' => true]);
     Lubricant::create(['reference' => '1 - ADITIVO GASOLINA AUTOS', 'sale_price' => 13445, 'iva' => 2555, 'total' => 16000, 'cost_price' => 10000, 'active' => true]);
     Lubricant::create(['reference' => 'ADITIVO VIEJO', 'sale_price' => 5000, 'iva' => 950, 'total' => 5950, 'cost_price' => 3000, 'active' => false]);
 
-    $datos = $this->actingAs($jefe)
+    $datos = $this->actingAs($admin)
         ->get(route('informes.saldos.index', ['seccion' => 'precios']))
         ->assertOk()
         ->assertSee('INFORME DE PRECIOS DE VENTA DE CANASTILLA')

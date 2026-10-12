@@ -31,9 +31,11 @@ use Illuminate\Support\Facades\Route;
 Route::redirect('/', '/dashboard')->name('home');
 
 Route::middleware(['auth', 'verified'])->group(function () {
+    $administracion = 'role:'.implode(',', User::rolesAdministrativos());
+
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
-    Route::middleware('role:'.implode(',', [User::ROLE_ISLERO, User::ROLE_JEFE_PATIOS, User::ROLE_ADMINISTRADOR]))->group(function () {
+    Route::middleware('role:'.implode(',', User::roles()))->group(function () {
         Route::get('/turnos/create', [TurnoController::class, 'create'])
             ->name('turnos.create');
 
@@ -41,7 +43,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             ->name('turnos.store');
     });
 
-    Route::middleware('role:'.User::ROLE_ADMINISTRADOR)->group(function () {
+    Route::middleware($administracion)->group(function () {
         Route::get('/turnos/pendientes', [TurnoController::class, 'pendientes'])
             ->name('turnos.pendientes');
 
@@ -52,7 +54,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
             ->name('turnos.reabrir');
     });
 
-    Route::middleware('role:'.implode(',', [User::ROLE_JEFE_PATIOS, User::ROLE_ADMINISTRADOR]))->group(function () {
+    // El jefe de patios, además de la planilla de turnos, solo accede a Cartera - Estado de cuenta y a Control de tanques.
+    Route::middleware('role:'.implode(',', [User::ROLE_JEFE_PATIOS, ...User::rolesAdministrativos()]))->group(function () {
         Route::get('/cartera', [CarteraController::class, 'index'])
             ->name('cartera.index');
 
@@ -70,7 +73,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         Route::get('/control-tanques/exportar', [ControlTanqueController::class, 'exportar'])
             ->name('control-tanques.exportar');
+    });
 
+    Route::middleware($administracion)->group(function () {
         Route::get('/compras/create', [CompraController::class, 'create'])
             ->name('compras.create');
 
@@ -124,9 +129,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         Route::post('/comprobante-contable-compras', [ComprobanteContableCompraController::class, 'store'])
             ->name('comprobante-contable-compras.store');
-    });
 
-    Route::middleware('role:'.User::ROLE_ADMINISTRADOR)->group(function () {
         Route::get('/inventarios/lubricantes/create', [InventarioLubricanteController::class, 'create'])
             ->name('inventarios-lubricantes.create');
 

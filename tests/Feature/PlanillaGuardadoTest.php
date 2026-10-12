@@ -87,25 +87,74 @@ test('si el guardado falla, la planilla vuelve con lo que se había digitado', f
         ->assertSee('Turno de la tarde');
 });
 
-test('un islero no modifica la planilla que registró otro; el jefe de patios sí y el vendedor se conserva', function () {
+test('el islero y el jefe de patios solo modifican sus planillas; el administrador cualquiera y el vendedor se conserva', function () {
     $ana = User::factory()->create(['role' => User::ROLE_ISLERO, 'name' => 'Ana']);
     $beto = User::factory()->create(['role' => User::ROLE_ISLERO, 'name' => 'Beto']);
     $jefe = User::factory()->create(['role' => User::ROLE_JEFE_PATIOS]);
+    $gerente = User::factory()->create(['role' => User::ROLE_GERENTE]);
 
     guardarPlanilla($ana, 3, ['observaciones' => 'original']);
 
     guardarPlanilla($beto, 3, ['observaciones' => 'cambiado por Beto'])->assertForbidden();
-    $this->actingAs($beto)->get(route('turnos.create', ['turno_busqueda' => 3]))
-        ->assertSee('Esta planilla la registró otro usuario');
+    guardarPlanilla($jefe, 3, ['observaciones' => 'cambiado por el jefe'])->assertForbidden();
+
+    // El jefe de patios ve la planilla del islero, pero sin poder guardarla.
+    $this->actingAs($jefe)->get(route('turnos.create', ['turno_busqueda' => 3]))
+        ->assertOk()
+        ->assertDontSee('<button type="submit" form="turno-form"', false);
 
     guardarPlanilla($ana, 3, ['observaciones' => 'corregido por Ana'])->assertRedirect();
-    guardarPlanilla($jefe, 3, ['observaciones' => 'corregido por el jefe'])->assertRedirect();
+    guardarPlanilla($gerente, 3, ['observaciones' => 'corregido por el gerente'])->assertRedirect();
 
     $turno = Turno::query()->sole();
 
-    expect($turno->observaciones)->toBe('corregido por el jefe')
+    expect($turno->observaciones)->toBe('corregido por el gerente')
         ->and($turno->nombre_vendedor)->toBe('Ana')
         ->and($turno->user_id)->toBe($ana->id);
+});
+
+test('el islero solo ve sus planillas y el jefe de patios las suyas y las de los isleros', function () {
+    $ana = User::factory()->create(['role' => User::ROLE_ISLERO]);
+    $beto = User::factory()->create(['role' => User::ROLE_ISLERO]);
+    $jefe = User::factory()->create(['role' => User::ROLE_JEFE_PATIOS]);
+    $otroJefe = User::factory()->create(['role' => User::ROLE_JEFE_PATIOS]);
+    $admin = User::factory()->create(['role' => User::ROLE_ADMINISTRADOR]);
+
+    guardarPlanilla($ana, 1);
+    guardarPlanilla($jefe, 2);
+    guardarPlanilla($admin, 3);
+
+    $verPlanilla = fn (User $usuario, int $numero) => $this->actingAs($usuario)->get(route('turnos.create', ['turno_busqueda' => $numero]));
+    $planillasDelDia = fn (User $usuario): array => $this->actingAs($usuario)
+        ->get(route('turnos.create', ['buscar_fecha' => '2026-09-25']))
+        ->viewData('turnosDeFecha')->pluck('numero_turno')->all();
+
+    $verPlanilla($ana, 1)->assertOk();
+    $verPlanilla($beto, 1)->assertForbidden();
+    $verPlanilla($ana, 2)->assertForbidden();
+    $verPlanilla($jefe, 1)->assertOk();
+    $verPlanilla($otroJefe, 2)->assertForbidden();
+    $verPlanilla($jefe, 3)->assertForbidden();
+    $verPlanilla($admin, 2)->assertOk();
+
+    expect($planillasDelDia($ana))->toBe([1])
+        ->and($planillasDelDia($beto))->toBe([])
+        ->and($planillasDelDia($jefe))->toBe([1, 2])
+        ->and($planillasDelDia($admin))->toBe([1, 2, 3]);
+});
+
+test('después de revisada, el islero sigue viendo su planilla pero ya no la modifica', function () {
+    $ana = User::factory()->create(['role' => User::ROLE_ISLERO]);
+
+    guardarPlanilla($ana, 1);
+    Turno::query()->sole()->update(['revisado' => true, 'revisado_por' => 'Admin']);
+
+    $this->actingAs($ana)->get(route('turnos.create', ['turno_busqueda' => 1]))
+        ->assertOk()
+        ->assertSee('PLANILLA REVISADA.')
+        ->assertDontSee('<button type="submit" form="turno-form"', false);
+
+    guardarPlanilla($ana, 1, ['observaciones' => 'cambio'])->assertForbidden();
 });
 
 test('solo el administrador cambia la fecha de una planilla ya guardada', function () {

@@ -23,13 +23,17 @@ test('guests are redirected to the login page', function () {
     $response->assertRedirect(route('login'));
 });
 
-test('authenticated users can visit the dashboard', function () {
-    $user = User::factory()->create();
-    $this->actingAs($user);
+test('el gerente, el super administrador y el administrador ven el dashboard; el jefe de patios y el islero van a la planilla', function (string $role, bool $veDashboard) {
+    $response = $this->actingAs(User::factory()->create(['role' => $role]))->get(route('dashboard'));
 
-    $response = $this->get(route('dashboard'));
-    $response->assertOk();
-});
+    $veDashboard ? $response->assertOk() : $response->assertRedirect(route('turnos.create'));
+})->with([
+    [User::ROLE_SUPERADMIN, true],
+    [User::ROLE_GERENTE, true],
+    [User::ROLE_ADMINISTRADOR, true],
+    [User::ROLE_JEFE_PATIOS, false],
+    [User::ROLE_ISLERO, false],
+]);
 
 test('el dashboard resume las planillas de turnos del rango', function () {
     $admin = User::factory()->create(['role' => User::ROLE_ADMINISTRADOR]);
@@ -93,13 +97,10 @@ test('el islero solo ve en el dashboard sus propias planillas', function () {
     turnoDashboard(['fecha' => '2026-10-01', 'numero_turno' => 1, 'user_id' => $islero->id, 'tirillas_valor_corriente' => 1000]);
     turnoDashboard(['fecha' => '2026-10-01', 'numero_turno' => 2, 'user_id' => $otro->id, 'tirillas_valor_corriente' => 5000]);
 
-    $html = $this->actingAs($islero)
-        ->get(route('dashboard', ['desde' => '2026-10-01', 'hasta' => '2026-10-01']))
-        ->assertOk()
-        ->assertViewHas('kpis', fn (array $kpis): bool => $kpis['turnos'] === 1 && $kpis['ventas'] === 1000.0)
-        ->getContent();
+    $kpis = app(DashboardService::class)->resumen('2026-10-01', '2026-10-01', $islero)['kpis'];
 
-    expect($html)->toContain('ventasChart')->not->toContain('#2</a>');
+    expect($kpis['turnos'])->toBe(1)
+        ->and($kpis['ventas'])->toBe(1000.0);
 });
 
 test('sin planillas en el rango el dashboard lo indica en lugar de mostrar gráficas vacías', function () {

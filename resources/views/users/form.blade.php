@@ -15,9 +15,9 @@
         <label for="campo-role" class="form-label">Rol</label>
         <select id="campo-role" name="role" class="form-select" required>
             <option value="">Selecciona un rol</option>
-            @foreach (App\Models\User::roles() as $role)
+            @foreach (auth()->user()->rolesAsignables() as $role)
                 <option value="{{ $role }}" @selected(old('role', $user->role ?? '') === $role)>
-                    {{ ucfirst(str_replace('_', ' ', $role)) }}</option>
+                    {{ App\Models\User::etiquetaRol($role) }}</option>
             @endforeach
         </select>
     </div>

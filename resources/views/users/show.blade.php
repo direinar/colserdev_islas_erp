@@ -11,7 +11,7 @@
             <div class="card-body">
                 <p><strong>Nombre:</strong> {{ $user->name }}</p>
                 <p><strong>Email:</strong> {{ $user->email }}</p>
-                <p><strong>Rol:</strong> {{ ucfirst(str_replace('_', ' ', $user->role)) }}</p>
+                <p><strong>Rol:</strong> {{ App\Models\User::etiquetaRol($user->role) }}</p>
                 <p><strong>Registrado:</strong> {{ $user->created_at->format('d/m/Y H:i') }}</p>
             </div>
         </div>

@@ -35,19 +35,17 @@ function comprasAnticipo2026(): void
 }
 
 test('el primer bimestre liquida enero con el margen anterior y febrero con el del año', function () {
-    $jefe = User::factory()->create(['role' => User::ROLE_JEFE_PATIOS]);
+    $admin = User::factory()->create(['role' => User::ROLE_ADMINISTRADOR]);
     comprasAnticipo2026();
     LiquidacionAnticipoBimestral::create(['anio' => 2026, 'bimestre' => 1, 'otros_ingresos' => 1000000, 'descuentos_ventas' => 500000]);
 
-    $response = $this->actingAs($jefe)
+    $response = $this->actingAs($admin)
         ->get(route('informes.anticipo-bimestral.index', ['anio' => 2026, 'bimestre' => 1]))
         ->assertOk()
         ->assertSee('Informe anticipo bimestral')
         ->assertSee('LIQUIDACIÓN PRIMER BIMESTRE')
         ->assertSee('48.377.983')
-        ->assertSee('35.057.285')
-        // El jefe de patios consulta, pero no digita otros ingresos ni descuentos.
-        ->assertDontSee('name="otros_ingresos"', false);
+        ->assertSee('35.057.285');
 
     [$enero, $febrero] = $response->viewData('meses');
 

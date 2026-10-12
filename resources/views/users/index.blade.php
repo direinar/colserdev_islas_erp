@@ -29,7 +29,7 @@
                     <tr>
                         <td>{{ $user->name }}</td>
                         <td>{{ $user->email }}</td>
-                        <td>{{ ucfirst(str_replace('_', ' ', $user->role)) }}</td>
+                        <td>{{ App\Models\User::etiquetaRol($user->role) }}</td>
                         <td>
                             <x-action-buttons :showRoute="'users.show'" :editRoute="'users.edit'" :deleteRoute="'users.destroy'" :id="$user" />
                         </td>

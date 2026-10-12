@@ -16,8 +16,8 @@ class AdminUserSeeder extends Seeder
     public function run(): void
     {
         $administradores = [
-            ['email' => 'diego.reina9@hotmail.com', 'name' => 'Diego Reina'],
-            ['email' => 'carlosbeltranramos@gmail.com', 'name' => 'Carlos Beltrán'],
+            ['email' => 'diego.reina9@hotmail.com', 'name' => 'Diego Reina', 'role' => User::ROLE_SUPERADMIN],
+            ['email' => 'carlosbeltranramos@gmail.com', 'name' => 'Carlos Beltrán', 'role' => User::ROLE_GERENTE],
         ];
 
         foreach ($administradores as $administrador) {
@@ -29,7 +29,6 @@ class AdminUserSeeder extends Seeder
 
             User::query()->create($administrador + [
                 'password' => $clave,
-                'role' => User::ROLE_ADMINISTRADOR,
                 'email_verified_at' => now(),
             ]);
 

@@ -5,7 +5,7 @@ use App\Models\User;
 test('las paginas del erp y el login enlazan el manifiesto de la pwa', function () {
     $this->get(route('login'))->assertOk()->assertSee('<link rel="manifest"', false);
 
-    $this->actingAs(User::factory()->create())->get(route('dashboard'))
+    $this->actingAs(User::factory()->create(['role' => User::ROLE_ADMINISTRADOR]))->get(route('dashboard'))
         ->assertOk()
         ->assertSee('<link rel="manifest"', false)
         ->assertSee('<meta name="theme-color" content="#d40000">', false)

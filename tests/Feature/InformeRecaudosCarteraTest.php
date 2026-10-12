@@ -38,16 +38,14 @@ function recaudosDelPeriodo(): array
 }
 
 test('el informe lista cada recaudo del periodo con su banco y concepto', function () {
-    $jefe = User::factory()->create(['role' => User::ROLE_JEFE_PATIOS]);
+    $admin = User::factory()->create(['role' => User::ROLE_ADMINISTRADOR]);
     recaudosDelPeriodo();
 
-    $response = $this->actingAs($jefe)
+    $response = $this->actingAs($admin)
         ->get(route('informes.recaudos-cartera.index', ['desde' => '2026-09-01', 'hasta' => '2026-09-30']))
         ->assertOk()
         ->assertSee('Informe de recaudos de cartera')
-        ->assertSee('COMPROBANTE CONTABLE - RECAUDOS DE CARTERA')
-        // El jefe de patios consulta, pero no cambia las cuentas.
-        ->assertDontSee('Guardar cuentas');
+        ->assertSee('COMPROBANTE CONTABLE - RECAUDOS DE CARTERA');
 
     $recaudos = array_map(fn (array $r): array => array_values($r), $response->viewData('recaudos'));
 

@@ -63,6 +63,7 @@ class TurnoController extends Controller
         $buscarFecha = $request->query('buscar_fecha');
         $turnosDeFecha = $buscarFecha
             ? Turno::query()
+                ->visiblePara($request->user())
                 ->whereDate('fecha', $buscarFecha)
                 ->orderBy('numero_turno')
                 ->get(['id', 'numero_turno', 'fecha', 'nombre_vendedor', 'revisado'])
@@ -75,6 +76,10 @@ class TurnoController extends Controller
                 ->whereDate('fecha', $searchFecha)
                 ->where('numero_turno', $searchNumero)
                 ->first();
+        }
+
+        if ($turno && ! $turno->visiblePara($request->user())) {
+            abort(403, 'Esta planilla la registró otro usuario y no tiene permiso para verla.');
         }
 
         if (! $turno && ! $searchNumero) {
@@ -179,7 +184,7 @@ class TurnoController extends Controller
         }
 
         if (! $existente->editablePor($request->user())) {
-            abort(403, 'Esta planilla la registró otro usuario; solo él, el jefe de patios o el administrador la pueden modificar.');
+            abort(403, 'Esta planilla la registró otro usuario; solo él o el administrador la pueden modificar.');
         }
 
         // Cambiar la fecha de una planilla ya guardada la movería de día en todos los informes.

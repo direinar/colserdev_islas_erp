@@ -6,7 +6,7 @@
         // Una planilla revisada queda bloqueada para todos; el administrador puede
         // devolverla a PENDIENTE DE REVISIÓN para corregirla.
         $turnoRevisado = isset($turno) && $turno && $turno->revisado;
-        // El islero solo modifica las planillas que él registró.
+        // El islero y el jefe de patios solo modifican las planillas que ellos registraron.
         $turnoDeOtro = isset($turno) && $turno && ! $turnoRevisado && ! $turno->editablePor(auth()->user());
         $puedeGuardar = ! $turnoRevisado && ! $turnoDeOtro;
     @endphp

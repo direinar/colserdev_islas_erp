@@ -91,15 +91,15 @@ test('el control de tanques arma el saldo diario con compras, los cortes de IAPR
 });
 
 test('el INGRESO se arrastra automáticamente del módulo de compras según su fecha', function () {
-    $jefe = User::factory()->create(['role' => User::ROLE_JEFE_PATIOS]);
+    $admin = User::factory()->create(['role' => User::ROLE_ADMINISTRADOR]);
     $ingresos = fn (): array => collect(
-        $this->actingAs($jefe)
+        $this->actingAs($admin)
             ->get(route('control-tanques.index', ['desde' => '2026-09-25', 'hasta' => '2026-09-26']))
             ->viewData('filas')
     )->mapWithKeys(fn (array $fila): array => [$fila['fecha'] => [$fila['corriente']['ingreso'], $fila['acpm']['ingreso']]])->all();
 
     // Dos facturas del mismo día se suman en la fila de esa fecha.
-    $this->actingAs($jefe)->post(route('compras.store'), ['compras' => [
+    $this->actingAs($admin)->post(route('compras.store'), ['compras' => [
         ['fecha' => '2026-09-25', 'factura' => '1006', 'vr_total_fra' => '40.000.000', 'gasolina' => '3.000', 'acpm' => '1.000'],
         ['fecha' => '2026-09-25', 'factura' => '1007', 'vr_total_fra' => '10.000.000', 'gasolina' => '800', 'acpm' => '200'],
     ]])->assertRedirect();
@@ -108,13 +108,13 @@ test('el INGRESO se arrastra automáticamente del módulo de compras según su f
 
     // Al corregir la fecha o los galones de la compra, el informe se actualiza solo.
     $compra = Compra::query()->where('factura', '1007')->sole();
-    $this->actingAs($jefe)->put(route('compras.update', $compra), [
+    $this->actingAs($admin)->put(route('compras.update', $compra), [
         'fecha' => '2026-09-26', 'factura' => '1007', 'vr_total_fra' => '10.000.000', 'gasolina' => '900', 'acpm' => '100',
     ])->assertRedirect();
 
     expect($ingresos())->toBe(['2026-09-25' => [3000.0, 1000.0], '2026-09-26' => [900.0, 100.0]]);
 
-    $this->actingAs($jefe)->delete(route('compras.destroy', $compra))->assertRedirect();
+    $this->actingAs($admin)->delete(route('compras.destroy', $compra))->assertRedirect();
 
     expect($ingresos())->toBe(['2026-09-25' => [3000.0, 1000.0], '2026-09-26' => [0.0, 0.0]]);
 });

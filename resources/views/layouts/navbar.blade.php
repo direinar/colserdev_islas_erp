@@ -46,12 +46,14 @@
                     @php($user = auth()->user())
 
                     {{-- Dashboard --}}
-                    <li class="nav-item">
-                        <a class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}"
-                            href="{{ route('dashboard') }}">
-                            Dashboard
-                        </a>
-                    </li>
+                    @if ($user->canAccessDashboard())
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}"
+                                href="{{ route('dashboard') }}">
+                                Dashboard
+                            </a>
+                        </li>
+                    @endif
 
                     {{-- OPERACIÓN --}}
                     @if ($user->canAccessTurnos())
@@ -247,7 +249,7 @@
                                     </li>
                                 @endif
 
-                                @if ($user->canAccessCartera())
+                                @if ($user->isAdministrador())
                                     <li><hr class="dropdown-divider"></li>
                                     <li><h6 class="dropdown-header">Cartera y saldos</h6></li>
                                     <li>
@@ -277,16 +279,14 @@
                                     </li>
                                 @endif
 
-                                <li><hr class="dropdown-divider"></li>
-                                <li><h6 class="dropdown-header">Fiscales y de gestión</h6></li>
-                                @if ($user->canAccessAnticipoBimestral())
+                                @if ($user->isAdministrador())
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><h6 class="dropdown-header">Fiscales y de gestión</h6></li>
                                     <li>
                                         <a class="dropdown-item" href="{{ route('informes.anticipo-bimestral.index') }}">
                                             Anticipo bimestral
                                         </a>
                                     </li>
-                                @endif
-                                @if ($user->isAdministrador())
                                     <li>
                                         <a class="dropdown-item" href="{{ route('informes.cierre.index') }}">
                                             Informe de cierre

@@ -155,7 +155,7 @@ test('save button is hidden when turno is revisado', function () {
         'revisado_por' => 'Otro Admin',
     ]);
 
-    $vendedor = User::factory()->create(['role' => User::ROLE_ISLERO]);
+    $vendedor = User::factory()->create(['role' => User::ROLE_ADMINISTRADOR]);
 
     $response = $this->actingAs($vendedor)->get(route('turnos.create', [
         'fecha' => $today,
@@ -195,7 +195,7 @@ test('lubricantes table shows previously saved rows when consulting an existing 
         'total' => 297500,
     ]);
 
-    $user = User::factory()->create();
+    $user = User::factory()->create(['role' => User::ROLE_ADMINISTRADOR]);
 
     $response = $this->actingAs($user)->get(route('turnos.create', [
         'fecha' => $today,
@@ -344,7 +344,7 @@ test('search still finds a turno by typing just the numero_turno', function () {
 
     $turno = Turno::create(['fecha' => $today, 'numero_turno' => 4, 'nombre_vendedor' => 'Dana']);
 
-    $user = User::factory()->create();
+    $user = User::factory()->create(['role' => User::ROLE_ADMINISTRADOR]);
 
     $response = $this->actingAs($user)->get(route('turnos.create', ['turno_busqueda' => 4]));
 
