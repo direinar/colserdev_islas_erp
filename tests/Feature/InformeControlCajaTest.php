@@ -28,7 +28,7 @@ function turnosControlCaja(): void
     ]);
 
     $turno = Turno::create([
-        'fecha' => '2026-09-25', 'numero_turno' => 10,
+        'fecha' => '2026-09-25', 'numero_turno' => 10, 'nombre_vendedor' => 'ANA PEREZ',
         'tirillas_galones_corriente' => 60, 'tirillas_valor_corriente' => 984000,
         'tirillas_galones_acpm' => 60, 'tirillas_valor_acpm' => 642000,
         'total_venta_lecturas' => 1600000, 'traslado_faltante' => 65000, 'traslado_sobrante' => 0,
@@ -47,7 +47,8 @@ function turnosControlCaja(): void
     $turno->recaudos()->create(['cliente_id' => $arkatec->id, 'valor' => 20000, 'total' => 70000]);
 
     $conSobrante = Turno::create([
-        'fecha' => '2026-09-26', 'numero_turno' => 11,
+        // Sin nombre de vendedor guardado: se toma el del usuario que la registró.
+        'fecha' => '2026-09-26', 'numero_turno' => 11, 'user_id' => User::factory()->create(['name' => 'BETO GOMEZ'])->id,
         'tirillas_galones_corriente' => 10, 'tirillas_valor_corriente' => 100000,
         'total_venta_lecturas' => 100000, 'traslado_faltante' => 0, 'traslado_sobrante' => -10000,
     ]);
@@ -65,6 +66,7 @@ test('el control caja arma una fila por planilla con ventas, formas de pago y to
         ->assertOk()
         ->assertSee('Informe control caja')
         // El comprobante contable de ventas está en su propio módulo; aquí solo se enlaza.
+        ->assertSeeInOrder(['>SOBRANTES<', '>ISLERO<', '>RECAUDOS Y<', 'ANA PEREZ'], false)
         ->assertDontSee('COMPROBANTE CONTABLE DE VENTAS')
         ->assertSee(route('informes.comprobante-ventas.index', ['desde' => '2026-09-25', 'hasta' => '2026-09-30']));
 
@@ -75,7 +77,7 @@ test('el control caja arma una fila por planilla con ventas, formas de pago y to
             'numero_turno' => 10,
             'gasolina' => 984000.0, 'acpm' => 642000.0, 'canastilla' => 26890.0, 'iva' => 5110.0, 'total_ventas' => 1658000.0,
             'consignaciones' => 1000000.0, 'pagos_electronicos' => 300000.0, 'puntos' => 20000.0, 'gasolina_eds' => 15000.0,
-            'descuentos' => 10000.0, 'cartera' => 250000.0, 'faltantes' => 65000.0, 'sobrantes' => 0.0, 'recaudos' => -70000.0,
+            'descuentos' => 10000.0, 'cartera' => 250000.0, 'faltantes' => 65000.0, 'sobrantes' => 0.0, 'islero' => 'ANA PEREZ', 'recaudos' => -70000.0,
             // Mismo total recibido que el resumen de la planilla: cuadra con la venta después del traslado.
             'total' => 1658000.0, 'recibido_planilla' => 1658000.0, 'recibido_lectura' => 1632000.0,
         ])
@@ -86,7 +88,7 @@ test('el control caja arma una fila por planilla con ventas, formas de pago y to
             ['concepto' => 'CAFETERIA', 'valor' => 30000.0],
             ['concepto' => 'PAPELERIA / TAXI', 'valor' => 8000.0],
         ])
-        ->and($turno11)->toMatchArray(['sobrantes' => -10000.0, 'total' => 100000.0])
+        ->and($turno11)->toMatchArray(['sobrantes' => -10000.0, 'islero' => 'BETO GOMEZ', 'total' => 100000.0])
         ->and($response->viewData('totales'))->toMatchArray(['total_ventas' => 1758000.0, 'total' => 1758000.0, 'consignaciones' => 1110000.0]);
 });
 
@@ -164,7 +166,10 @@ test('el informe control caja se exporta a Excel', function () {
         ->and((float) $hoja->getCell('G5')->getValue())->toBe(1658000.0)
         ->and($hoja->getCell('T5')->getValue())->toBe('PAPELERIA / TAXI')
         ->and($hoja->getCell('B7')->getValue())->toBe('TOTALES')
-        ->and((float) $hoja->getCell('Y7')->getValue())->toBe(1758000.0)
+        ->and($hoja->getCell('W4')->getValue())->toBe('SOBRANTES')
+        ->and($hoja->getCell('X4')->getValue())->toBe('ISLERO')
+        ->and($hoja->getCell('X5')->getValue())->toBe('ANA PEREZ')
+        ->and((float) $hoja->getCell('Z7')->getValue())->toBe(1758000.0)
         // El comprobante se exporta en su propio módulo.
         ->and($hoja->getHighestRow())->toBe(7);
 });

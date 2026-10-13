@@ -75,7 +75,7 @@ class ControlCajaService
         return Turno::query()
             ->whereDate('fecha', '>=', $desde)
             ->whereDate('fecha', '<=', $hasta)
-            ->with(['lubricantes', 'consignaciones', 'qrPagos', 'transferencias', 'gasolinaEds', 'descuentos', 'cartera.cliente', 'varios', 'recaudos'])
+            ->with(['lubricantes', 'consignaciones', 'qrPagos', 'transferencias', 'gasolinaEds', 'descuentos', 'cartera.cliente', 'varios', 'recaudos', 'user'])
             ->orderBy('fecha')
             ->orderBy('numero_turno')
             ->get();
@@ -141,6 +141,8 @@ class ControlCajaService
             'varios' => $varios,
             'faltantes' => $faltantes,
             'sobrantes' => $sobrantes,
+            // Quien registró la planilla (se conserva aunque otro la corrija).
+            'islero' => (string) ($turno->nombre_vendedor ?: $turno->user?->name),
             'recaudos' => $recaudos,
             'total' => $total,
             // Total recibido en el turno (resumen de la planilla) y venta según lecturas de surtidores.

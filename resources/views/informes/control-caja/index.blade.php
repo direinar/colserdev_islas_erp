@@ -122,7 +122,7 @@
                     <tr>
                         <th colspan="2" class="cc-planilla cc-grupo">PLANILLA</th>
                         <th colspan="5" class="cc-ventas cc-grupo cc-inicio">VENTAS</th>
-                        <th colspan="{{ 6 + 2 * count($casillas) + 4 }}" class="cc-pagos cc-grupo cc-inicio">FORMAS DE PAGO</th>
+                        <th colspan="{{ 6 + 2 * count($casillas) + 5 }}" class="cc-pagos cc-grupo cc-inicio">FORMAS DE PAGO</th>
                         <th colspan="2" class="cc-resultados cc-grupo cc-inicio">RESULTADOS</th>
                     </tr>
                     <tr>
@@ -145,6 +145,7 @@
                         @endforeach
                         <th class="cc-pagos">FALTANTES</th>
                         <th class="cc-pagos">SOBRANTES</th>
+                        <th class="cc-pagos">ISLERO</th>
                         <th class="cc-pagos">RECAUDOS Y<br>ANTICIPOS</th>
                         <th class="cc-pagos">TOTAL</th>
                         <th class="cc-resultados cc-inicio">RECIBIDO<br>S/PLANILLA</th>
@@ -158,7 +159,7 @@
                             <th>{{ $concepto }}</th>
                             <th>{{ $valor }}</th>
                         @endforeach
-                        @foreach (['(16)', '(17)', '(18)', '(19)', '(20)', '(21)'] as $referencia)
+                        @foreach (['(16)', '(17)', '(17A)', '(18)', '(19)', '(20)', '(21)'] as $referencia)
                             <th>{{ $referencia }}</th>
                         @endforeach
                     </tr>
@@ -186,6 +187,7 @@
                             @endforeach
                             <td class="num">{{ $pesos($fila['faltantes']) }}</td>
                             <td class="num {{ $rojo($fila['sobrantes']) }}">{{ $pesos($fila['sobrantes']) }}</td>
+                            <td>{{ $fila['islero'] }}</td>
                             <td class="num {{ $rojo($fila['recaudos']) }}">{{ $pesos($fila['recaudos']) }}</td>
                             <td class="num cc-total {{ $rojo($fila['total']) }}">{{ $pesosSiempre($fila['total']) }}</td>
                             <td class="num cc-inicio">{{ $pesosSiempre($fila['recibido_planilla']) }}</td>
@@ -193,7 +195,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="{{ 19 + 2 * count($casillas) }}" class="text-center text-muted py-3">No hay planillas de turno en el periodo.</td>
+                            <td colspan="{{ 20 + 2 * count($casillas) }}" class="text-center text-muted py-3">No hay planillas de turno en el periodo.</td>
                         </tr>
                     @endforelse
                 </tbody>
@@ -207,7 +209,11 @@
                             <td></td>
                             <td class="num">{{ $pesosSiempre($valor) }}</td>
                         @endforeach
-                        @foreach (['faltantes', 'sobrantes', 'recaudos', 'total'] as $columna)
+                        @foreach (['faltantes', 'sobrantes'] as $columna)
+                            <td class="num {{ $rojo($totales[$columna]) }}">{{ $pesosSiempre($totales[$columna]) }}</td>
+                        @endforeach
+                        <td></td>
+                        @foreach (['recaudos', 'total'] as $columna)
                             <td class="num {{ $rojo($totales[$columna]) }}">{{ $pesosSiempre($totales[$columna]) }}</td>
                         @endforeach
                         <td class="num cc-inicio">{{ $pesosSiempre($totales['recibido_planilla']) }}</td>

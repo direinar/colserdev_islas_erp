@@ -39,7 +39,7 @@ class ControlCajaExcelService
             $encabezados[] = 'CONCEPTO No. '.$numero;
             $encabezados[] = 'VALOR No. '.$numero;
         }
-        array_push($encabezados, 'FALTANTES', 'SOBRANTES', 'RECAUDOS Y ANTICIPOS', 'TOTAL', 'RECIBIDO S/PLANILLA', 'RECIBIDO S/LECTURA');
+        array_push($encabezados, 'FALTANTES', 'SOBRANTES', 'ISLERO', 'RECAUDOS Y ANTICIPOS', 'TOTAL', 'RECIBIDO S/PLANILLA', 'RECIBIDO S/LECTURA');
 
         $ultima = Coordinate::stringFromColumnIndex(count($encabezados));
         $hoja->fromArray($encabezados, null, 'A4');
@@ -59,6 +59,7 @@ class ControlCajaExcelService
         $hoja->fromArray($this->valores(array_merge($totales, [
             'fecha' => null,
             'numero_turno' => 'TOTALES',
+            'islero' => null,
             'varios' => array_map(fn (float $valor): array => ['concepto' => '', 'valor' => $valor], $totales['varios']),
         ])), null, 'A'.$fila);
         $hoja->getStyle("A{$fila}:{$ultima}{$fila}")->getFont()->setBold(true);
@@ -69,6 +70,7 @@ class ControlCajaExcelService
         foreach (range(1, count($encabezados)) as $columna) {
             $hoja->getColumnDimension(Coordinate::stringFromColumnIndex($columna))->setWidth(14);
         }
+        $hoja->getColumnDimension(Coordinate::stringFromColumnIndex(array_search('ISLERO', $encabezados, true) + 1))->setWidth(24);
 
         return $libro;
     }
@@ -92,7 +94,7 @@ class ControlCajaExcelService
         }
 
         return [...$valores,
-            $dato['faltantes'], $dato['sobrantes'], $dato['recaudos'], $dato['total'],
+            $dato['faltantes'], $dato['sobrantes'], $dato['islero'], $dato['recaudos'], $dato['total'],
             $dato['recibido_planilla'], $dato['recibido_lectura'],
         ];
     }
