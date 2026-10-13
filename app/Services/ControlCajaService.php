@@ -5,7 +5,6 @@ namespace App\Services;
 use App\Models\ComprobanteVentaCuenta;
 use App\Models\Turno;
 use App\Models\TurnoCartera;
-use App\Models\TurnoRecaudo;
 use App\Models\TurnoVarios;
 use Illuminate\Support\Collection;
 
@@ -47,7 +46,7 @@ class ControlCajaService
         $turnos = Turno::query()
             ->whereDate('fecha', '>=', $desde)
             ->whereDate('fecha', '<=', $hasta)
-            ->with(['lubricantes', 'consignaciones', 'qrPagos', 'transferencias', 'gasolinaEds', 'descuentos', 'cartera.cliente', 'varios', 'recaudos.cliente'])
+            ->with(['lubricantes', 'consignaciones', 'qrPagos', 'transferencias', 'gasolinaEds', 'descuentos', 'cartera.cliente', 'varios', 'recaudos'])
             ->orderBy('fecha')
             ->orderBy('numero_turno')
             ->get();
@@ -175,10 +174,10 @@ class ControlCajaService
         $costoCanastilla = $this->costoDeVentas($this->kardex->canastillaControl()['rows'], $desde, $hasta);
 
         $lineas = [
-            // Los recaudos y anticipos por islas ($totales['recaudos'] ya es negativo) se
-            // restan aquí y van en su propia línea: el comprobante sigue cuadrando.
+            // Se restan los recaudos y anticipos por islas ($totales['recaudos'] ya es negativo):
+            // su asiento (débito a caja, crédito a la cartera del cliente) está en el
+            // comprobante de Recaudos de cartera y no se repite aquí.
             $linea('consignaciones_pagos', 'CONSIGNACIONES, TC, QR Y TRANSF.', $totales['consignaciones'] + $totales['pagos_electronicos'] + $totales['recaudos'], 0),
-            $linea('recaudos_anticipos', 'RECAUDOS Y ANTICIPOS', -$totales['recaudos'], 0),
             $linea('descuentos_ventas', 'DESCUENTOS EN VENTAS', $totales['puntos'] + $totales['descuentos'], 0),
             $linea('gastos_gasolina_eds', 'GASTOS DE GASOLINA EDS', $totales['gasolina_eds'], 0),
             $linea('varios', 'VARIOS', array_sum($totales['varios']), 0),
@@ -201,8 +200,9 @@ class ControlCajaService
     }
 
     /**
-     * Una línea por cliente (con su nombre y NIT como tercero): ventas a crédito al débito y
-     * recaudos y anticipos de islas al crédito.
+     * Una línea por cliente (con su nombre y NIT como tercero) con sus ventas a crédito al
+     * débito. Los recaudos y anticipos por islas no van aquí: los acredita a la cartera el
+     * comprobante de Recaudos de cartera.
      *
      * @param  Collection<int, Turno>  $turnos
      * @return list<array{cuenta: string, concepto: string, tercero: string, nit: string, debito: float, credito: float}>
@@ -210,31 +210,24 @@ class ControlCajaService
     private function carteraPorCliente(Collection $turnos, callable $linea): array
     {
         $clientes = [];
-        $acumular = function (TurnoCartera|TurnoRecaudo $movimiento, string $lado) use (&$clientes): void {
-            $clave = (string) ($movimiento->cliente_id ?? '');
-            $clientes[$clave] ??= [
-                'tercero' => $movimiento->cliente?->name ?? 'SIN CLIENTE',
-                'nit' => (string) ($movimiento->cliente?->document ?? ''),
-                'debito' => 0.0,
-                'credito' => 0.0,
-            ];
-            $clientes[$clave][$lado] += (float) $movimiento->valor;
-        };
 
         foreach ($turnos as $turno) {
             foreach ($turno->cartera as $venta) {
-                $acumular($venta, 'debito');
-            }
-
-            foreach ($turno->recaudos as $recaudo) {
-                $acumular($recaudo, 'credito');
+                /** @var TurnoCartera $venta */
+                $clave = (string) ($venta->cliente_id ?? '');
+                $clientes[$clave] ??= [
+                    'tercero' => $venta->cliente?->name ?? 'SIN CLIENTE',
+                    'nit' => (string) ($venta->cliente?->document ?? ''),
+                    'debito' => 0.0,
+                ];
+                $clientes[$clave]['debito'] += (float) $venta->valor;
             }
         }
 
         uasort($clientes, fn (array $a, array $b): int => strcmp($a['tercero'], $b['tercero']));
 
         return array_values(array_map(
-            fn (array $cliente): array => $linea('cartera_clientes', 'CARTERA CLIENTES', $cliente['debito'], $cliente['credito'], $cliente['tercero'], $cliente['nit']),
+            fn (array $cliente): array => $linea('cartera_clientes', 'CARTERA CLIENTES', $cliente['debito'], 0, $cliente['tercero'], $cliente['nit']),
             $clientes,
         ));
     }

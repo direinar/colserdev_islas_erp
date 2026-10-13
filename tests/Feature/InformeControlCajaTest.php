@@ -100,15 +100,14 @@ test('el comprobante contable de ventas del periodo cuadra débitos y créditos'
     $lineas = array_map(fn (array $linea): array => array_values($linea), $comprobante['lineas']);
 
     expect($lineas)->toBe([
-        // Consignaciones y pagos electrónicos (1.410.000) menos los recaudos y anticipos (70.000), que van aparte.
+        // Consignaciones y pagos electrónicos (1.410.000) menos los recaudos y anticipos (70.000): su
+        // asiento está en el comprobante de Recaudos de cartera, por eso la cartera solo lleva ventas a crédito.
         ['11050501', 'CONSIGNACIONES, TC, QR Y TRANSF.', '', '', 1340000.0, 0.0],
-        ['11050501', 'RECAUDOS Y ANTICIPOS', '', '', 70000.0, 0.0],
         ['413601', 'DESCUENTOS EN VENTAS', '', '', 30000.0, 0.0],
         ['519535', 'GASTOS DE GASOLINA EDS', '', '', 15000.0, 0.0],
         ['11050501', 'VARIOS', '', '', 68000.0, 0.0],
         ['11050501', 'FALT/SOBRANT/DIF. MENORES', '', '', 55000.0, 0.0],
-        ['13050501', 'CARTERA CLIENTES', 'ARKATEC', '900333444', 0.0, 20000.0],
-        ['13050501', 'CARTERA CLIENTES', 'CONSORCIO LIDER', '900111222', 250000.0, 50000.0],
+        ['13050501', 'CARTERA CLIENTES', 'CONSORCIO LIDER', '900111222', 250000.0, 0.0],
         ['41350701', 'VENTAS COMBUSTIBLE', '', '', 0.0, 1726000.0],
         // Costo al promedio de las salidas según cortes: 70 gal gasolina x 10.000 + 60 gal ACPM x 8.000.
         ['41350801', 'COSTO DE VENTAS DE COMBUSTIBLE', '', '', 1180000.0, 0.0],
@@ -118,8 +117,8 @@ test('el comprobante contable de ventas del periodo cuadra débitos y créditos'
         ['143509', 'INVENTARIOS DE CANASTILLA', '', '', 0.0, 20000.0],
         ['23670501', 'IVA POR PAGAR', '', '', 0.0, 5110.0],
     ])
-        ->and($comprobante['debito'])->toBe(3028000.0)
-        ->and($comprobante['credito'])->toBe(3028000.0)
+        ->and($comprobante['debito'])->toBe(2958000.0)
+        ->and($comprobante['credito'])->toBe(2958000.0)
         ->and($comprobante['diferencia'])->toBe(0.0);
 });
 
@@ -165,5 +164,5 @@ test('el informe control caja se exporta a Excel', function () {
 
     expect(array_slice($comprobante[1], 0, 6))->toBe(['CUENTA', 'CONCEPTO', 'CLIENTE/TERCERO', 'NIT', 'DEBITO', 'CREDITO'])
         ->and($comprobante->first(fn (array $fila): bool => $fila[2] === 'CONSORCIO LIDER'))
-        ->toMatchArray([1 => 'CARTERA CLIENTES', 3 => '900111222', 4 => 250000, 5 => 50000]);
+        ->toMatchArray([1 => 'CARTERA CLIENTES', 3 => '900111222', 4 => 250000, 5 => null]);
 });
