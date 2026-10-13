@@ -38,6 +38,17 @@
                     <input type="text" id="factura" name="factura" class="form-control form-control-sm"
                         value="{{ old('factura', $valores['factura']) }}">
                 </div>
+                <div class="col-12 col-md-6">
+                    <label for="proveedor_id" class="form-label small mb-1">Proveedor</label>
+                    <select id="proveedor_id" name="proveedor_id" class="form-select form-select-sm">
+                        <option value="">Seleccione proveedor</option>
+                        @foreach ($proveedores as $proveedor)
+                            <option value="{{ $proveedor->id }}" @selected(old('proveedor_id', $valores['proveedor_id']) == $proveedor->id)>
+                                {{ $proveedor->name }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
                 <div class="col-6 col-md-3">
                     <label for="gasolina" class="form-label small mb-1">Gasolina - galones</label>
                     <input type="text" id="gasolina" name="gasolina" class="form-control form-control-sm text-end"

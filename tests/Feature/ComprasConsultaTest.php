@@ -3,6 +3,7 @@
 use App\Models\Compra;
 use App\Models\CompraLubricante;
 use App\Models\Lubricant;
+use App\Models\Proveedor;
 use App\Models\User;
 
 function crearCompra(string $fecha, string $factura): Compra
@@ -60,6 +61,39 @@ test('una compra de combustible se corrige desde compras', function () {
         ->gasolina->toEqual('2500.000')
         ->total->toEqual('3500.000')
         ->vr_total_fra->toEqual('35000000.00');
+});
+
+test('la compra de combustible guarda el proveedor, lo lista y se puede corregir', function () {
+    $admin = User::factory()->create(['role' => User::ROLE_ADMINISTRADOR]);
+    $terpel = Proveedor::create(['name' => 'TERPEL', 'document' => '830095213']);
+    $primax = Proveedor::create(['name' => 'PRIMAX', 'document' => '860002554']);
+
+    $this->actingAs($admin)
+        ->get(route('compras.create'))
+        ->assertSeeInOrder(['No. FACTURA', 'PROVEEDOR', 'GASOLINA'], false)
+        ->assertSee('<option value="'.$terpel->id.'"', false);
+
+    $this->actingAs($admin)->post(route('compras.store'), ['compras' => [
+        ['fecha' => '2026-09-25', 'factura' => '2001', 'proveedor_id' => $terpel->id, 'vr_total_fra' => '', 'gasolina' => '1.000', 'distribucion_gasolina' => '10.000.000'],
+    ]])->assertSessionHasNoErrors();
+
+    $compra = Compra::query()->sole();
+
+    expect($compra->proveedor_id)->toBe($terpel->id);
+
+    $this->actingAs($admin)
+        ->get(route('compras.create', ['desde' => '2026-09-01', 'hasta' => '2026-09-30']))
+        ->assertSeeInOrder(['>2001<', '>TERPEL<'], false);
+
+    $this->actingAs($admin)->put(route('compras.update', $compra), [
+        'fecha' => '2026-09-25', 'factura' => '2001', 'proveedor_id' => $primax->id, 'gasolina' => '1.000', 'distribucion_gasolina' => '10.000.000',
+    ])->assertSessionHasNoErrors();
+
+    expect($compra->fresh()->proveedor_id)->toBe($primax->id);
+
+    $this->actingAs($admin)->put(route('compras.update', $compra), [
+        'fecha' => '2026-09-25', 'factura' => '2001', 'proveedor_id' => 999, 'gasolina' => '1.000',
+    ])->assertSessionHasErrors('proveedor_id');
 });
 
 test('al corregir una compra no se permite usar la factura de otra compra', function () {

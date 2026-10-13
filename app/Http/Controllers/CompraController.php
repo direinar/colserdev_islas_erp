@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Compra;
+use App\Models\Proveedor;
 use App\Support\NumberParser;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -24,11 +25,13 @@ class CompraController extends Controller
         $comprasRegistradas = Compra::query()
             ->whereDate('fecha', '>=', $desde)
             ->whereDate('fecha', '<=', $hasta)
+            ->with('proveedor')
             ->orderBy('fecha')
             ->orderBy('id')
             ->get();
+        $proveedores = Proveedor::orderBy('name')->get();
 
-        return view('compras.create', compact('comprasRegistradas', 'desde', 'hasta'));
+        return view('compras.create', compact('comprasRegistradas', 'proveedores', 'desde', 'hasta'));
     }
 
     public function store(Request $request): RedirectResponse
@@ -86,9 +89,11 @@ class CompraController extends Controller
     {
         return view('compras.edit', [
             'compra' => $compra,
+            'proveedores' => Proveedor::orderBy('name')->get(),
             'valores' => [
                 'fecha' => $compra->fecha->format('Y-m-d'),
                 'factura' => $compra->factura,
+                'proveedor_id' => $compra->proveedor_id,
                 'gasolina' => $this->formatInputValue((float) $compra->gasolina),
                 'distribucion_gasolina' => $this->formatInputValue((float) $compra->distribucion_gasolina),
                 'acpm' => $this->formatInputValue((float) $compra->acpm),
@@ -102,7 +107,7 @@ class CompraController extends Controller
         $request->validate($this->reglasFila());
 
         $datos = $this->normalizarFila($request->only([
-            'fecha', 'factura', 'gasolina', 'distribucion_gasolina', 'acpm', 'distribucion_acpm',
+            'fecha', 'factura', 'proveedor_id', 'gasolina', 'distribucion_gasolina', 'acpm', 'distribucion_acpm',
         ]));
 
         if ($datos === null) {
@@ -137,6 +142,7 @@ class CompraController extends Controller
         return [
             $prefijo.'fecha' => ['nullable', 'date'],
             $prefijo.'factura' => ['nullable', 'string', 'max:60'],
+            $prefijo.'proveedor_id' => ['nullable', 'integer', 'exists:proveedores,id'],
             $prefijo.'vr_total_fra' => ['nullable', 'string', 'max:40'],
             $prefijo.'gasolina' => ['nullable', 'string', 'max:40'],
             $prefijo.'distribucion_gasolina' => ['nullable', 'string', 'max:40'],
@@ -150,7 +156,8 @@ class CompraController extends Controller
      * Convierte una fila del formulario en los datos a guardar, o null si la fila no trae datos.
      *
      * @param  array<string, mixed>  $row
-     * @return array{fecha: string, factura: string, vr_total_fra: float, gasolina: float, acpm: float, total: float, distribucion_gasolina: float, distribucion_acpm: float}|null
+     *                                     El proveedor solo no hace que una fila cuente como compra.
+     * @return array{fecha: string, factura: string, proveedor_id: int|null, vr_total_fra: float, gasolina: float, acpm: float, total: float, distribucion_gasolina: float, distribucion_acpm: float}|null
      */
     private function normalizarFila(array $row): ?array
     {
@@ -186,6 +193,7 @@ class CompraController extends Controller
         return [
             'fecha' => $fecha ?: now()->toDateString(),
             'factura' => $factura,
+            'proveedor_id' => ($row['proveedor_id'] ?? null) ? (int) $row['proveedor_id'] : null,
             'vr_total_fra' => $vrTotalFra,
             'gasolina' => $gasolina,
             'acpm' => $acpm,

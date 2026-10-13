@@ -38,13 +38,14 @@
                         <tr>
                             <th class="text-center align-middle border-end">FECHA</th>
                             <th class="text-center align-middle border-end">No. FACTURA</th>
+                            <th class="text-center align-middle border-end">PROVEEDOR</th>
                             <th colspan="2" class="text-center align-middle border-end">GASOLINA</th>
                             <th colspan="2" class="text-center align-middle border-end">ACPM</th>
                             <th colspan="2" class="text-center align-middle border-end">TOTAL</th>
                             <th class="text-center align-middle">ACCION</th>
                         </tr>
                         <tr>
-                            <th colspan="2" class="border-end"></th>
+                            <th colspan="3" class="border-end"></th>
                             <th class="text-center border-end">UNIDADES</th>
                             <th class="text-center border-end">DISTRIB. COSTO</th>
                             <th class="text-center border-end">UNIDADES</th>
@@ -61,6 +62,7 @@
                                 [
                                     'fecha' => date('Y-m-d'),
                                     'factura' => '',
+                                    'proveedor_id' => '',
                                     'vr_total_fra' => '',
                                     'gasolina' => '',
                                     'acpm' => '',
@@ -80,6 +82,17 @@
                                 <td>
                                     <input type="text" name="compras[{{ $index }}][factura]"
                                         class="form-control form-control-sm" value="{{ $row['factura'] ?? '' }}">
+                                </td>
+                                <td>
+                                    <select name="compras[{{ $index }}][proveedor_id]" class="form-select form-select-sm"
+                                        aria-label="Proveedor">
+                                        <option value="">Seleccione proveedor</option>
+                                        @foreach ($proveedores as $proveedor)
+                                            <option value="{{ $proveedor->id }}" @selected(($row['proveedor_id'] ?? '') == $proveedor->id)>
+                                                {{ $proveedor->name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
                                 </td>
                                 <td>
                                     <input type="text" name="compras[{{ $index }}][gasolina]"
@@ -118,7 +131,7 @@
 
                     <tfoot>
                         <tr class="table-secondary fw-bold">
-                            <td colspan="2" class="text-end">TOTALES</td>
+                            <td colspan="3" class="text-end">TOTALES</td>
                             <td id="total-gasolina" class="text-end">0</td>
                             <td id="total-distrib-gasolina" class="text-end">0</td>
                             <td id="total-acpm" class="text-end">0</td>
@@ -132,6 +145,14 @@
             </div>
         </x-erp-card>
     </form>
+
+    {{-- Molde de opciones de proveedor para las filas que se agregan con JS. --}}
+    <select id="proveedores-options-template" class="d-none" aria-hidden="true" tabindex="-1">
+        <option value="">Seleccione proveedor</option>
+        @foreach ($proveedores as $proveedor)
+            <option value="{{ $proveedor->id }}">{{ $proveedor->name }}</option>
+        @endforeach
+    </select>
 
     <style>
         #compras-registradas tr:target td {
@@ -161,6 +182,7 @@
                     <tr>
                         <th rowspan="2" class="text-center align-middle">FECHA</th>
                         <th rowspan="2" class="text-center align-middle">No. FACTURA</th>
+                        <th rowspan="2" class="text-center align-middle">PROVEEDOR</th>
                         <th colspan="2" class="text-center">GASOLINA</th>
                         <th colspan="2" class="text-center">ACPM</th>
                         <th colspan="2" class="text-center">TOTAL</th>
@@ -180,6 +202,7 @@
                         <tr id="compra-{{ $compra->id }}">
                             <td class="text-center">{{ $compra->fecha->format('d/m/Y') }}</td>
                             <td>{{ $compra->factura }}</td>
+                            <td>{{ $compra->proveedor?->name }}</td>
                             <td class="text-end">{{ number_format((float) $compra->gasolina, 0, ',', '.') }}</td>
                             <td class="text-end">{{ number_format((float) $compra->distribucion_gasolina, 0, ',', '.') }}</td>
                             <td class="text-end">{{ number_format((float) $compra->acpm, 0, ',', '.') }}</td>
@@ -198,13 +221,13 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="9" class="text-center text-muted py-3">No hay compras en el rango seleccionado.</td>
+                            <td colspan="10" class="text-center text-muted py-3">No hay compras en el rango seleccionado.</td>
                         </tr>
                     @endforelse
                 </tbody>
                 <tfoot>
                     <tr class="table-secondary fw-bold">
-                        <td colspan="2" class="text-end">TOTALES</td>
+                        <td colspan="3" class="text-end">TOTALES</td>
                         <td class="text-end">{{ number_format((float) $comprasRegistradas->sum('gasolina'), 0, ',', '.') }}</td>
                         <td class="text-end">{{ number_format((float) $comprasRegistradas->sum('distribucion_gasolina'), 0, ',', '.') }}</td>
                         <td class="text-end">{{ number_format((float) $comprasRegistradas->sum('acpm'), 0, ',', '.') }}</td>
@@ -320,6 +343,11 @@
                     </td>
                     <td>
                         <input type="text" name="compras[${index}][factura]" class="form-control form-control-sm">
+                    </td>
+                    <td>
+                        <select name="compras[${index}][proveedor_id]" class="form-select form-select-sm" aria-label="Proveedor">
+                            ${document.getElementById('proveedores-options-template').innerHTML}
+                        </select>
                     </td>
                     <td>
                         <input type="text" name="compras[${index}][gasolina]" class="form-control form-control-sm text-end gasolina-input" inputmode="decimal">
