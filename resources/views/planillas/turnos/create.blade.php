@@ -313,8 +313,9 @@
 
         <style>
             /* Fecha y número de turno resaltados para identificar la planilla de un vistazo. */
-            .dato-turno-destacado {
-                color: #d40000;
+            /* custom.css fija el color de input.form-control con !important; por eso aquí también. */
+            input.form-control.dato-turno-destacado {
+                color: #d40000 !important;
                 font-size: 1.15rem;
                 font-weight: 700;
             }

@@ -355,5 +355,7 @@ test('search still finds a turno by typing just the numero_turno', function () {
     // Fecha y turno se resaltan en rojo y más grandes.
     $response->assertSee('id="turno-fecha" class="form-control form-control-sm d-inline-block w-auto dato-turno-destacado"', false);
     $response->assertSee('id="turno-numero" class="form-control form-control-sm d-inline-block dato-turno-destacado"', false);
+    // Debe ganarle al color con !important de input.form-control en custom.css.
+    $response->assertSeeInOrder(['input.form-control.dato-turno-destacado {', 'color: #d40000 !important;'], false);
     $response->assertSee('value="'.$today.'"', false);
 });
