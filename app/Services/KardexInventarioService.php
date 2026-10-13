@@ -41,6 +41,58 @@ class KardexInventarioService
     }
 
     /**
+     * El kardex completo, recortado a un periodo: lo anterior a "desde" se resume en una
+     * línea SALDO ANTERIOR (saldo y promedio a esa fecha) y los totales son los del periodo,
+     * con el saldo al final del periodo.
+     *
+     * @param  array{rows: list<array<string, mixed>>, totales: array<string, float>}  $kardex
+     * @return array{rows: list<array<string, mixed>>, totales: array<string, float>}
+     */
+    public function delPeriodo(array $kardex, string $desde, string $hasta): array
+    {
+        $fecha = fn (array $fila): string => $fila['fecha_compra'] ?? $fila['fecha_venta'];
+        $anteriores = array_values(array_filter($kardex['rows'], fn (array $fila): bool => $fecha($fila) < $desde));
+        $delPeriodo = array_values(array_filter($kardex['rows'], fn (array $fila): bool => $fecha($fila) >= $desde && $fecha($fila) <= $hasta));
+
+        $ultimaAnterior = end($anteriores) ?: null;
+        $saldoUnidades = (float) ($ultimaAnterior['saldo_unidades'] ?? 0.0);
+        $saldoValor = (float) ($ultimaAnterior['valor_saldo'] ?? 0.0);
+
+        $filas = $ultimaAnterior ? [[
+            'tipo' => 'saldo_anterior',
+            'numero_turno' => null,
+            'fecha_venta' => null,
+            'fecha_compra' => $desde,
+            'compra_id' => null,
+            'factura' => 'SALDO ANTERIOR',
+            'referencia' => '',
+            'entradas' => 0.0,
+            'valor_entradas' => 0.0,
+            'salidas' => 0.0,
+            'valor_salidas' => 0.0,
+            'valor_venta' => 0.0,
+            'precio' => null,
+            'saldo_unidades' => $saldoUnidades,
+            'valor_saldo' => $saldoValor,
+            'promedio' => $saldoUnidades > 0 ? $saldoValor / $saldoUnidades : 0.0,
+        ]] : [];
+
+        // Mismas claves y orden que los totales del kardex completo.
+        $totales = array_fill_keys(array_keys($kardex['totales']), 0.0);
+        foreach ($delPeriodo as $fila) {
+            foreach (['entradas', 'salidas', 'valor_entradas', 'valor_salidas', 'valor_venta'] as $columna) {
+                $totales[$columna] += (float) $fila[$columna];
+            }
+        }
+
+        $ultima = end($delPeriodo) ?: null;
+        $totales['saldo_unidades'] = (float) ($ultima['saldo_unidades'] ?? $saldoUnidades);
+        $totales['valor_saldo'] = (float) ($ultima['valor_saldo'] ?? $saldoValor);
+
+        return ['rows' => [...$filas, ...$delPeriodo], 'totales' => $totales];
+    }
+
+    /**
      * Saldos iniciales cargados, por inventario y referencia ("gasolina|", "canastilla|MOBIL ...").
      *
      * @return Collection<string, InventarioSaldoInicial>

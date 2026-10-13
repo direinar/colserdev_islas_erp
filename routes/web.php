@@ -139,6 +139,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/inventarios/lubricantes/control', [InventarioLubricanteController::class, 'control'])
             ->name('inventarios-lubricantes.control');
 
+        Route::get('/inventarios/lubricantes/exportar', [InventarioLubricanteController::class, 'exportar'])
+            ->name('inventarios-lubricantes.exportar');
+
+        Route::get('/inventarios/lubricantes/control/exportar', [InventarioLubricanteController::class, 'exportarControl'])
+            ->name('inventarios-lubricantes.control.exportar');
+
         Route::get('/inventarios/saldos-iniciales', [InventarioSaldoInicialController::class, 'index'])
             ->name('inventarios-saldos-iniciales.index');
 
@@ -208,8 +214,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/inventarios/acpm/create', [InventarioAcpmController::class, 'create'])
             ->name('inventarios-acpm.create');
 
+        Route::get('/inventarios/acpm/exportar', [InventarioAcpmController::class, 'exportar'])
+            ->name('inventarios-acpm.exportar');
+
         Route::get('/inventarios/gasolina/create', [InventarioGasolinaController::class, 'create'])
             ->name('inventarios-gasolina.create');
+
+        Route::get('/inventarios/gasolina/exportar', [InventarioGasolinaController::class, 'exportar'])
+            ->name('inventarios-gasolina.exportar');
 
         Route::resource('fuel-prices', FuelPriceController::class);
 

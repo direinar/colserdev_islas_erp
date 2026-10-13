@@ -14,6 +14,33 @@
     .kardex-table td {
         white-space: nowrap;
     }
+
+    @page {
+        size: landscape;
+        margin: 8mm;
+    }
+
+    @media print {
+        nav,
+        .navbar {
+            display: none !important;
+        }
+
+        body > .container-fluid {
+            padding: 0 !important;
+        }
+
+        .kardex-table {
+            font-size: 8px;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+
+        .kardex-table a {
+            color: inherit;
+            text-decoration: none;
+        }
+    }
 </style>
 
 <x-erp-card :title="$titulo">
@@ -60,7 +87,7 @@
                             @endif
                         </td>
                         <td class="text-center">
-                            @if ($row['tipo'] === 'saldo_inicial')
+                            @if (in_array($row['tipo'], ['saldo_inicial', 'saldo_anterior'], true))
                                 {{ \Illuminate\Support\Carbon::parse($row['fecha_compra'])->format('d/m/Y') }}
                             @elseif ($row['fecha_compra'])
                                 <a href="{{ route($compraRoute, ['desde' => $row['fecha_compra'], 'hasta' => $row['fecha_compra']]) }}#compra-{{ $row['compra_id'] }}"

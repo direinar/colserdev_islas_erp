@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Services\KardexInventarioService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
+use PhpOffice\PhpSpreadsheet\IOFactory;
 
 function compraCombustible(array $atributos = []): Compra
 {
@@ -38,7 +39,7 @@ test('el inventario de gasolina valora al costo promedio las salidas según cort
     ]);
 
     $response = $this->actingAs($admin)
-        ->get(route('inventarios-gasolina.create'))
+        ->get(route('inventarios-gasolina.create', ['desde' => '2026-09-01', 'hasta' => '2026-09-30']))
         ->assertOk();
 
     [$filaCompra, $filaVenta] = $response->viewData('kardex')['rows'];
@@ -70,7 +71,8 @@ test('el inventario de gasolina valora al costo promedio las salidas según cort
         ->assertSee('>984.000<', false)
         ->assertSee('>16.400<', false)
         ->assertSee(route('compras.create', ['desde' => '2026-09-25', 'hasta' => '2026-09-25']).'#compra-'.$compra->id)
-        ->assertDontSee('type="date"', false)
+        // Solo el filtro de fechas: el kardex no tiene campos para digitar movimientos.
+        ->assertDontSee('name="fecha', false)
         ->assertDontSee('Agregar fila')
         ->assertDontSee('remove-row');
 });
@@ -100,7 +102,7 @@ test('el inventario de ACPM toma los galones, la venta y el precio de ACPM y omi
     ]);
 
     $rows = $this->actingAs($admin)
-        ->get(route('inventarios-acpm.create'))
+        ->get(route('inventarios-acpm.create', ['desde' => '2026-09-01', 'hasta' => '2026-09-30']))
         ->assertOk()
         ->viewData('kardex')['rows'];
 
@@ -123,7 +125,7 @@ test('el inventario de canastilla suma por planilla las ventas del producto y to
     $turno->lubricantes()->create(['cantidad' => 1, 'producto' => '3-UREA', 'valor_sin_iva' => 1700, 'iva' => 0, 'total' => 1700]);
 
     $rows = $this->actingAs($admin)
-        ->get(route('inventarios-lubricantes.create', ['producto' => '17-MOBIL SUPER 20W50']))
+        ->get(route('inventarios-lubricantes.create', ['producto' => '17-MOBIL SUPER 20W50', 'desde' => '2026-09-01', 'hasta' => '2026-09-30']))
         ->assertOk()
         ->assertSee(route('compras-lubricantes.create', ['desde' => '2026-09-20', 'hasta' => '2026-09-20']))
         ->viewData('kardex')['rows'];
@@ -149,7 +151,7 @@ test('el inventario de canastilla registra el valor de la venta sin IVA', functi
     $turno->lubricantes()->create(['cantidad' => 2, 'producto' => '1 - ADITIVO GASOLINA AUTOS', 'valor_sin_iva' => 26890, 'iva' => 5110, 'total' => 32000]);
 
     $rows = $this->actingAs($admin)
-        ->get(route('inventarios-lubricantes.create'))
+        ->get(route('inventarios-lubricantes.create', ['desde' => '2026-09-01', 'hasta' => '2026-09-30']))
         ->assertOk()
         ->viewData('kardex')['rows'];
 
@@ -172,7 +174,7 @@ test('el control de canastilla consolida todas las referencias y sus totales son
     $turno->lubricantes()->create(['cantidad' => 5, 'producto' => '3-UREA', 'valor_sin_iva' => 8500, 'iva' => 0, 'total' => 8500]);
 
     $response = $this->actingAs($admin)
-        ->get(route('inventarios-lubricantes.control'))
+        ->get(route('inventarios-lubricantes.control', ['desde' => '2026-09-01', 'hasta' => '2026-09-30']))
         ->assertOk()
         ->assertSee('INVENTARIO CANASTILLA – CONTROL')
         ->assertSee('REFERENCIA')
@@ -265,7 +267,7 @@ test('el saldo inicial de canastilla abre el kardex de la referencia y suma en e
     expect($kardex['rows'][0])->toMatchArray(['tipo' => 'saldo_inicial', 'entradas' => 12.0, 'valor_entradas' => 360000.0])
         ->and(app(KardexInventarioService::class)->canastillaControl()['totales'])->toMatchArray(['saldo_unidades' => 12.0, 'valor_saldo' => 360000.0]);
 
-    $this->actingAs($admin)->get(route('inventarios-lubricantes.create', ['producto' => 'MOBIL 20W50']))
+    $this->actingAs($admin)->get(route('inventarios-lubricantes.create', ['producto' => 'MOBIL 20W50', 'desde' => '2026-09-01', 'hasta' => '2026-09-30']))
         ->assertOk()
         ->assertSeeInOrder(['20/09/2026', 'SALDO INICIAL', '360.000']);
 });
@@ -305,3 +307,51 @@ test('el administrador carga los saldos iniciales de inventario y el jefe de pat
 
     expect((float) InventarioSaldoInicial::query()->where('inventario', 'gasolina')->value('costo_unitario'))->toBe(9800.0);
 });
+
+test('el kardex se consulta por periodo: lo anterior queda en SALDO ANTERIOR y los totales son del periodo', function () {
+    $admin = User::factory()->create(['role' => User::ROLE_ADMINISTRADOR]);
+    compraCombustible(['fecha' => '2026-09-01', 'factura' => 'A-1']);
+    compraCombustible(['fecha' => '2026-10-05', 'factura' => 'A-2']);
+    Turno::create(['fecha' => '2026-10-06', 'numero_turno' => 1, 'precio_corriente' => 16400, 'tirillas_galones_corriente' => 100, 'tirillas_valor_corriente' => 1640000]);
+
+    $response = $this->actingAs($admin)
+        ->get(route('inventarios-gasolina.create', ['desde' => '2026-10-01', 'hasta' => '2026-10-31']))
+        ->assertOk()
+        // Filtro de fechas, imprimir y Excel en el encabezado.
+        ->assertSee('IMPRIMIR')
+        ->assertSee(route('inventarios-gasolina.exportar', ['desde' => '2026-10-01', 'hasta' => '2026-10-31']))
+        ->assertSeeInOrder(['SALDO ANTERIOR', 'A-2'], false)
+        ->assertDontSee('>A-1<', false);
+
+    $kardex = $response->viewData('kardex');
+
+    expect(array_column($kardex['rows'], 'tipo'))->toBe(['saldo_anterior', 'compra', 'venta'])
+        ->and($kardex['rows'][0])->toMatchArray(['saldo_unidades' => 3000.0, 'valor_saldo' => 30000000.0, 'promedio' => 10000.0])
+        ->and($kardex['totales'])->toMatchArray(['entradas' => 3000.0, 'salidas' => 100.0, 'saldo_unidades' => 5900.0, 'valor_salidas' => 1000000.0]);
+});
+
+test('los kardex de inventario se exportan a Excel con el periodo', function (string $ruta, array $parametros, string $titulo) {
+    $admin = User::factory()->create(['role' => User::ROLE_ADMINISTRADOR]);
+    Lubricant::create(['reference' => 'MOBIL 20W50', 'sale_price' => 50000, 'iva' => 0, 'total' => 50000, 'cost_price' => 30000, 'active' => true]);
+    compraCombustible(['fecha' => '2026-10-05']);
+    CompraLubricante::create(['fecha' => '2026-10-05', 'nombre' => 'MOBIL 20W50', 'no_fc' => 'L-1', 'unidades' => 10, 'valor_unitario' => 30000, 'vr_sin_iva' => 300000, 'iva' => 0, 'total' => 300000]);
+
+    $response = $this->actingAs($admin)
+        ->get(route($ruta, $parametros + ['desde' => '2026-10-01', 'hasta' => '2026-10-31']))
+        ->assertOk();
+
+    $archivo = tempnam(sys_get_temp_dir(), 'kardex').'.xlsx';
+    file_put_contents($archivo, $response->streamedContent());
+    $hoja = IOFactory::load($archivo)->getActiveSheet();
+    unlink($archivo);
+
+    expect($hoja->getCell('A1')->getValue())->toBe($titulo)
+        ->and($hoja->getCell('A2')->getValue())->toBe('DESDE 01/10/2026  HASTA 31/10/2026')
+        ->and($hoja->getCell('B5')->getValue())->toBe('05/10/2026')
+        ->and($hoja->getCell('A6')->getValue())->toBe('TOTALES');
+})->with([
+    ['inventarios-gasolina.exportar', [], 'INVENTARIOS GASOLINA'],
+    ['inventarios-acpm.exportar', [], 'INVENTARIOS ACPM'],
+    ['inventarios-lubricantes.exportar', ['producto' => 'MOBIL 20W50'], 'INVENTARIOS MOBIL 20W50'],
+    ['inventarios-lubricantes.control.exportar', [], 'INVENTARIO CANASTILLA – CONTROL'],
+]);
