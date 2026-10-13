@@ -12,7 +12,8 @@ use Illuminate\Support\Collection;
  * módulo de compras. No se digita: cuentas, terceros y NIT salen de sus tablas.
  *
  * - Combustible (cada factura): débito inventario de combustibles / crédito proveedor
- *   de combustibles por el valor total de la factura (el combustible no lleva IVA).
+ *   de combustibles por el valor total de la factura (el combustible no lleva IVA). El
+ *   tercero es el proveedor de la compra o, si no tiene, el configurado en las cuentas.
  * - Canastilla (cada factura): débito inventario por el valor sin IVA, débito IVA si
  *   lo tiene y crédito proveedor por el total con IVA.
  *
@@ -56,16 +57,19 @@ class ComprobanteContableComprasService
      */
     private function combustibles(Collection $cuentas, string $desde, string $hasta): Collection
     {
-        $proveedor = $cuentas->get(ComprobanteCompraCuenta::PROVEEDOR_COMBUSTIBLES)?->proveedor;
+        $proveedorConfigurado = $cuentas->get(ComprobanteCompraCuenta::PROVEEDOR_COMBUSTIBLES)?->proveedor;
 
         return Compra::query()
+            ->with('proveedor')
             ->whereDate('fecha', '>=', $desde)
             ->whereDate('fecha', '<=', $hasta)
             ->orderBy('fecha')
             ->orderBy('factura')
             ->get()
             ->filter(fn (Compra $compra): bool => (float) $compra->vr_total_fra > 0)
-            ->flatMap(function (Compra $compra) use ($cuentas, $proveedor): array {
+            ->flatMap(function (Compra $compra) use ($cuentas, $proveedorConfigurado): array {
+                // El tercero es el proveedor de la compra; si no lo tiene, el configurado en las cuentas.
+                $proveedor = $compra->proveedor ?? $proveedorConfigurado;
                 $valor = round((float) $compra->vr_total_fra, 0);
                 $base = [
                     'fecha' => $compra->fecha->format('Y-m-d'),

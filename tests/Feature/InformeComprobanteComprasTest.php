@@ -138,3 +138,31 @@ test('el comprobante contable de compras se exporta a Excel', function () {
         ->and((float) $hoja->getCell('E14')->getValue())->toBe(86075621.0)
         ->and((float) $hoja->getCell('F14')->getValue())->toBe(86075621.0);
 });
+
+test('las compras de combustible llevan como tercero su propio proveedor y, si no tienen, el configurado', function () {
+    $admin = User::factory()->create(['role' => User::ROLE_ADMINISTRADOR]);
+    $terpel = Proveedor::create(['name' => 'TERPEL', 'document' => '830095213']);
+    $chevron = Proveedor::create(['name' => 'CHEVRON PETROLEUM', 'document' => '860023560']);
+    ComprobanteCompraCuenta::query()
+        ->where('clave', ComprobanteCompraCuenta::PROVEEDOR_COMBUSTIBLES)
+        ->update(['proveedor_id' => $chevron->id]);
+
+    $compra = ['vr_total_fra' => 1000000, 'gasolina' => 100, 'acpm' => 0, 'total' => 100, 'distribucion_gasolina' => 1000000, 'distribucion_acpm' => 0];
+    Compra::create(['fecha' => '2026-03-05', 'factura' => 'A-1', 'proveedor_id' => $terpel->id] + $compra);
+    Compra::create(['fecha' => '2026-03-06', 'factura' => 'A-2'] + $compra);
+
+    $lineas = collect($this->actingAs($admin)
+        ->get(route('informes.comprobante-contable-compras.index', ['desde' => '2026-03-01', 'hasta' => '2026-03-31']))
+        ->viewData('lineas'))
+        ->whereIn('concepto', ['FC A-1', 'FC A-2'])
+        ->map(fn (array $linea): array => [$linea['concepto'], $linea['tercero'], $linea['nit']])
+        ->values()
+        ->all();
+
+    expect($lineas)->toBe([
+        ['FC A-1', 'TERPEL', '830095213'],
+        ['FC A-1', 'TERPEL', '830095213'],
+        ['FC A-2', 'CHEVRON PETROLEUM', '860023560'],
+        ['FC A-2', 'CHEVRON PETROLEUM', '860023560'],
+    ]);
+});
