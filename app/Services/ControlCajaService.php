@@ -10,7 +10,7 @@ use Illuminate\Support\Collection;
 
 /**
  * Informe Control Caja: una fila por planilla de turno con sus ventas, formas de pago y
- * resultados, y el comprobante contable de ventas del periodo. Todo sale de la planilla de
+ * resultados; y el comprobante contable de ventas del periodo (módulo aparte). Todo sale de la planilla de
  * turnos; el "total recibido" se recalcula aquí con la misma fórmula del resumen de la
  * planilla, que solo lo calcula en pantalla y no lo guarda.
  *
@@ -39,18 +39,54 @@ class ControlCajaService
     ) {}
 
     /**
-     * @return array{filas: list<array<string, mixed>>, totales: array<string, mixed>, comprobante: array<string, mixed>, cuentas: Collection<string, ComprobanteVentaCuenta>}
+     * Informe Control Caja: una fila por planilla y los totales del periodo.
+     *
+     * @return array{filas: list<array<string, mixed>>, totales: array<string, mixed>}
      */
     public function informe(string $desde, string $hasta): array
     {
-        $turnos = Turno::query()
+        [$filas, $totales] = $this->filasYTotales($this->turnos($desde, $hasta));
+
+        return ['filas' => $filas, 'totales' => $totales];
+    }
+
+    /**
+     * Comprobante contable de ventas del periodo (módulo aparte) con las cuentas configuradas.
+     *
+     * @return array{comprobante: array<string, mixed>, cuentas: Collection<string, ComprobanteVentaCuenta>}
+     */
+    public function comprobanteVentas(string $desde, string $hasta): array
+    {
+        $turnos = $this->turnos($desde, $hasta);
+        [, $totales] = $this->filasYTotales($turnos);
+        $cuentas = ComprobanteVentaCuenta::query()->get()->keyBy('clave');
+
+        return [
+            'comprobante' => $this->comprobante($turnos, $totales, $cuentas, $desde, $hasta),
+            'cuentas' => $cuentas,
+        ];
+    }
+
+    /**
+     * @return Collection<int, Turno>
+     */
+    private function turnos(string $desde, string $hasta): Collection
+    {
+        return Turno::query()
             ->whereDate('fecha', '>=', $desde)
             ->whereDate('fecha', '<=', $hasta)
             ->with(['lubricantes', 'consignaciones', 'qrPagos', 'transferencias', 'gasolinaEds', 'descuentos', 'cartera.cliente', 'varios', 'recaudos'])
             ->orderBy('fecha')
             ->orderBy('numero_turno')
             ->get();
+    }
 
+    /**
+     * @param  Collection<int, Turno>  $turnos
+     * @return array{0: list<array<string, mixed>>, 1: array<string, mixed>}
+     */
+    private function filasYTotales(Collection $turnos): array
+    {
         $filas = $turnos->map(fn (Turno $turno): array => $this->fila($turno))->all();
 
         $totales = collect(self::COLUMNAS_TOTALES)
@@ -60,14 +96,7 @@ class ControlCajaService
             ->map(fn (int $casilla): float => (float) collect($filas)->sum(fn (array $fila): float => $fila['varios'][$casilla]['valor']))
             ->all();
 
-        $cuentas = ComprobanteVentaCuenta::query()->get()->keyBy('clave');
-
-        return [
-            'filas' => $filas,
-            'totales' => $totales,
-            'comprobante' => $this->comprobante($turnos, $totales, $cuentas, $desde, $hasta),
-            'cuentas' => $cuentas,
-        ];
+        return [$filas, $totales];
     }
 
     /**

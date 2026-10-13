@@ -273,6 +273,11 @@
                                         </a>
                                     </li>
                                     <li>
+                                        <a class="dropdown-item" href="{{ route('informes.comprobante-ventas.index') }}">
+                                            Comprobante contable de ventas
+                                        </a>
+                                    </li>
+                                    <li>
                                         <a class="dropdown-item" href="{{ route('informes.margen-mayorista.index') }}">
                                             Margen mayorista
                                         </a>

@@ -64,7 +64,9 @@ test('el control caja arma una fila por planilla con ventas, formas de pago y to
         ->get(route('informes.control-caja.index', ['desde' => '2026-09-25', 'hasta' => '2026-09-30']))
         ->assertOk()
         ->assertSee('Informe control caja')
-        ->assertSee('COMPROBANTE CONTABLE DE VENTAS');
+        // El comprobante contable de ventas está en su propio módulo; aquí solo se enlaza.
+        ->assertDontSee('COMPROBANTE CONTABLE DE VENTAS')
+        ->assertSee(route('informes.comprobante-ventas.index', ['desde' => '2026-09-25', 'hasta' => '2026-09-30']));
 
     [$turno10, $turno11] = $response->viewData('filas');
 
@@ -93,7 +95,13 @@ test('el comprobante contable de ventas del periodo cuadra débitos y créditos'
     turnosControlCaja();
 
     $response = $this->actingAs($admin)
-        ->get(route('informes.control-caja.index', ['desde' => '2026-09-25', 'hasta' => '2026-09-30']))
+        ->get(route('informes.comprobante-ventas.index', ['desde' => '2026-09-25', 'hasta' => '2026-09-30']))
+        ->assertOk()
+        // Mismo encabezado del informe control caja: título, periodo, fechas, imprimir y Excel.
+        ->assertSee('Comprobante contable de ventas')
+        ->assertSee('Desde 25/09/2026 — hasta 30/09/2026', false)
+        ->assertSee(route('informes.comprobante-ventas.exportar', ['desde' => '2026-09-25', 'hasta' => '2026-09-30']))
+        ->assertSee('IMPRIMIR')
         ->assertSeeInOrder(['<th>CONCEPTO</th>', '<th>CLIENTE/TERCERO</th>', '<th>NIT</th>', '<th>DEBITO</th>'], false);
     $comprobante = $response->viewData('comprobante');
 
@@ -127,10 +135,11 @@ test('el administrador cambia las cuentas del comprobante y el jefe de patios no
     $jefe = User::factory()->create(['role' => User::ROLE_JEFE_PATIOS]);
 
     $this->actingAs($jefe)->get(route('informes.control-caja.index'))->assertForbidden();
-    $this->actingAs($jefe)->post(route('informes.control-caja.cuentas'), ['cuentas' => []])->assertForbidden();
+    $this->actingAs($jefe)->get(route('informes.comprobante-ventas.index'))->assertForbidden();
+    $this->actingAs($jefe)->post(route('informes.comprobante-ventas.cuentas'), ['cuentas' => []])->assertForbidden();
 
     $this->actingAs($admin)
-        ->post(route('informes.control-caja.cuentas'), ['cuentas' => ['iva_por_pagar' => ['cuenta' => '24080101']]])
+        ->post(route('informes.comprobante-ventas.cuentas'), ['cuentas' => ['iva_por_pagar' => ['cuenta' => '24080101']]])
         ->assertRedirect();
 
     expect(ComprobanteVentaCuenta::query()->where('clave', 'iva_por_pagar')->value('cuenta'))->toBe('24080101');
@@ -155,14 +164,32 @@ test('el informe control caja se exporta a Excel', function () {
         ->and((float) $hoja->getCell('G5')->getValue())->toBe(1658000.0)
         ->and($hoja->getCell('T5')->getValue())->toBe('PAPELERIA / TAXI')
         ->and($hoja->getCell('B7')->getValue())->toBe('TOTALES')
-        ->and((float) $hoja->getCell('Y7')->getValue())->toBe(1758000.0);
+        ->and((float) $hoja->getCell('Y7')->getValue())->toBe(1758000.0)
+        // El comprobante se exporta en su propio módulo.
+        ->and($hoja->getHighestRow())->toBe(7);
+});
 
-    // Comprobante: CLIENTE/TERCERO y NIT después de CONCEPTO.
-    $comprobante = collect($hoja->toArray(null, false, false, false))
-        ->skipUntil(fn (array $fila): bool => $fila[0] === 'COMPROBANTE CONTABLE DE VENTAS')
-        ->values();
+test('el comprobante contable de ventas se exporta a Excel', function () {
+    $admin = User::factory()->create(['role' => User::ROLE_ADMINISTRADOR]);
+    turnosControlCaja();
 
-    expect(array_slice($comprobante[1], 0, 6))->toBe(['CUENTA', 'CONCEPTO', 'CLIENTE/TERCERO', 'NIT', 'DEBITO', 'CREDITO'])
-        ->and($comprobante->first(fn (array $fila): bool => $fila[2] === 'CONSORCIO LIDER'))
-        ->toMatchArray([1 => 'CARTERA CLIENTES', 3 => '900111222', 4 => 250000, 5 => null]);
+    $response = $this->actingAs($admin)
+        ->get(route('informes.comprobante-ventas.exportar', ['desde' => '2026-09-25', 'hasta' => '2026-09-30']))
+        ->assertOk()
+        ->assertDownload('comprobante-ventas-2026-09-25-a-2026-09-30.xlsx');
+
+    $archivo = tempnam(sys_get_temp_dir(), 'ventas').'.xlsx';
+    file_put_contents($archivo, $response->streamedContent());
+    $hoja = IOFactory::load($archivo)->getActiveSheet();
+    unlink($archivo);
+
+    $filas = collect($hoja->toArray(null, false, false, false));
+
+    expect($hoja->getCell('A1')->getValue())->toBe('COMPROBANTE CONTABLE DE VENTAS')
+        ->and($hoja->getCell('A2')->getValue())->toBe('DESDE 25/09/2026  HASTA 30/09/2026')
+        ->and(array_slice($filas[3], 0, 6))->toBe(['CUENTA', 'CONCEPTO', 'CLIENTE/TERCERO', 'NIT', 'DEBITO', 'CREDITO'])
+        ->and($filas->first(fn (array $fila): bool => $fila[2] === 'CONSORCIO LIDER'))
+        ->toMatchArray([0 => '13050501', 1 => 'CARTERA CLIENTES', 3 => '900111222', 4 => 250000, 5 => null])
+        ->and($filas->first(fn (array $fila): bool => $fila[1] === 'TOTALES'))
+        ->toMatchArray([4 => 2958000, 5 => 2958000]);
 });

@@ -218,88 +218,9 @@
         </div>
     </div>
 
-    <div class="row g-3">
-        <div class="col-12 col-xl-7">
-            <div class="card">
-                <div class="table-responsive">
-                    <table class="cc-tabla">
-                        <thead>
-                            <tr>
-                                <th colspan="6" class="cc-grupo" style="background:#ccccff;">COMPROBANTE CONTABLE DE VENTAS</th>
-                            </tr>
-                            <tr style="background:#ccccff;">
-                                <th>CUENTA</th>
-                                <th>CONCEPTO</th>
-                                <th>CLIENTE/TERCERO</th>
-                                <th>NIT</th>
-                                <th>DEBITO</th>
-                                <th>CREDITO</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach ($comprobante['lineas'] as $linea)
-                                <tr>
-                                    <td>{{ $linea['cuenta'] }}</td>
-                                    <td>{{ $linea['concepto'] }}</td>
-                                    <td>{{ $linea['tercero'] }}</td>
-                                    <td>{{ $linea['nit'] }}</td>
-                                    <td class="num">{{ $pesos($linea['debito']) }}</td>
-                                    <td class="num">{{ $pesos($linea['credito']) }}</td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                        <tfoot>
-                            <tr>
-                                <td colspan="4" class="text-end">TOTALES</td>
-                                <td class="num">{{ $pesosSiempre($comprobante['debito']) }}</td>
-                                <td class="num">{{ $pesosSiempre($comprobante['credito']) }}</td>
-                            </tr>
-                            <tr>
-                                <td colspan="4" class="text-end">DIFERENCIA</td>
-                                <td colspan="2" class="num {{ round($comprobante['diferencia']) != 0 ? 'cc-negativo' : '' }}">
-                                    {{ $pesosSiempre($comprobante['diferencia']) }}
-                                </td>
-                            </tr>
-                        </tfoot>
-                    </table>
-                </div>
-            </div>
-            @if (round($comprobante['diferencia']) != 0)
-                <div class="alert alert-warning mt-2 small d-print-none">
-                    El comprobante no cuadra: normalmente es un sobrante o faltante de alguna planilla que no se ha trasladado.
-                </div>
-            @endif
-        </div>
-
-        <div class="col-12 col-xl-5 d-print-none">
-            <details class="card">
-                <summary class="card-body py-2 fw-semibold small" style="cursor:pointer;">Cuentas contables del comprobante</summary>
-                <form method="POST" action="{{ route('informes.control-caja.cuentas') }}" class="card-body pt-0">
-                    @csrf
-                    <input type="hidden" name="desde" value="{{ $desde }}">
-                    <input type="hidden" name="hasta" value="{{ $hasta }}">
-                    <table class="table table-sm align-middle mb-2">
-                        <tbody>
-                            @foreach ($cuentas as $clave => $cuenta)
-                                <tr>
-                                    <td class="small">{{ $cuenta->descripcion }}</td>
-                                    <td style="width:9rem;">
-                                        <input type="text" name="cuentas[{{ $clave }}][cuenta]" class="form-control form-control-sm"
-                                            value="{{ $cuenta->cuenta }}" required maxlength="30">
-                                    </td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                    <button type="submit" class="btn btn-outline-primary btn-sm">Guardar cuentas</button>
-                </form>
-            </details>
-
-            <div class="small text-muted mt-2">
-                Ventas de combustible según cierres de IAPROPIADA. Costo de ventas: salidas al costo promedio de los
-                inventarios de gasolina, ACPM y canastilla. Recibido s/planilla: total recibido en el turno; recibido
-                s/lectura: venta según lecturas de surtidores más canastilla.
-            </div>
-        </div>
+    <div class="small text-muted d-print-none">
+        Ventas de combustible según cierres de IAPROPIADA. Recibido s/planilla: total recibido en el turno; recibido
+        s/lectura: venta según lecturas de surtidores más canastilla. El comprobante contable de ventas está en
+        <a href="{{ route('informes.comprobante-ventas.index', $rango) }}">Informes → Comprobante contable de ventas</a>.
     </div>
 @endsection
