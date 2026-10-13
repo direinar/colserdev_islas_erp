@@ -4,12 +4,13 @@ namespace App\Services;
 
 use App\Models\Compra;
 use App\Models\CompraLubricante;
+use App\Models\InventarioSaldoInicial;
 use App\Models\Turno;
 use App\Models\TurnoLubricante;
 use Illuminate\Support\Collection;
 
 /**
- * Kardex de inventario al costo promedio. Solo lee compras y planillas de turno:
+ * Kardex de inventario al costo promedio. Solo lee el saldo inicial, compras y planillas de turno:
  * el inventario no se edita, todas las correcciones se hacen en su origen.
  */
 class KardexInventarioService
@@ -28,7 +29,7 @@ class KardexInventarioService
      */
     public function gasolina(): array
     {
-        return $this->memoria['gasolina'] ??= $this->combustible('gasolina', 'distribucion_gasolina', 'tirillas_galones_corriente', 'tirillas_valor_corriente', 'precio_corriente');
+        return $this->memoria['gasolina'] ??= $this->combustible(InventarioSaldoInicial::GASOLINA, 'gasolina', 'distribucion_gasolina', 'tirillas_galones_corriente', 'tirillas_valor_corriente', 'precio_corriente');
     }
 
     /**
@@ -36,7 +37,54 @@ class KardexInventarioService
      */
     public function acpm(): array
     {
-        return $this->memoria['acpm'] ??= $this->combustible('acpm', 'distribucion_acpm', 'tirillas_galones_acpm', 'tirillas_valor_acpm', 'precio_acpm');
+        return $this->memoria['acpm'] ??= $this->combustible(InventarioSaldoInicial::ACPM, 'acpm', 'distribucion_acpm', 'tirillas_galones_acpm', 'tirillas_valor_acpm', 'precio_acpm');
+    }
+
+    /**
+     * Saldos iniciales cargados, por inventario y referencia ("gasolina|", "canastilla|MOBIL ...").
+     *
+     * @return Collection<string, InventarioSaldoInicial>
+     */
+    private function saldosIniciales(): Collection
+    {
+        return $this->memoria['saldos_iniciales'] ??= InventarioSaldoInicial::query()
+            ->get()
+            ->keyBy(fn (InventarioSaldoInicial $saldo): string => $saldo->inventario.'|'.$saldo->referencia);
+    }
+
+    /**
+     * Con saldo inicial, el kardex arranca en la fecha de corte: los movimientos anteriores
+     * no cuentan y el saldo inicial es la primera línea.
+     *
+     * @param  Collection<int, array<string, mixed>>  $movimientos
+     * @return Collection<int, array<string, mixed>>
+     */
+    private function conSaldoInicial(Collection $movimientos, ?InventarioSaldoInicial $saldo): Collection
+    {
+        if (! $saldo) {
+            return $movimientos;
+        }
+
+        $corte = $saldo->fecha_corte->format('Y-m-d');
+        $unidades = (float) $saldo->unidades;
+
+        return collect([[
+            'tipo' => 'saldo_inicial',
+            'numero_turno' => null,
+            'fecha_venta' => null,
+            'fecha_compra' => $corte,
+            'compra_id' => null,
+            'factura' => 'SALDO INICIAL',
+            'entradas' => $unidades,
+            'valor_entradas' => round($unidades * (float) $saldo->costo_unitario, 2),
+            'salidas' => 0.0,
+            'valor_venta' => 0.0,
+            'precio' => null,
+            // "!" ordena antes que las compras ("0") y las ventas ("1") del mismo día.
+            'orden' => $corte.'-!',
+        ]])->concat($movimientos->filter(
+            fn (array $movimiento): bool => ($movimiento['fecha_compra'] ?? $movimiento['fecha_venta']) >= $corte
+        ));
     }
 
     /**
@@ -105,13 +153,18 @@ class KardexInventarioService
                 })
                 ->values());
 
-        $referencias = $entradas->keys()->concat($salidas->keys())->filter()->unique()->sort()->values();
+        $saldos = $this->saldosIniciales()
+            ->filter(fn (InventarioSaldoInicial $saldo): bool => $saldo->inventario === InventarioSaldoInicial::CANASTILLA)
+            ->keyBy('referencia');
+
+        $referencias = $entradas->keys()->concat($salidas->keys())->concat($saldos->keys())->filter()->unique()->sort()->values();
 
         return $this->memoria['canastilla'] = $referencias
             ->mapWithKeys(fn (string $referencia): array => [
-                $referencia => $this->calcular(
-                    ($entradas->get($referencia) ?? collect())->concat($salidas->get($referencia) ?? collect())
-                ),
+                $referencia => $this->calcular($this->conSaldoInicial(
+                    ($entradas->get($referencia) ?? collect())->concat($salidas->get($referencia) ?? collect()),
+                    $saldos->get($referencia),
+                )),
             ])
             ->all();
     }
@@ -155,8 +208,12 @@ class KardexInventarioService
 
         $rows = $movimientos
             ->sortBy(fn (array $row): string => ($row['fecha_compra'] ?? $row['fecha_venta'])
-                .'-'.($row['tipo'] === 'compra' ? '0' : '1')
-                .'-'.sprintf('%010d', $row['compra_id'] ?? $row['numero_turno'])
+                .'-'.match ($row['tipo']) {
+                    'saldo_inicial' => '!',
+                    'compra' => '0',
+                    default => '1',
+                }
+                .'-'.sprintf('%010d', $row['compra_id'] ?? $row['numero_turno'] ?? 0)
                 .'-'.$row['referencia'])
             ->values()
             ->map(function (array $row) use (&$saldoUnidades, &$saldoValor, &$totales): array {
@@ -180,7 +237,7 @@ class KardexInventarioService
     /**
      * @return array{rows: list<array<string, mixed>>, totales: array<string, float>}
      */
-    private function combustible(string $columnaGalones, string $columnaCosto, string $columnaSalidas, string $columnaVenta, string $columnaPrecio): array
+    private function combustible(string $inventario, string $columnaGalones, string $columnaCosto, string $columnaSalidas, string $columnaVenta, string $columnaPrecio): array
     {
         $entradas = Compra::query()
             ->where(fn ($query) => $query->where($columnaGalones, '>', 0)->orWhere($columnaCosto, '>', 0))
@@ -204,7 +261,10 @@ class KardexInventarioService
                 (float) $turno->{$columnaPrecio},
             ));
 
-        return $this->calcular($entradas->concat($salidas));
+        return $this->calcular($this->conSaldoInicial(
+            $entradas->concat($salidas),
+            $this->saldosIniciales()->get($inventario.'|'),
+        ));
     }
 
     /**

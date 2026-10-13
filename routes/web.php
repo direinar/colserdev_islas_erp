@@ -22,6 +22,7 @@ use App\Http\Controllers\InformeSaldosController;
 use App\Http\Controllers\InventarioAcpmController;
 use App\Http\Controllers\InventarioGasolinaController;
 use App\Http\Controllers\InventarioLubricanteController;
+use App\Http\Controllers\InventarioSaldoInicialController;
 use App\Http\Controllers\LubricantController;
 use App\Http\Controllers\ProveedorController;
 use App\Http\Controllers\TurnoController;
@@ -136,6 +137,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         Route::get('/inventarios/lubricantes/control', [InventarioLubricanteController::class, 'control'])
             ->name('inventarios-lubricantes.control');
+
+        Route::get('/inventarios/saldos-iniciales', [InventarioSaldoInicialController::class, 'index'])
+            ->name('inventarios-saldos-iniciales.index');
+
+        Route::post('/inventarios/saldos-iniciales', [InventarioSaldoInicialController::class, 'store'])
+            ->name('inventarios-saldos-iniciales.store');
 
         Route::post('/control-tanques/saldo-inicial', [ControlTanqueController::class, 'guardarSaldoInicial'])
             ->name('control-tanques.saldo-inicial');

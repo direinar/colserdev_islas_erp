@@ -2,6 +2,7 @@
 
 use App\Models\Compra;
 use App\Models\CompraLubricante;
+use App\Models\InventarioSaldoInicial;
 use App\Models\Lubricant;
 use App\Models\Turno;
 use App\Models\User;
@@ -226,10 +227,81 @@ test('el kardex de canastilla consulta lo mismo sin importar cuántas referencia
         $kardex->canastilla($referencia);
     }
 
-    // Compras + líneas de canastilla + sus turnos, sin importar el número de referencias.
-    expect(count(DB::getQueryLog()))->toBeLessThanOrEqual(3)
+    // Saldos iniciales + compras + líneas de canastilla + sus turnos, sin importar el número de referencias.
+    expect(count(DB::getQueryLog()))->toBeLessThanOrEqual(4)
         ->and($control['totales']['salidas'])->toBe(6.0)
         ->and($kardex->referenciasCanastilla())->toBe(['A', 'B', 'C', 'D', 'E', 'F'])
         // Los informes de la misma petición comparten la instancia (y lo ya calculado).
         ->and(app(KardexInventarioService::class))->toBe($kardex);
+});
+
+test('el kardex de gasolina arranca con el saldo inicial y no cuenta los movimientos anteriores al corte', function () {
+    InventarioSaldoInicial::create(['inventario' => InventarioSaldoInicial::GASOLINA, 'fecha_corte' => '2026-09-20', 'unidades' => 1000, 'costo_unitario' => 9000]);
+    // Anterior al corte: no cuenta.
+    compraCombustible(['fecha' => '2026-09-10', 'factura' => '0999']);
+    compraCombustible(['fecha' => '2026-09-20', 'factura' => '1006']);
+    Turno::create(['fecha' => '2026-09-21', 'numero_turno' => 1, 'precio_corriente' => 16400, 'tirillas_galones_corriente' => 60, 'tirillas_valor_corriente' => 984000]);
+
+    $kardex = app(KardexInventarioService::class)->gasolina();
+    $filas = array_map(fn (array $fila): array => [$fila['tipo'], $fila['factura'], $fila['entradas'], $fila['salidas'], round($fila['valor_entradas']), round($fila['valor_salidas']), round($fila['promedio'])], $kardex['rows']);
+
+    // Promedio tras la compra: (9.000.000 + 30.000.000) / 4.000 galones = 9.750.
+    expect($filas)->toBe([
+        ['saldo_inicial', 'SALDO INICIAL', 1000.0, 0.0, 9000000.0, 0.0, 9000.0],
+        ['compra', '1006', 3000.0, 0.0, 30000000.0, 0.0, 9750.0],
+        ['venta', '', 0.0, 60.0, 0.0, 585000.0, 9750.0],
+    ])
+        ->and($kardex['totales']['saldo_unidades'])->toBe(3940.0)
+        ->and(round($kardex['totales']['valor_saldo']))->toBe(38415000.0);
+});
+
+test('el saldo inicial de canastilla abre el kardex de la referencia y suma en el control', function () {
+    $admin = User::factory()->create(['role' => User::ROLE_ADMINISTRADOR]);
+    Lubricant::create(['reference' => 'MOBIL 20W50', 'sale_price' => 50000, 'iva' => 0, 'total' => 50000, 'cost_price' => 30000, 'active' => true]);
+    InventarioSaldoInicial::create(['inventario' => InventarioSaldoInicial::CANASTILLA, 'referencia' => 'MOBIL 20W50', 'fecha_corte' => '2026-09-20', 'unidades' => 12, 'costo_unitario' => 30000]);
+
+    $kardex = app(KardexInventarioService::class)->canastilla('MOBIL 20W50');
+
+    expect($kardex['rows'][0])->toMatchArray(['tipo' => 'saldo_inicial', 'entradas' => 12.0, 'valor_entradas' => 360000.0])
+        ->and(app(KardexInventarioService::class)->canastillaControl()['totales'])->toMatchArray(['saldo_unidades' => 12.0, 'valor_saldo' => 360000.0]);
+
+    $this->actingAs($admin)->get(route('inventarios-lubricantes.create', ['producto' => 'MOBIL 20W50']))
+        ->assertOk()
+        ->assertSeeInOrder(['20/09/2026', 'SALDO INICIAL', '360.000']);
+});
+
+test('el administrador carga los saldos iniciales de inventario y el jefe de patios no accede', function () {
+    $admin = User::factory()->create(['role' => User::ROLE_ADMINISTRADOR]);
+    $jefe = User::factory()->create(['role' => User::ROLE_JEFE_PATIOS]);
+    Lubricant::create(['reference' => 'MOBIL 20W50', 'sale_price' => 50000, 'iva' => 0, 'total' => 50000, 'cost_price' => 30000, 'active' => true]);
+    InventarioSaldoInicial::create(['inventario' => InventarioSaldoInicial::ACPM, 'fecha_corte' => '2026-09-01', 'unidades' => 50, 'costo_unitario' => 8000]);
+
+    $this->actingAs($jefe)->get(route('inventarios-saldos-iniciales.index'))->assertForbidden();
+    $this->actingAs($admin)->get(route('inventarios-saldos-iniciales.index'))
+        ->assertOk()
+        ->assertSeeInOrder(['GASOLINA (CORRIENTE)', 'ACPM', 'MOBIL 20W50']);
+
+    $saldos = [
+        ['inventario' => 'gasolina', 'referencia' => '', 'unidades' => '1.500,5', 'costo_unitario' => '9.800'],
+        // En blanco: se borra el saldo que tenía.
+        ['inventario' => 'acpm', 'referencia' => '', 'unidades' => '', 'costo_unitario' => ''],
+        ['inventario' => 'canastilla', 'referencia' => 'MOBIL 20W50', 'unidades' => '12', 'costo_unitario' => '30.000'],
+    ];
+
+    $this->actingAs($admin)->post(route('inventarios-saldos-iniciales.store'), ['fecha_corte' => '2026-10-13', 'saldos' => $saldos])
+        ->assertRedirect(route('inventarios-saldos-iniciales.index'))
+        ->assertSessionHasNoErrors();
+
+    expect(InventarioSaldoInicial::query()->orderBy('inventario')->get()->map(fn ($s) => [$s->inventario, $s->referencia, $s->fecha_corte->format('Y-m-d'), (float) $s->unidades, (float) $s->costo_unitario])->all())
+        ->toBe([
+            ['canastilla', 'MOBIL 20W50', '2026-10-13', 12.0, 30000.0],
+            ['gasolina', '', '2026-10-13', 1500.5, 9800.0],
+        ]);
+
+    // Con cantidad pero sin costo no se guarda.
+    $saldos[0]['costo_unitario'] = '';
+    $this->actingAs($admin)->post(route('inventarios-saldos-iniciales.store'), ['fecha_corte' => '2026-10-13', 'saldos' => $saldos])
+        ->assertSessionHasErrors('saldos');
+
+    expect((float) InventarioSaldoInicial::query()->where('inventario', 'gasolina')->value('costo_unitario'))->toBe(9800.0);
 });

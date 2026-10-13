@@ -119,7 +119,7 @@
                     {{-- INVENTARIO --}}
                     @if ($user->isAdministrador() || $user->canAccessProveedores())
                         <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle {{ request()->is('fuel-prices*') || request()->is('lubricants*') || request()->is('proveedores*') || request()->is('bancos*') || request()->is('inventarios/gasolina*') || request()->is('inventarios/acpm*') || request()->is('inventarios/lubricantes*') ? 'active' : '' }}"
+                            <a class="nav-link dropdown-toggle {{ request()->is('fuel-prices*') || request()->is('lubricants*') || request()->is('proveedores*') || request()->is('bancos*') || request()->is('inventarios/gasolina*') || request()->is('inventarios/acpm*') || request()->is('inventarios/lubricantes*') || request()->is('inventarios/saldos-iniciales*') ? 'active' : '' }}"
                                 href="#" data-bs-toggle="dropdown">
                                 Inventario
                             </a>
@@ -144,6 +144,11 @@
                                     <li>
                                         <a class="dropdown-item" href="{{ route('inventarios-lubricantes.control') }}">
                                             Canastilla – control
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" href="{{ route('inventarios-saldos-iniciales.index') }}">
+                                            Saldos iniciales de inventario
                                         </a>
                                     </li>
                                     <li><hr class="dropdown-divider"></li>

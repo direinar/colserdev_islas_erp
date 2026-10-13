@@ -1,5 +1,5 @@
 {{--
-    Kardex de solo lectura. Todo se alimenta de la planilla de turnos (ventas) y de compras (entradas);
+    Kardex de solo lectura. Todo se alimenta del saldo inicial, la planilla de turnos (ventas) y compras (entradas);
     las correcciones se hacen allá, no aquí.
 
     Parámetros: $kardex (KardexInventarioService), $titulo, $unidad ('GALONES' | 'UNIDADES'), $compraRoute,
@@ -60,7 +60,9 @@
                             @endif
                         </td>
                         <td class="text-center">
-                            @if ($row['fecha_compra'])
+                            @if ($row['tipo'] === 'saldo_inicial')
+                                {{ \Illuminate\Support\Carbon::parse($row['fecha_compra'])->format('d/m/Y') }}
+                            @elseif ($row['fecha_compra'])
                                 <a href="{{ route($compraRoute, ['desde' => $row['fecha_compra'], 'hasta' => $row['fecha_compra']]) }}#compra-{{ $row['compra_id'] }}"
                                     class="text-decoration-none" title="Consultar la compra">{{ \Illuminate\Support\Carbon::parse($row['fecha_compra'])->format('d/m/Y') }}</a>
                             @elseif ($row['fecha_venta'])
