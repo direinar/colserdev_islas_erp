@@ -36,6 +36,31 @@
             background: #fff !important;
             border-color: #cfcfcf !important;
         }
+
+        .lubricantes-table .col-cantidad {
+            width: 64px;
+        }
+
+        .lubricantes-table .col-valor {
+            width: 100px;
+        }
+
+        .lubricantes-table .col-accion {
+            width: 1%;
+        }
+
+        .lubricantes-table abbr[title] {
+            text-decoration: none;
+            cursor: help;
+        }
+
+        .lubricantes-table .cantidad-input,
+        .lubricantes-table .valor-sin-iva-input,
+        .lubricantes-table .iva-input,
+        .lubricantes-table .total-input {
+            padding-left: 0.35rem;
+            padding-right: 0.35rem;
+        }
     </style>
 
     <div class="canastilla-toolbar">
@@ -52,12 +77,13 @@
                     <th colspan="5" class="text-center">VENTAS SEGÚN CIERRES DE IAPROPIADA</th>
                 </tr> --}}
                 <tr>
-                    <th style="width: 90px;">CANTIDAD</th>
+                    {{-- Cantidad para 4 dígitos y valores para 8 (99.999.999): el resto es para el nombre del producto. --}}
+                    <th class="col-cantidad"><abbr title="Cantidad">CANT.</abbr></th>
                     <th>PRODUCTO</th>
-                    <th class="text-end" style="width: 140px;">VR. SIN IVA</th>
-                    <th class="text-end" style="width: 120px;">IVA</th>
-                    <th class="text-end" style="width: 140px;">TOTAL</th>
-                    <th class="text-center" style="width: 90px;">ACCIÓN</th>
+                    <th class="text-end col-valor">VR. SIN IVA</th>
+                    <th class="text-end col-valor">IVA</th>
+                    <th class="text-end col-valor">TOTAL</th>
+                    <th class="text-center col-accion">ACCIÓN</th>
                 </tr>
             </thead>
             <tbody>

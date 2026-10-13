@@ -205,6 +205,9 @@ test('lubricantes table shows previously saved rows when consulting an existing 
     $response->assertOk();
     $response->assertSee('value="10"', false);
     $response->assertSee('MOBIL SUPER 20W50', false);
+    // Cantidad para 4 dígitos y valores para 8: el resto del ancho es para el nombre del producto.
+    $response->assertSeeInOrder(['<th class="col-cantidad">', '<th>PRODUCTO</th>', '<th class="text-end col-valor">VR. SIN IVA</th>', '<th class="text-end col-valor">IVA</th>', '<th class="text-end col-valor">TOTAL</th>', '<th class="text-center col-accion">ACCIÓN</th>'], false);
+    $response->assertSeeInOrder(['.lubricantes-table .col-cantidad {', 'width: 64px;', '.lubricantes-table .col-valor {', 'width: 100px;'], false);
     $response->assertSee('value="250.000"', false);
     $response->assertSee('value="47.500"', false);
     $response->assertSee('value="297.500"', false);
