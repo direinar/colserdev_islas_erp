@@ -79,6 +79,13 @@ test('el dashboard resume las planillas de turnos del rango', function () {
         ])
         ->and($resumen['productos'])->toBe([['producto' => 'UREA', 'cantidad' => 2, 'total' => 8000.0]])
         ->and($resumen['ultimos']->pluck('numero_turno')->all())->toBe([2, 1]);
+
+    // Galones vendidos por día: corriente, ACPM y la línea verde del total.
+    $this->actingAs($admin)
+        ->get(route('dashboard', ['desde' => '2026-10-01', 'hasta' => '2026-10-03']))
+        ->assertOk()
+        ->assertSee("linea('Total', periodos.map((p) => Math.round((p.galones_corriente + p.galones_acpm) * 1000) / 1000), color.totalGalones)", false)
+        ->assertSee("totalGalones: '#15803d'", false);
 });
 
 test('los rangos largos se agrupan por mes', function () {

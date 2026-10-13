@@ -168,7 +168,7 @@
                     </div>
                     <div class="card-body">
                         <div class="dashboard-chart">
-                            <canvas id="galonesChart" role="img" aria-label="Galones de corriente y ACPM por {{ $porDia ? 'día' : 'mes' }}; los datos están en la tabla de ventas"></canvas>
+                            <canvas id="galonesChart" role="img" aria-label="Galones de corriente, ACPM y total por {{ $porDia ? 'día' : 'mes' }}; los datos están en la tabla de ventas"></canvas>
                         </div>
                     </div>
                 </section>
@@ -276,6 +276,8 @@
                     gasolina: '#2a78d6',
                     acpm: '#eb6834',
                     canastilla: '#1baf7a',
+                    // Total de galones (corriente + ACPM).
+                    totalGalones: '#15803d',
                     tinta: '#3b4046',
                     tenue: '#6b7280',
                     rejilla: '#eceef1',
@@ -378,6 +380,7 @@
                         datasets: [
                             linea('Corriente', periodos.map((p) => p.galones_corriente), color.gasolina),
                             linea('ACPM', periodos.map((p) => p.galones_acpm), color.acpm),
+                            linea('Total', periodos.map((p) => Math.round((p.galones_corriente + p.galones_acpm) * 1000) / 1000), color.totalGalones),
                         ],
                     },
                     options: {
