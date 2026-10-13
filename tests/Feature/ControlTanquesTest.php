@@ -223,3 +223,23 @@ test('el control de tanques se exporta a Excel', function () {
         ->and((float) $hoja->getCell('I7')->getValue())->toBe(40.0)
         ->and((float) $hoja->getCell('N7')->getValue())->toBe(100.0);
 });
+
+test('el control de tanques se descarga en PDF y se puede compartir desde el módulo', function () {
+    $jefe = User::factory()->create(['role' => User::ROLE_JEFE_PATIOS]);
+    $islero = User::factory()->create(['role' => User::ROLE_ISLERO]);
+    TanqueSaldoInicial::create(['combustible' => 'corriente', 'fecha_corte' => '2026-09-01', 'galones' => 3350]);
+
+    $this->actingAs($jefe)->get(route('control-tanques.index', ['desde' => '2026-09-01', 'hasta' => '2026-09-05']))
+        ->assertSee(route('control-tanques.pdf', ['desde' => '2026-09-01', 'hasta' => '2026-09-05']))
+        ->assertSee('id="compartir-pdf"', false);
+
+    $pdf = $this->actingAs($jefe)
+        ->get(route('control-tanques.pdf', ['desde' => '2026-09-01', 'hasta' => '2026-09-05']))
+        ->assertOk()
+        ->assertDownload('control-de-tanques-2026-09-01-a-2026-09-05.pdf');
+
+    expect($pdf->headers->get('content-type'))->toBe('application/pdf')
+        ->and(substr((string) $pdf->getContent(), 0, 5))->toBe('%PDF-');
+
+    $this->actingAs($islero)->get(route('control-tanques.pdf'))->assertForbidden();
+});

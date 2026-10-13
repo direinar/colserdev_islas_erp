@@ -8,8 +8,10 @@ use App\Services\ControlTanquesExcelService;
 use App\Services\ControlTanquesService;
 use App\Support\DescargaExcel;
 use App\Support\NumberParser;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
@@ -30,6 +32,21 @@ class ControlTanqueController extends Controller
             'desde' => $desde,
             'hasta' => $hasta,
         ] + $controlTanques->informe($desde, $hasta));
+    }
+
+    /**
+     * El informe en PDF (horizontal), para descargarlo o compartirlo por WhatsApp desde el módulo.
+     */
+    public function pdf(Request $request, ControlTanquesService $controlTanques): Response
+    {
+        [$desde, $hasta] = $this->rango($request);
+
+        return Pdf::loadView('control-tanques.pdf', [
+            'desde' => $desde,
+            'hasta' => $hasta,
+        ] + $controlTanques->informe($desde, $hasta))
+            ->setPaper('letter', 'landscape')
+            ->download('control-de-tanques-'.$desde.'-a-'.$hasta.'.pdf');
     }
 
     /**

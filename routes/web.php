@@ -76,6 +76,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         Route::get('/control-tanques/exportar', [ControlTanqueController::class, 'exportar'])
             ->name('control-tanques.exportar');
+
+        Route::get('/control-tanques/pdf', [ControlTanqueController::class, 'pdf'])
+            ->name('control-tanques.pdf');
     });
 
     Route::middleware($administracion)->group(function () {

@@ -167,11 +167,59 @@
         <button type="button" class="btn btn-outline-light btn-sm" onclick="window.print()">
             <i class="bi bi-printer" aria-hidden="true"></i> IMPRIMIR
         </button>
+        <a href="{{ route('control-tanques.pdf', ['desde' => $desde, 'hasta' => $hasta]) }}"
+            class="btn btn-outline-light btn-sm">
+            <i class="bi bi-file-earmark-pdf" aria-hidden="true"></i> PDF
+        </a>
         <a href="{{ route('control-tanques.exportar', ['desde' => $desde, 'hasta' => $hasta]) }}"
             class="btn btn-outline-light btn-sm">
             <i class="bi bi-file-earmark-excel" aria-hidden="true"></i> EXCEL
         </a>
+        <button type="button" class="btn btn-outline-light btn-sm" id="compartir-pdf"
+            data-url="{{ route('control-tanques.pdf', ['desde' => $desde, 'hasta' => $hasta]) }}"
+            data-archivo="control-de-tanques-{{ $desde }}-a-{{ $hasta }}.pdf">
+            <i class="bi bi-whatsapp" aria-hidden="true"></i> COMPARTIR
+        </button>
     </x-page-header>
+
+    <script>
+        // Comparte el PDF con el menú del celular (WhatsApp → el grupo). Si el navegador no
+        // permite compartir archivos (p. ej. en el computador), se descarga para adjuntarlo a mano.
+        document.getElementById('compartir-pdf')?.addEventListener('click', async function() {
+            const boton = this;
+            boton.disabled = true;
+
+            try {
+                const respuesta = await fetch(boton.dataset.url, { credentials: 'same-origin' });
+                if (!respuesta.ok) throw new Error('No se pudo generar el PDF.');
+
+                const archivo = new File([await respuesta.blob()], boton.dataset.archivo, { type: 'application/pdf' });
+
+                if (navigator.canShare && navigator.canShare({ files: [archivo] })) {
+                    await navigator.share({ files: [archivo], title: 'Informe de control de tanques' });
+                } else {
+                    const enlace = document.createElement('a');
+                    enlace.href = URL.createObjectURL(archivo);
+                    enlace.download = archivo.name;
+                    enlace.click();
+                    URL.revokeObjectURL(enlace.href);
+                    Swal.fire({
+                        title: 'PDF descargado',
+                        text: 'Este navegador no permite compartir archivos directamente. Adjunte el PDF descargado en el grupo de WhatsApp. Desde el celular, COMPARTIR abre WhatsApp directamente.',
+                        icon: 'info',
+                        confirmButtonText: 'Entendido',
+                    });
+                }
+            } catch (error) {
+                // Cancelar el menú de compartir no es un error.
+                if (error.name !== 'AbortError') {
+                    Swal.fire({ title: 'No se pudo compartir', text: error.message, icon: 'error', confirmButtonText: 'Entendido' });
+                }
+            } finally {
+                boton.disabled = false;
+            }
+        });
+    </script>
 
     @if (session('success'))
         <div class="alert alert-success d-print-none">{{ session('success') }}</div>
