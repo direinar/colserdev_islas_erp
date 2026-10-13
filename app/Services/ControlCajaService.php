@@ -152,14 +152,16 @@ class ControlCajaService
      * @param  Collection<int, Turno>  $turnos
      * @param  array<string, mixed>  $totales
      * @param  Collection<string, ComprobanteVentaCuenta>  $cuentas
-     * @return array{lineas: list<array{cuenta: string, concepto: string, debito: float, credito: float}>, debito: float, credito: float, diferencia: float}
+     * @return array{lineas: list<array{cuenta: string, concepto: string, tercero: string, nit: string, debito: float, credito: float}>, debito: float, credito: float, diferencia: float}
      */
     private function comprobante(Collection $turnos, array $totales, Collection $cuentas, string $desde, string $hasta): array
     {
         $cuenta = fn (string $clave): string => (string) $cuentas->get($clave)?->cuenta;
-        $linea = fn (string $clave, string $concepto, float $debito, float $credito): array => [
+        $linea = fn (string $clave, string $concepto, float $debito, float $credito, string $tercero = '', string $nit = ''): array => [
             'cuenta' => $cuenta($clave),
             'concepto' => $concepto,
+            'tercero' => $tercero,
+            'nit' => $nit,
             'debito' => round($debito, 0),
             'credito' => round($credito, 0),
         ];
@@ -196,36 +198,42 @@ class ControlCajaService
     }
 
     /**
-     * Una línea por cliente: ventas a crédito al débito y recaudos y anticipos de islas al crédito.
+     * Una línea por cliente (con su nombre y NIT como tercero): ventas a crédito al débito y
+     * recaudos y anticipos de islas al crédito.
      *
      * @param  Collection<int, Turno>  $turnos
-     * @return list<array{cuenta: string, concepto: string, debito: float, credito: float}>
+     * @return list<array{cuenta: string, concepto: string, tercero: string, nit: string, debito: float, credito: float}>
      */
     private function carteraPorCliente(Collection $turnos, callable $linea): array
     {
         $clientes = [];
+        $acumular = function (TurnoCartera|TurnoRecaudo $movimiento, string $lado) use (&$clientes): void {
+            $clave = (string) ($movimiento->cliente_id ?? '');
+            $clientes[$clave] ??= [
+                'tercero' => $movimiento->cliente?->name ?? 'SIN CLIENTE',
+                'nit' => (string) ($movimiento->cliente?->document ?? ''),
+                'debito' => 0.0,
+                'credito' => 0.0,
+            ];
+            $clientes[$clave][$lado] += (float) $movimiento->valor;
+        };
 
         foreach ($turnos as $turno) {
             foreach ($turno->cartera as $venta) {
-                /** @var TurnoCartera $venta */
-                $nombre = $venta->cliente?->name ?? 'SIN CLIENTE';
-                $clientes[$nombre]['debito'] = ($clientes[$nombre]['debito'] ?? 0) + (float) $venta->valor;
+                $acumular($venta, 'debito');
             }
 
             foreach ($turno->recaudos as $recaudo) {
-                /** @var TurnoRecaudo $recaudo */
-                $nombre = $recaudo->cliente?->name ?? 'SIN CLIENTE';
-                $clientes[$nombre]['credito'] = ($clientes[$nombre]['credito'] ?? 0) + (float) $recaudo->valor;
+                $acumular($recaudo, 'credito');
             }
         }
 
-        ksort($clientes);
+        uasort($clientes, fn (array $a, array $b): int => strcmp($a['tercero'], $b['tercero']));
 
-        return array_map(
-            fn (string $nombre, array $valores): array => $linea('cartera_clientes', 'CARTERA: '.$nombre, $valores['debito'] ?? 0, $valores['credito'] ?? 0),
-            array_keys($clientes),
+        return array_values(array_map(
+            fn (array $cliente): array => $linea('cartera_clientes', 'CARTERA CLIENTES', $cliente['debito'], $cliente['credito'], $cliente['tercero'], $cliente['nit']),
             $clientes,
-        );
+        ));
     }
 
     /**

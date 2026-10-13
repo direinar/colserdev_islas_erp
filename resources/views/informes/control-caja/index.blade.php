@@ -225,11 +225,13 @@
                     <table class="cc-tabla">
                         <thead>
                             <tr>
-                                <th colspan="4" class="cc-grupo" style="background:#ccccff;">COMPROBANTE CONTABLE DE VENTAS</th>
+                                <th colspan="6" class="cc-grupo" style="background:#ccccff;">COMPROBANTE CONTABLE DE VENTAS</th>
                             </tr>
                             <tr style="background:#ccccff;">
                                 <th>CUENTA</th>
                                 <th>CONCEPTO</th>
+                                <th>CLIENTE/TERCERO</th>
+                                <th>NIT</th>
                                 <th>DEBITO</th>
                                 <th>CREDITO</th>
                             </tr>
@@ -239,6 +241,8 @@
                                 <tr>
                                     <td>{{ $linea['cuenta'] }}</td>
                                     <td>{{ $linea['concepto'] }}</td>
+                                    <td>{{ $linea['tercero'] }}</td>
+                                    <td>{{ $linea['nit'] }}</td>
                                     <td class="num">{{ $pesos($linea['debito']) }}</td>
                                     <td class="num">{{ $pesos($linea['credito']) }}</td>
                                 </tr>
@@ -246,12 +250,12 @@
                         </tbody>
                         <tfoot>
                             <tr>
-                                <td colspan="2" class="text-end">TOTALES</td>
+                                <td colspan="4" class="text-end">TOTALES</td>
                                 <td class="num">{{ $pesosSiempre($comprobante['debito']) }}</td>
                                 <td class="num">{{ $pesosSiempre($comprobante['credito']) }}</td>
                             </tr>
                             <tr>
-                                <td colspan="2" class="text-end">DIFERENCIA</td>
+                                <td colspan="4" class="text-end">DIFERENCIA</td>
                                 <td colspan="2" class="num {{ round($comprobante['diferencia']) != 0 ? 'cc-negativo' : '' }}">
                                     {{ $pesosSiempre($comprobante['diferencia']) }}
                                 </td>

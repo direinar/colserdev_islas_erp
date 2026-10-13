@@ -92,28 +92,29 @@ test('el comprobante contable de ventas del periodo cuadra débitos y créditos'
     $admin = User::factory()->create(['role' => User::ROLE_ADMINISTRADOR]);
     turnosControlCaja();
 
-    $comprobante = $this->actingAs($admin)
+    $response = $this->actingAs($admin)
         ->get(route('informes.control-caja.index', ['desde' => '2026-09-25', 'hasta' => '2026-09-30']))
-        ->viewData('comprobante');
+        ->assertSeeInOrder(['<th>CONCEPTO</th>', '<th>CLIENTE/TERCERO</th>', '<th>NIT</th>', '<th>DEBITO</th>'], false);
+    $comprobante = $response->viewData('comprobante');
 
     $lineas = array_map(fn (array $linea): array => array_values($linea), $comprobante['lineas']);
 
     expect($lineas)->toBe([
-        ['11050501', 'CONSIGNACIONES, TC, QR Y TRANSF.', 1410000.0, 0.0],
-        ['413601', 'DESCUENTOS EN VENTAS', 30000.0, 0.0],
-        ['519535', 'GASTOS DE GASOLINA EDS', 15000.0, 0.0],
-        ['11050501', 'VARIOS', 68000.0, 0.0],
-        ['11050501', 'FALT/SOBRANT/DIF. MENORES', 55000.0, 0.0],
-        ['13050501', 'CARTERA: ARKATEC', 0.0, 20000.0],
-        ['13050501', 'CARTERA: CONSORCIO LIDER', 250000.0, 50000.0],
-        ['41350701', 'VENTAS COMBUSTIBLE', 0.0, 1726000.0],
+        ['11050501', 'CONSIGNACIONES, TC, QR Y TRANSF.', '', '', 1410000.0, 0.0],
+        ['413601', 'DESCUENTOS EN VENTAS', '', '', 30000.0, 0.0],
+        ['519535', 'GASTOS DE GASOLINA EDS', '', '', 15000.0, 0.0],
+        ['11050501', 'VARIOS', '', '', 68000.0, 0.0],
+        ['11050501', 'FALT/SOBRANT/DIF. MENORES', '', '', 55000.0, 0.0],
+        ['13050501', 'CARTERA CLIENTES', 'ARKATEC', '900333444', 0.0, 20000.0],
+        ['13050501', 'CARTERA CLIENTES', 'CONSORCIO LIDER', '900111222', 250000.0, 50000.0],
+        ['41350701', 'VENTAS COMBUSTIBLE', '', '', 0.0, 1726000.0],
         // Costo al promedio de las salidas según cortes: 70 gal gasolina x 10.000 + 60 gal ACPM x 8.000.
-        ['41350801', 'COSTO DE VENTAS DE COMBUSTIBLE', 1180000.0, 0.0],
-        ['143508', 'INVENTARIOS DE COMBUSTIBLES', 0.0, 1180000.0],
-        ['41351001', 'VENTAS DE CANASTILLA', 0.0, 26890.0],
-        ['41351002', 'COSTO DE VENTAS CANASTILLA', 20000.0, 0.0],
-        ['143509', 'INVENTARIOS DE CANASTILLA', 0.0, 20000.0],
-        ['23670501', 'IVA POR PAGAR', 0.0, 5110.0],
+        ['41350801', 'COSTO DE VENTAS DE COMBUSTIBLE', '', '', 1180000.0, 0.0],
+        ['143508', 'INVENTARIOS DE COMBUSTIBLES', '', '', 0.0, 1180000.0],
+        ['41351001', 'VENTAS DE CANASTILLA', '', '', 0.0, 26890.0],
+        ['41351002', 'COSTO DE VENTAS CANASTILLA', '', '', 20000.0, 0.0],
+        ['143509', 'INVENTARIOS DE CANASTILLA', '', '', 0.0, 20000.0],
+        ['23670501', 'IVA POR PAGAR', '', '', 0.0, 5110.0],
     ])
         ->and($comprobante['debito'])->toBe(3028000.0)
         ->and($comprobante['credito'])->toBe(3028000.0)
@@ -154,4 +155,13 @@ test('el informe control caja se exporta a Excel', function () {
         ->and($hoja->getCell('T5')->getValue())->toBe('PAPELERIA / TAXI')
         ->and($hoja->getCell('B7')->getValue())->toBe('TOTALES')
         ->and((float) $hoja->getCell('Y7')->getValue())->toBe(1758000.0);
+
+    // Comprobante: CLIENTE/TERCERO y NIT después de CONCEPTO.
+    $comprobante = collect($hoja->toArray(null, false, false, false))
+        ->skipUntil(fn (array $fila): bool => $fila[0] === 'COMPROBANTE CONTABLE DE VENTAS')
+        ->values();
+
+    expect(array_slice($comprobante[1], 0, 6))->toBe(['CUENTA', 'CONCEPTO', 'CLIENTE/TERCERO', 'NIT', 'DEBITO', 'CREDITO'])
+        ->and($comprobante->first(fn (array $fila): bool => $fila[2] === 'CONSORCIO LIDER'))
+        ->toMatchArray([1 => 'CARTERA CLIENTES', 3 => '900111222', 4 => 250000, 5 => 50000]);
 });

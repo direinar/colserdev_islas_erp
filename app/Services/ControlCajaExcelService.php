@@ -71,29 +71,33 @@ class ControlCajaExcelService
         $inicio = $fila + 3;
         $hoja->setCellValue("A{$inicio}", 'COMPROBANTE CONTABLE DE VENTAS');
         $hoja->getStyle("A{$inicio}")->getFont()->setBold(true);
-        $hoja->fromArray(['CUENTA', 'CONCEPTO', 'DEBITO', 'CREDITO'], null, 'A'.($inicio + 1));
-        $hoja->getStyle('A'.($inicio + 1).':D'.($inicio + 1))->getFont()->setBold(true);
-        $hoja->getStyle('A'.($inicio + 1).':D'.($inicio + 1))->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('CCCCFF');
+        $hoja->fromArray(['CUENTA', 'CONCEPTO', 'CLIENTE/TERCERO', 'NIT', 'DEBITO', 'CREDITO'], null, 'A'.($inicio + 1));
+        $hoja->getStyle('A'.($inicio + 1).':F'.($inicio + 1))->getFont()->setBold(true);
+        $hoja->getStyle('A'.($inicio + 1).':F'.($inicio + 1))->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('CCCCFF');
 
         $fila = $inicio + 1;
         foreach ($informe['comprobante']['lineas'] as $linea) {
             $fila++;
             $hoja->setCellValueExplicit("A{$fila}", $linea['cuenta'], DataType::TYPE_STRING);
             $hoja->setCellValue("B{$fila}", $linea['concepto']);
-            $hoja->setCellValue("C{$fila}", $linea['debito'] ?: null);
-            $hoja->setCellValue("D{$fila}", $linea['credito'] ?: null);
+            $hoja->setCellValue("C{$fila}", $linea['tercero']);
+            // El NIT como texto, para que Excel no le quite ceros ni lo vuelva número.
+            $hoja->setCellValueExplicit("D{$fila}", $linea['nit'], DataType::TYPE_STRING);
+            $hoja->setCellValue("E{$fila}", $linea['debito'] ?: null);
+            $hoja->setCellValue("F{$fila}", $linea['credito'] ?: null);
         }
         $fila++;
-        $hoja->fromArray(['', 'TOTALES', $informe['comprobante']['debito'], $informe['comprobante']['credito']], null, 'A'.$fila);
-        $hoja->fromArray(['', 'DIFERENCIA', $informe['comprobante']['diferencia']], null, 'A'.($fila + 1));
-        $hoja->getStyle("A{$fila}:D".($fila + 1))->getFont()->setBold(true);
-        $hoja->getStyle('C'.($inicio + 2).':D'.($fila + 1))->getNumberFormat()->setFormatCode(self::FORMATO_PESOS);
-        $hoja->getStyle('A'.($inicio + 1).":D{$fila}")->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
+        $hoja->fromArray(['', 'TOTALES', '', '', $informe['comprobante']['debito'], $informe['comprobante']['credito']], null, 'A'.$fila);
+        $hoja->fromArray(['', 'DIFERENCIA', '', '', $informe['comprobante']['diferencia']], null, 'A'.($fila + 1));
+        $hoja->getStyle("A{$fila}:F".($fila + 1))->getFont()->setBold(true);
+        $hoja->getStyle('E'.($inicio + 2).':F'.($fila + 1))->getNumberFormat()->setFormatCode(self::FORMATO_PESOS);
+        $hoja->getStyle('A'.($inicio + 1).":F{$fila}")->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
 
         foreach (range(1, count($encabezados)) as $columna) {
             $hoja->getColumnDimension(Coordinate::stringFromColumnIndex($columna))->setWidth(14);
         }
         $hoja->getColumnDimension('B')->setWidth(36);
+        $hoja->getColumnDimension('C')->setWidth(30);
 
         return $libro;
     }
