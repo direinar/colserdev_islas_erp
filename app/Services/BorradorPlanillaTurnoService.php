@@ -43,8 +43,8 @@ class BorradorPlanillaTurnoService
             ? $turno
             : (Turno::query()->where('numero_turno', $numero)->first() ?? new Turno([
                 'numero_turno' => $numero,
-                'precio_corriente' => (float) FuelPrice::activePriceOn('Gasolina', $fecha),
-                'precio_acpm' => (float) FuelPrice::activePriceOn('ACPM', $fecha),
+                'precio_corriente' => (float) FuelPrice::precioParaTurno('Gasolina', $numero),
+                'precio_acpm' => (float) FuelPrice::precioParaTurno('ACPM', $numero),
             ]));
 
         $borrador->fill([

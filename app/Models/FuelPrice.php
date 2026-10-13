@@ -9,22 +9,27 @@ class FuelPrice extends Model
     protected $fillable = [
         'name',
         'price',
+        'turno_desde',
         'effective_date',
         'active',
     ];
 
+    protected $casts = [
+        'turno_desde' => 'integer',
+    ];
+
     /**
-     * Precio activo vigente para un combustible en una fecha dada.
-     * Permite que cada turno quede ligado al precio que regía ese día,
-     * incluso si luego se registra un cambio de precio posterior.
+     * Precio activo para un combustible en una planilla. Rige desde un número de turno
+     * (consecutivo global) y no desde una fecha, porque en un mismo día el precio puede
+     * cambiar entre un turno y otro.
      */
-    public static function activePriceOn(string $name, $date): ?float
+    public static function precioParaTurno(string $name, int $numeroTurno): ?float
     {
         $price = static::query()
             ->where('name', $name)
             ->where('active', true)
-            ->whereDate('effective_date', '<=', $date)
-            ->orderByDesc('effective_date')
+            ->where('turno_desde', '<=', $numeroTurno)
+            ->orderByDesc('turno_desde')
             ->orderByDesc('id')
             ->value('price');
 

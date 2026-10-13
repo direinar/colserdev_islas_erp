@@ -30,7 +30,8 @@
                             <th>ID</th>
                             <th>Nombre</th>
                             <th>Precio</th>
-                            <th>Fecha Vigencia</th>
+                            <th>Rige desde el turno</th>
+                            <th>Fecha del cambio</th>
                             <th>Activo</th>
                             <th width="220">Acciones</th>
 
@@ -51,6 +52,10 @@
 
                                 <td>
                                     $ {{ number_format($fuel->price, 2, ',', '.') }}
+                                </td>
+
+                                <td>
+                                    {{ $fuel->turno_desde ? str_pad($fuel->turno_desde, 3, '0', STR_PAD_LEFT) : '—' }}
                                 </td>
 
                                 <td>
@@ -82,7 +87,7 @@
 
                             <tr>
 
-                                <td colspan="6" class="text-center">
+                                <td colspan="7" class="text-center">
 
                                     No hay registros
 

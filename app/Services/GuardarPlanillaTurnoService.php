@@ -44,10 +44,10 @@ class GuardarPlanillaTurnoService
                 // El vendedor es quien registró la planilla; si otro la corrige, no se reemplaza.
                 'nombre_vendedor' => $turno?->nombre_vendedor ?: $usuario->name,
                 'observaciones' => $datos['observaciones'] ?? null,
-                // Sin fallback a config(): el precio debe salir de un registro vigente
-                // en Precios de Combustible; si no existe, queda en 0.
-                'precio_corriente' => (float) FuelPrice::activePriceOn('Gasolina', $datos['fecha']),
-                'precio_acpm' => (float) FuelPrice::activePriceOn('ACPM', $datos['fecha']),
+                // El precio rige desde un número de turno en Precios de Combustible (no
+                // desde una fecha). Sin fallback a config(): si no hay registro, queda en 0.
+                'precio_corriente' => (float) FuelPrice::precioParaTurno('Gasolina', (int) $datos['numero_turno']),
+                'precio_acpm' => (float) FuelPrice::precioParaTurno('ACPM', (int) $datos['numero_turno']),
                 // Estado del traslado de sobrante/faltante (botón TRASLADAR en
                 // sobrantes.blade.php): debe persistir para que el resumen no
                 // vuelva a mostrar el faltante/sobrante original al recargar.

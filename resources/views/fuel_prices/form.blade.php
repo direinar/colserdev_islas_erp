@@ -6,7 +6,7 @@
             Nombre
         </label>
 
-        {{-- Fijo a "Gasolina"/"ACPM": son los nombres que FuelPrice::activePriceOn()
+        {{-- Fijo a "Gasolina"/"ACPM": son los nombres que FuelPrice::precioParaTurno()
              busca al calcular el precio vigente de cada turno (ver TurnoController
              y planillas/turnos/create.blade.php). Un nombre libre rompería ese cálculo. --}}
         <select id="campo-name" name="name" class="form-select" required>
@@ -44,18 +44,40 @@
 
 <div class="row">
 
-    <div class="col-md-6 mb-3">
+    {{-- El precio rige desde un número de turno (no desde una fecha): en un mismo día
+         el precio puede cambiar entre un turno y otro. --}}
+    <div class="col-md-4 mb-3">
 
-        <label for="campo-effective_date" class="form-label">
-            Fecha Vigencia
+        <label for="campo-turno_desde" class="form-label">
+            Rige desde el turno N°
         </label>
 
-        <input id="campo-effective_date" type="date" name="effective_date" class="form-control"
-            value="{{ old('effective_date', $fuelPrice->effective_date ?? '') }}">
+        <input id="campo-turno_desde" type="number" min="1" step="1" name="turno_desde" class="form-control"
+            value="{{ old('turno_desde', $fuelPrice->turno_desde ?? $siguienteTurno ?? '') }}" required
+            aria-describedby="ayuda-turno_desde">
+
+        <div id="ayuda-turno_desde" class="form-text">
+            Primera planilla de turno que se liquida con este precio.
+        </div>
 
     </div>
 
-    <div class="col-md-6 mb-3">
+    <div class="col-md-4 mb-3">
+
+        <label for="campo-effective_date" class="form-label">
+            Fecha del cambio
+        </label>
+
+        <input id="campo-effective_date" type="date" name="effective_date" class="form-control"
+            value="{{ old('effective_date', $fuelPrice->effective_date ?? '') }}" aria-describedby="ayuda-effective_date">
+
+        <div id="ayuda-effective_date" class="form-text">
+            Solo informativa.
+        </div>
+
+    </div>
+
+    <div class="col-md-4 mb-3">
 
         <label for="campo-active" class="form-label">
             Estado

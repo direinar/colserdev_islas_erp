@@ -122,7 +122,7 @@ test('el precio de combustible guarda solo los campos validados', function () {
     $admin = User::factory()->create(['role' => User::ROLE_ADMINISTRADOR]);
 
     $this->actingAs($admin)->post(route('fuel-prices.store'), [
-        'name' => 'Gasolina', 'price' => '16400', 'effective_date' => '2026-10-01', 'active' => '1',
+        'name' => 'Gasolina', 'price' => '16400', 'turno_desde' => '5', 'effective_date' => '2026-10-01', 'active' => '1',
         'id' => 999, 'created_at' => '2000-01-01',
     ])->assertSessionHas('success', 'Precio de combustible creado correctamente.');
 
@@ -130,7 +130,8 @@ test('el precio de combustible guarda solo los campos validados', function () {
 
     expect($precio->id)->not->toBe(999)
         ->and($precio->created_at->year)->not->toBe(2000)
-        ->and((float) $precio->price)->toBe(16400.0);
+        ->and((float) $precio->price)->toBe(16400.0)
+        ->and($precio->turno_desde)->toBe(5);
 });
 
 test('el seeder de administradores no cambia la clave de un usuario existente', function () {

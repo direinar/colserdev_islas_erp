@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\FuelPrice;
+use App\Models\Turno;
 use Illuminate\Http\Request;
 
 class FuelPriceController extends Controller
@@ -12,7 +13,7 @@ class FuelPriceController extends Controller
      */
     public function index()
     {
-        $fuels = FuelPrice::orderBy('effective_date', 'desc')->get();
+        $fuels = FuelPrice::orderByDesc('turno_desde')->orderByDesc('id')->get();
 
         return view('fuel_prices.index', compact('fuels'));
     }
@@ -22,7 +23,10 @@ class FuelPriceController extends Controller
      */
     public function create()
     {
-        return view('fuel_prices.create');
+        // Por defecto, el nuevo precio rige desde la próxima planilla que se registre.
+        $siguienteTurno = (int) Turno::max('numero_turno') + 1;
+
+        return view('fuel_prices.create', compact('siguienteTurno'));
     }
 
     /**
@@ -77,13 +81,14 @@ class FuelPriceController extends Controller
     /**
      * Solo se guardan los campos validados (antes se guardaba todo lo enviado).
      *
-     * @return array{name: string, price: numeric-string|float, effective_date?: string|null, active?: bool}
+     * @return array{name: string, price: numeric-string|float, turno_desde: int|string, effective_date?: string|null, active?: bool}
      */
     private function validar(Request $request): array
     {
         return $request->validate([
             'name' => 'required|string|in:Gasolina,ACPM',
             'price' => 'required|numeric|min:0',
+            'turno_desde' => 'required|integer|min:1',
             'effective_date' => 'nullable|date',
             'active' => 'boolean',
         ]);

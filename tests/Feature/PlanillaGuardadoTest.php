@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Customer;
+use App\Models\FuelPrice;
 use App\Models\Turno;
 use App\Models\User;
 
@@ -197,4 +198,30 @@ test('el sobrante o faltante pendiente se recalcula al guardar, también despué
         'traslado_faltante' => '2000',
     ]);
     expect((float) Turno::query()->sole()->sobrante_pendiente)->toBe(50000.0);
+});
+
+test('el precio del combustible rige desde un número de turno, aunque cambie entre turnos del mismo día', function () {
+    $admin = User::factory()->create(['role' => User::ROLE_ADMINISTRADOR]);
+    FuelPrice::create(['name' => 'Gasolina', 'price' => 16500, 'turno_desde' => 1, 'active' => true]);
+    FuelPrice::create(['name' => 'ACPM', 'price' => 9850, 'turno_desde' => 1, 'active' => true]);
+
+    guardarPlanilla($admin, 1);
+
+    // El precio de la gasolina cambia a partir del turno 2, el mismo día.
+    FuelPrice::create(['name' => 'Gasolina', 'price' => 17000, 'turno_desde' => 2, 'active' => true]);
+
+    // La planilla nueva (turno 2) ya muestra el precio nuevo.
+    $this->actingAs($admin)->get(route('turnos.create'))
+        ->assertOk()
+        ->assertSee('data-precio="17000"', false);
+
+    guardarPlanilla($admin, 2);
+    // Volver a guardar el turno 1 no le cambia el precio.
+    guardarPlanilla($admin, 1);
+
+    $turnos = Turno::query()->orderBy('numero_turno')->get();
+
+    expect($turnos->pluck('fecha')->map->toDateString()->unique()->all())->toBe(['2026-09-25'])
+        ->and($turnos->pluck('precio_corriente')->all())->toBe(['16500.00', '17000.00'])
+        ->and($turnos->pluck('precio_acpm')->all())->toBe(['9850.00', '9850.00']);
 });
