@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\FuelPrice;
 use App\Models\Turno;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 
 class FuelPriceController extends Controller
 {
@@ -14,8 +16,9 @@ class FuelPriceController extends Controller
     public function index()
     {
         $fuels = FuelPrice::orderByDesc('turno_desde')->orderByDesc('id')->get();
+        $usados = $fuels->filter(fn (FuelPrice $fuel): bool => $fuel->usadoEnPlanillas())->pluck('id');
 
-        return view('fuel_prices.index', compact('fuels'));
+        return view('fuel_prices.index', compact('fuels', 'usados'));
     }
 
     /**
@@ -53,6 +56,10 @@ class FuelPriceController extends Controller
      */
     public function edit(FuelPrice $fuelPrice)
     {
+        if ($fuelPrice->usadoEnPlanillas()) {
+            return $this->precioUsado();
+        }
+
         return view('fuel_prices.edit', compact('fuelPrice'));
     }
 
@@ -61,6 +68,10 @@ class FuelPriceController extends Controller
      */
     public function update(Request $request, FuelPrice $fuelPrice)
     {
+        if ($fuelPrice->usadoEnPlanillas()) {
+            return $this->precioUsado();
+        }
+
         $fuelPrice->update($this->validar($request));
 
         return redirect()->route('fuel-prices.index')
@@ -72,25 +83,46 @@ class FuelPriceController extends Controller
      */
     public function destroy(FuelPrice $fuelPrice)
     {
+        if ($fuelPrice->usadoEnPlanillas()) {
+            return $this->precioUsado();
+        }
+
         $fuelPrice->delete();
 
         return redirect()->route('fuel-prices.index')
             ->with('success', 'Precio de combustible eliminado correctamente.');
     }
 
+    private function precioUsado(): RedirectResponse
+    {
+        return redirect()->route('fuel-prices.index')
+            ->with('error', 'Este precio ya liquidó planillas guardadas y no se puede editar ni eliminar. Si el precio cambió, registre un precio nuevo desde el turno en que cambia.');
+    }
+
     /**
-     * Solo se guardan los campos validados (antes se guardaba todo lo enviado).
+     * Solo se guardan los campos validados (antes se guardaba todo lo enviado). Un precio
+     * no puede regir desde un turno que ya tiene una planilla revisada en adelante: le
+     * cambiaría el precio a una planilla cerrada.
      *
-     * @return array{name: string, price: numeric-string|float, turno_desde: int|string, effective_date?: string|null, active?: bool}
+     * @return array{name: string, price: numeric-string|float, turno_desde: int|string, effective_date?: string|null}
      */
     private function validar(Request $request): array
     {
-        return $request->validate([
+        $datos = $request->validate([
             'name' => 'required|string|in:Gasolina,ACPM',
             'price' => 'required|numeric|min:0',
             'turno_desde' => 'required|integer|min:1',
             'effective_date' => 'nullable|date',
-            'active' => 'boolean',
         ]);
+
+        $ultimaRevisada = (int) Turno::query()->where('revisado', true)->max('numero_turno');
+
+        if ((int) $datos['turno_desde'] <= $ultimaRevisada) {
+            throw ValidationException::withMessages([
+                'turno_desde' => 'La planilla del turno '.$ultimaRevisada.' ya está revisada: el precio debe regir desde el turno '.($ultimaRevisada + 1).' o uno posterior.',
+            ]);
+        }
+
+        return $datos;
     }
 }

@@ -35,4 +35,23 @@ class FuelPrice extends Model
 
         return $price !== null ? (float) $price : null;
     }
+
+    /**
+     * Si alguna planilla guardada cae en el rango de este precio (desde su turno hasta el
+     * siguiente cambio del mismo combustible). Un precio usado no se edita ni se elimina:
+     * el cambio se registra con un precio nuevo.
+     */
+    public function usadoEnPlanillas(): bool
+    {
+        $siguienteCambio = static::query()
+            ->where('name', $this->name)
+            ->where('active', true)
+            ->where('turno_desde', '>', $this->turno_desde)
+            ->min('turno_desde');
+
+        return Turno::query()
+            ->where('numero_turno', '>=', $this->turno_desde)
+            ->when($siguienteCambio, fn ($turnos) => $turnos->where('numero_turno', '<', $siguienteCambio))
+            ->exists();
+    }
 }

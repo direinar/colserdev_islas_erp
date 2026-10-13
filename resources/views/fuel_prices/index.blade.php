@@ -4,7 +4,7 @@
     <div class="container">
 
         <x-page-header title="Precios de combustible" icon="fuel-pump"
-            subtitle="Precio de venta vigente de gasolina y ACPM según su fecha de vigencia.">
+            subtitle="Precio de venta de gasolina y ACPM según el número de turno desde el que rige.">
             <a href="{{ route('fuel-prices.create') }}" class="btn btn-light">
                 <i class="bi bi-plus-circle" aria-hidden="true"></i> Nuevo registro
             </a>
@@ -13,6 +13,12 @@
         @if (session('success'))
             <div class="alert alert-success">
                 {{ session('success') }}
+            </div>
+        @endif
+
+        @if (session('error'))
+            <div class="alert alert-danger">
+                {{ session('error') }}
             </div>
         @endif
 
@@ -32,7 +38,7 @@
                             <th>Precio</th>
                             <th>Rige desde el turno</th>
                             <th>Fecha del cambio</th>
-                            <th>Activo</th>
+                            <th>Planillas</th>
                             <th width="220">Acciones</th>
 
                         </tr>
@@ -64,21 +70,26 @@
 
                                 <td>
 
-                                    @if ($fuel->active)
-                                        <span class="badge bg-success">
-                                            ACTIVO
+                                    {{-- Un precio que ya liquidó planillas no se edita ni se elimina. --}}
+                                    @if ($usados->contains($fuel->id))
+                                        <span class="badge bg-secondary">
+                                            EN USO
                                         </span>
                                     @else
-                                        <span class="badge bg-danger">
-                                            INACTIVO
+                                        <span class="badge bg-success">
+                                            SIN PLANILLAS
                                         </span>
                                     @endif
 
                                 </td>
 
                                 <td>
-                                    <x-action-buttons :showRoute="'fuel-prices.show'" :editRoute="'fuel-prices.edit'" :deleteRoute="'fuel-prices.destroy'"
-                                        :id="$fuel" />
+                                    @if ($usados->contains($fuel->id))
+                                        <x-action-buttons :showRoute="'fuel-prices.show'" :id="$fuel" />
+                                    @else
+                                        <x-action-buttons :showRoute="'fuel-prices.show'" :editRoute="'fuel-prices.edit'" :deleteRoute="'fuel-prices.destroy'"
+                                            :id="$fuel" />
+                                    @endif
                                 </td>
 
                             </tr>

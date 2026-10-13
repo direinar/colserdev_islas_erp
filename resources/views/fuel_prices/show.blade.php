@@ -78,32 +78,6 @@
                 <tr>
 
                     <th>
-                        Estado
-                    </th>
-
-                    <td>
-
-                        @if($fuelPrice->active)
-
-                            <span class="badge bg-success">
-                                ACTIVO
-                            </span>
-
-                        @else
-
-                            <span class="badge bg-danger">
-                                INACTIVO
-                            </span>
-
-                        @endif
-
-                    </td>
-
-                </tr>
-
-                <tr>
-
-                    <th>
                         Creado
                     </th>
 

@@ -134,6 +134,45 @@ test('el precio de combustible guarda solo los campos validados', function () {
         ->and($precio->turno_desde)->toBe(5);
 });
 
+test('un precio que ya liquidó planillas no se edita ni se elimina; uno sin planillas sí', function () {
+    $admin = User::factory()->create(['role' => User::ROLE_ADMINISTRADOR]);
+    $usado = FuelPrice::create(['name' => 'Gasolina', 'price' => 16500, 'turno_desde' => 1]);
+    $siguiente = FuelPrice::create(['name' => 'Gasolina', 'price' => 17000, 'turno_desde' => 5]);
+    Turno::create(['fecha' => '2026-10-01', 'numero_turno' => 3, 'nombre_vendedor' => 'Ana']);
+
+    $this->actingAs($admin)->get(route('fuel-prices.index'))
+        ->assertOk()
+        ->assertSeeInOrder(['17.000,00', 'SIN PLANILLAS', '16.500,00', 'EN USO'], false)
+        ->assertDontSee('Activo');
+    $this->actingAs($admin)->get(route('fuel-prices.edit', $usado))->assertSessionHas('error');
+    $this->actingAs($admin)->put(route('fuel-prices.update', $usado), ['name' => 'Gasolina', 'price' => '1', 'turno_desde' => '1'])
+        ->assertSessionHas('error');
+    $this->actingAs($admin)->delete(route('fuel-prices.destroy', $usado))->assertSessionHas('error');
+
+    expect((float) $usado->fresh()->price)->toBe(16500.0);
+
+    $this->actingAs($admin)->get(route('fuel-prices.edit', $siguiente))
+        ->assertOk()
+        ->assertDontSee('name="active"', false);
+    $this->actingAs($admin)->delete(route('fuel-prices.destroy', $siguiente))->assertSessionHas('success');
+
+    expect(FuelPrice::query()->whereKey($siguiente->id)->exists())->toBeFalse();
+});
+
+test('un precio no puede regir desde un turno con planilla revisada', function () {
+    $admin = User::factory()->create(['role' => User::ROLE_ADMINISTRADOR]);
+    Turno::create(['fecha' => '2026-10-01', 'numero_turno' => 4, 'nombre_vendedor' => 'Ana', 'revisado' => true]);
+    Turno::create(['fecha' => '2026-10-01', 'numero_turno' => 6, 'nombre_vendedor' => 'Ana']);
+
+    $this->actingAs($admin)->post(route('fuel-prices.store'), ['name' => 'ACPM', 'price' => '9900', 'turno_desde' => '4'])
+        ->assertSessionHasErrors('turno_desde');
+    // Una planilla guardada sin revisar sí puede tomar el precio nuevo al volver a guardarla.
+    $this->actingAs($admin)->post(route('fuel-prices.store'), ['name' => 'ACPM', 'price' => '9900', 'turno_desde' => '5'])
+        ->assertSessionHasNoErrors();
+
+    expect(FuelPrice::query()->sole()->turno_desde)->toBe(5);
+});
+
 test('el seeder de administradores no cambia la clave de un usuario existente', function () {
     $existente = User::factory()->create([
         'email' => 'diego.reina9@hotmail.com',

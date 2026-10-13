@@ -1,3 +1,13 @@
+@if ($errors->any())
+    <div class="alert alert-danger">
+        <ul class="mb-0">
+            @foreach ($errors->all() as $error)
+                <li>{{ $error }}</li>
+            @endforeach
+        </ul>
+    </div>
+@endif
+
 <div class="row">
 
     <div class="col-md-6 mb-3">
@@ -46,7 +56,7 @@
 
     {{-- El precio rige desde un número de turno (no desde una fecha): en un mismo día
          el precio puede cambiar entre un turno y otro. --}}
-    <div class="col-md-4 mb-3">
+    <div class="col-md-6 mb-3">
 
         <label for="campo-turno_desde" class="form-label">
             Rige desde el turno N°
@@ -62,7 +72,7 @@
 
     </div>
 
-    <div class="col-md-4 mb-3">
+    <div class="col-md-6 mb-3">
 
         <label for="campo-effective_date" class="form-label">
             Fecha del cambio
@@ -77,28 +87,6 @@
 
     </div>
 
-    <div class="col-md-4 mb-3">
-
-        <label for="campo-active" class="form-label">
-            Estado
-        </label>
-
-        <select id="campo-active" name="active" class="form-select">
-
-            <option value="1" {{ old('active', $fuelPrice->active ?? 1) == 1 ? 'selected' : '' }}>
-
-                Activo
-
-            </option>
-
-            <option value="0" {{ old('active', $fuelPrice->active ?? 1) == 0 ? 'selected' : '' }}>
-
-                Inactivo
-
-            </option>
-
-        </select>
-
-    </div>
-
 </div>
+
+{{-- Sin campo Estado: un precio deja de regir cuando se registra otro desde un turno posterior. --}}
