@@ -352,5 +352,8 @@ test('search still finds a turno by typing just the numero_turno', function () {
 
     $response->assertOk();
     $response->assertSee('value="004"', false);
+    // Fecha y turno se resaltan en rojo y más grandes.
+    $response->assertSee('id="turno-fecha" class="form-control form-control-sm d-inline-block w-auto dato-turno-destacado"', false);
+    $response->assertSee('id="turno-numero" class="form-control form-control-sm d-inline-block dato-turno-destacado"', false);
     $response->assertSee('value="'.$today.'"', false);
 });

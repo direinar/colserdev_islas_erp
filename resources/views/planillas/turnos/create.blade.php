@@ -292,7 +292,7 @@
 
                     <label class="fw-semibold mb-0" for="turno-fecha">FECHA:</label>
 
-                    <input type="date" name="fecha" id="turno-fecha" class="form-control form-control-sm d-inline-block w-auto"
+                    <input type="date" name="fecha" id="turno-fecha" class="form-control form-control-sm d-inline-block w-auto dato-turno-destacado"
                         value="{{ old('fecha', isset($turno) && $turno ? $turno->fecha->toDateString() : request('fecha', date('Y-m-d'))) }}" required>
 
                     <label class="fw-semibold mb-0" for="turno-numero">TURNO:</label>
@@ -302,7 +302,7 @@
                         $displayNumber = isset($turno) && $turno ? $turno->numero_turno : $nextNumber ?? 1;
                     @endphp
                     <input type="hidden" name="numero_turno" value="{{ $displayNumber }}">
-                    <input type="text" id="turno-numero" class="form-control form-control-sm d-inline-block" style="width: 80px"
+                    <input type="text" id="turno-numero" class="form-control form-control-sm d-inline-block dato-turno-destacado" style="width: 90px"
                         value="{{ str_pad($displayNumber, 3, '0', STR_PAD_LEFT) }}" readonly>
 
                 </div>
@@ -310,6 +310,15 @@
             </div>
 
         </div>
+
+        <style>
+            /* Fecha y número de turno resaltados para identificar la planilla de un vistazo. */
+            .dato-turno-destacado {
+                color: #d40000;
+                font-size: 1.15rem;
+                font-weight: 700;
+            }
+        </style>
 
         @if (session('success'))
             <div class="alert alert-success">
