@@ -24,9 +24,9 @@ class ControlTanquesExcelService
         'B:D' => 'E2EFDA',
         'E:F' => 'BFBFBF',
         'G:G' => 'E2EFDA',
-        'H:J' => 'C6E0B4',
-        'K:L' => '92D050',
-        'M:M' => 'C6E0B4',
+        'H:J' => 'DCEFD4',
+        'K:L' => 'CDE8C0',
+        'M:M' => 'DCEFD4',
         'N:O' => 'D6DCE4',
     ];
 
@@ -49,8 +49,8 @@ class ControlTanquesExcelService
         $hoja->mergeCells('N4:O4')->setCellValue('N4', 'SALDOS');
         $hoja->fromArray([
             'FECHA DE VENTA',
-            'INGRESO', 'VENTA', 'SALDO', 'AFORO S/VARA', 'SALDO FINAL S/TABLA AFORO', 'FALTANTE (SOBRANTE)',
-            'INGRESO', 'VENTA', 'SALDO', 'AFORO S/VARA', 'SALDO FINAL S/TABLA AFORO', 'FALTANTE (SOBRANTE)',
+            'INGRESO', 'VENTA', 'SALDO', 'AFORO S/VARA', 'SALDO FINAL S/TABLA AFORO', 'FALTANTE/SOBRANTE',
+            'INGRESO', 'VENTA', 'SALDO', 'AFORO S/VARA', 'SALDO FINAL S/TABLA AFORO', 'FALTANTE/SOBRANTE',
             'VR. VENTA DIARIA', 'VR. VENTA ACUMULADA',
         ], null, 'A5');
 
@@ -125,7 +125,7 @@ class ControlTanquesExcelService
             $combustible['saldo'],
             $combustible['vara'],
             $combustible['tabla'],
-            $combustible['faltante'],
+            $combustible['faltante_sobrante'],
         ];
     }
 }

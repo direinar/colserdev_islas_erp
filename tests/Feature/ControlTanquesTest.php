@@ -62,11 +62,12 @@ test('el control de tanques arma el saldo diario con compras, los cortes de IAPR
 
     [$dia25, $dia26, $dia27] = $response->viewData('filas');
 
-    expect($dia25['corriente'])->toMatchArray(['ingreso' => 0.0, 'venta' => 104.0, 'saldo' => 4046.0, 'faltante' => null])
+    expect($dia25['corriente'])->toMatchArray(['ingreso' => 0.0, 'venta' => 104.0, 'saldo' => 4046.0, 'faltante_sobrante' => null])
         ->and($dia25['acpm'])->toMatchArray(['venta' => 43.0, 'saldo' => 4622.0])
         ->and($dia25)->toMatchArray(['venta_diaria' => 147.0, 'venta_acumulada' => 147.0])
-        ->and($dia26['corriente'])->toMatchArray(['ingreso' => 3800.0, 'venta' => 100.0, 'saldo' => 7746.0, 'vara' => 321.0, 'tabla' => 7800.0, 'faltante' => -54.0])
-        ->and($dia26['acpm'])->toMatchArray(['saldo' => 8572.0, 'tabla' => 9700.0, 'faltante' => -1128.0])
+        // Tabla de aforo − saldo de movimiento: positivo es sobrante.
+        ->and($dia26['corriente'])->toMatchArray(['ingreso' => 3800.0, 'venta' => 100.0, 'saldo' => 7746.0, 'vara' => 321.0, 'tabla' => 7800.0, 'faltante_sobrante' => 54.0])
+        ->and($dia26['acpm'])->toMatchArray(['saldo' => 8572.0, 'tabla' => 9700.0, 'faltante_sobrante' => 1128.0])
         ->and($dia26)->toMatchArray(['venta_diaria' => 150.0, 'venta_acumulada' => 297.0])
         ->and($dia27['corriente'])->toMatchArray(['venta' => 0.0, 'saldo' => 7746.0])
         ->and($response->viewData('totales'))->toMatchArray([
@@ -83,8 +84,11 @@ test('el control de tanques arma el saldo diario con compras, los cortes de IAPR
         ->assertSee('data-vienen="corriente">4.150<', false)
         ->assertDontSee('ct-corriente">VIENEN', false)
         ->assertDontSee('ct-acpm">VIENEN', false)
-        // Sobrante (negativo) en rojo, como en la plantilla.
-        ->assertSee('ct-negativo">-54<', false)
+        // Sobrante positivo, sin rojo; el rojo queda para el faltante (negativo).
+        ->assertSee('ct-faltante ">54<', false)
+        ->assertDontSee('ct-negativo">', false)
+        ->assertSee('FALTANTE/<br>SOBRANTE', false)
+        ->assertDontSee('(SOBRANTE)')
         ->assertSee('name="aforos[2026-09-26][tabla_corriente]"', false)
         ->assertSee('value="7800"', false)
         ->assertSee('value="92,26"', false);
@@ -165,19 +169,32 @@ test('el jefe de patios registra el aforo nocturno y una fecha sin datos borra s
 test('solo el administrador registra el saldo inicial de los tanques', function () {
     $jefe = User::factory()->create(['role' => User::ROLE_JEFE_PATIOS]);
     $admin = User::factory()->create(['role' => User::ROLE_ADMINISTRADOR]);
-    $datos = ['combustible' => 'acpm', 'fecha_corte' => '2026-09-01', 'galones' => '4265'];
+    // Un solo formulario: una fecha de corte y los galones de los dos tanques.
+    $datos = ['fecha_corte' => '2026-09-01', 'galones' => ['corriente' => '3350', 'acpm' => '4265']];
 
     $this->actingAs($jefe)->post(route('control-tanques.saldo-inicial'), $datos)->assertForbidden();
 
     $this->actingAs($admin)->post(route('control-tanques.saldo-inicial'), $datos)->assertRedirect();
-    $this->actingAs($admin)->post(route('control-tanques.saldo-inicial'), ['galones' => '4300,5'] + $datos)->assertRedirect();
+    $this->actingAs($admin)->post(route('control-tanques.saldo-inicial'), ['galones' => ['corriente' => '3350', 'acpm' => '4300,5']] + $datos)->assertRedirect();
 
-    $saldo = TanqueSaldoInicial::query()->sole();
+    $saldos = TanqueSaldoInicial::query()->get()->keyBy('combustible');
 
-    expect($saldo->combustible)->toBe('acpm')
-        ->and((float) $saldo->galones)->toBe(4300.5);
+    expect($saldos)->toHaveCount(2)
+        ->and((float) $saldos['corriente']->galones)->toBe(3350.0)
+        ->and((float) $saldos['acpm']->galones)->toBe(4300.5)
+        ->and($saldos['acpm']->fecha_corte->format('Y-m-d'))->toBe('2026-09-01');
 
-    $this->actingAs($admin)->get(route('control-tanques.index'))->assertSee('value="4300,5"', false);
+    $this->actingAs($admin)->get(route('control-tanques.index'))
+        ->assertSee('value="4300,5"', false)
+        // Una sola fecha de corte y un solo Guardar.
+        ->assertSee('name="fecha_corte"', false)
+        ->assertSee('name="galones[corriente]"', false)
+        ->assertSee('name="galones[acpm]"', false);
+
+    // En blanco: ese tanque queda sin saldo inicial.
+    $this->actingAs($admin)->post(route('control-tanques.saldo-inicial'), ['galones' => ['corriente' => '3350', 'acpm' => '']] + $datos)->assertRedirect();
+
+    expect(TanqueSaldoInicial::query()->pluck('combustible')->all())->toBe(['corriente']);
 });
 
 test('el islero no tiene acceso al control de tanques', function () {

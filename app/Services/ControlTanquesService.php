@@ -16,7 +16,8 @@ use Illuminate\Support\Collection;
  * de los surtidores. Lo único que se registra aquí es el aforo nocturno del jefe de patios.
  *
  * Saldo = saldo anterior + ingreso - venta, arrancando del saldo inicial del tanque.
- * Faltante = saldo en libros - galones según tabla de aforo (negativo = sobrante).
+ * Faltante/Sobrante = saldo final según tabla de aforo - saldo del movimiento de galones
+ * (positivo = sobrante, negativo = faltante).
  */
 class ControlTanquesService
 {
@@ -102,8 +103,8 @@ class ControlTanquesService
                     'saldo' => $saldos[$combustible],
                     'vara' => $vara !== null ? (float) $vara : null,
                     'tabla' => $tabla !== null ? (float) $tabla : null,
-                    'faltante' => $tabla !== null && $saldos[$combustible] !== null
-                        ? $saldos[$combustible] - (float) $tabla
+                    'faltante_sobrante' => $tabla !== null && $saldos[$combustible] !== null
+                        ? (float) $tabla - $saldos[$combustible]
                         : null,
                 ];
 

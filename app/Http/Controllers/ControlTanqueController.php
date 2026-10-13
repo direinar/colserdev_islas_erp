@@ -12,7 +12,6 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -84,21 +83,35 @@ class ControlTanqueController extends Controller
 
     public function guardarSaldoInicial(Request $request): RedirectResponse
     {
+        // Un solo formulario: una fecha de corte para los dos tanques.
         $request->validate([
-            'combustible' => ['required', Rule::in(TanqueSaldoInicial::COMBUSTIBLES)],
             'fecha_corte' => ['required', 'date'],
-            'galones' => ['required', 'string', 'max:20'],
+            'galones' => ['required', 'array'],
+            'galones.*' => ['nullable', 'string', 'max:20'],
             'desde' => ['nullable', 'date'],
             'hasta' => ['nullable', 'date'],
         ]);
 
-        TanqueSaldoInicial::query()->updateOrCreate(
-            ['combustible' => $request->input('combustible')],
-            [
-                'fecha_corte' => $request->input('fecha_corte'),
-                'galones' => NumberParser::quantity($request->input('galones')),
-            ],
-        );
+        DB::transaction(function () use ($request): void {
+            foreach (TanqueSaldoInicial::COMBUSTIBLES as $combustible) {
+                $galones = trim((string) $request->input('galones.'.$combustible, ''));
+
+                // En blanco: ese tanque queda sin saldo inicial.
+                if ($galones === '') {
+                    TanqueSaldoInicial::query()->where('combustible', $combustible)->delete();
+
+                    continue;
+                }
+
+                TanqueSaldoInicial::query()->updateOrCreate(
+                    ['combustible' => $combustible],
+                    [
+                        'fecha_corte' => $request->input('fecha_corte'),
+                        'galones' => NumberParser::quantity($galones),
+                    ],
+                );
+            }
+        });
 
         return redirect()->route('control-tanques.index', $request->only('desde', 'hasta'))
             ->with('success', 'Saldo inicial guardado correctamente.');

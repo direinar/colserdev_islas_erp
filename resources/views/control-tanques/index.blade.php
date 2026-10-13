@@ -28,8 +28,8 @@
         .ct-tabla {
             --ct-corriente: #e2efda;
             --ct-corriente-aforo: #bfbfbf;
-            --ct-acpm: #c6e0b4;
-            --ct-acpm-aforo: #92d050;
+            --ct-acpm: #dcefd4;
+            --ct-acpm-aforo: #cde8c0;
             --ct-saldos: #d6dce4;
             --ct-separador: #262626;
             border-collapse: collapse;
@@ -87,7 +87,6 @@
         .ct-tabla .ct-saldo { font-weight: 700; }
         .ct-tabla .ct-faltante { font-weight: 700; font-size: 1rem; }
         .ct-tabla .ct-negativo { color: #ff0000; }
-        .ct-tabla .ct-sobrante-titulo { color: #ff0000; }
 
         /* El aforo se digita en la celda, como en una hoja de cálculo. */
         .ct-tabla .ct-celda-input { padding: 0; }
@@ -197,35 +196,31 @@
     @endif
 
     @if ($esAdministrador)
+        {{-- Un solo informe: una fecha de corte y un GUARDAR para los dos tanques. --}}
         <div class="card mb-3 d-print-none">
-            <div class="card-body py-2">
-                <div class="fw-bold small mb-2">Saldo inicial de los tanques (galones al iniciar el día de corte)</div>
-                <div class="row g-2">
-                    @foreach ($combustibles as $combustible => $nombre)
+            <form method="POST" action="{{ route('control-tanques.saldo-inicial') }}" class="card-body py-2">
+                @csrf
+                <input type="hidden" name="desde" value="{{ $desde }}">
+                <input type="hidden" name="hasta" value="{{ $hasta }}">
+                <div class="fw-bold small mb-2 text-center">Saldo inicial de los tanques (galones al iniciar el día de corte)</div>
+                <div class="d-flex flex-wrap justify-content-center align-items-end gap-3">
+                    <div>
+                        <label class="form-label small mb-1" for="saldo-fecha-corte">Fecha de corte</label>
+                        <input type="date" name="fecha_corte" id="saldo-fecha-corte" class="form-control form-control-sm" required
+                            value="{{ $saldosIniciales->min(fn ($saldo) => $saldo->fecha_corte->format('Y-m-d')) }}">
+                    </div>
+                    @foreach (['corriente' => 'GASOLINA', 'acpm' => 'ACPM'] as $combustible => $nombre)
                         @php($saldoInicial = $saldosIniciales->get($combustible))
-                        <form method="POST" action="{{ route('control-tanques.saldo-inicial') }}"
-                            class="col-12 col-lg-6 d-flex flex-wrap gap-2 align-items-end">
-                            @csrf
-                            <input type="hidden" name="combustible" value="{{ $combustible }}">
-                            <input type="hidden" name="desde" value="{{ $desde }}">
-                            <input type="hidden" name="hasta" value="{{ $hasta }}">
-                            <div class="fw-semibold small pb-1" style="min-width:5.5rem;">{{ $nombre }}</div>
-                            <div>
-                                <label class="form-label small mb-1" for="saldo-{{ $combustible }}-fecha">Fecha de corte</label>
-                                <input type="date" name="fecha_corte" id="saldo-{{ $combustible }}-fecha" class="form-control form-control-sm" required
-                                    value="{{ $saldoInicial?->fecha_corte->format('Y-m-d') }}">
-                            </div>
-                            <div>
-                                <label class="form-label small mb-1" for="saldo-{{ $combustible }}-galones">Galones</label>
-                                <input type="text" name="galones" id="saldo-{{ $combustible }}-galones" class="form-control form-control-sm text-end" required
-                                    inputmode="decimal"
-                                    value="{{ $saldoInicial ? $aforoInput((float) $saldoInicial->galones, 3) : '' }}">
-                            </div>
-                            <button type="submit" class="btn btn-outline-primary btn-sm">Guardar</button>
-                        </form>
+                        <div class="text-center">
+                            <label class="form-label small mb-1 fw-semibold" for="saldo-{{ $combustible }}-galones">{{ $nombre }} (galones)</label>
+                            <input type="text" name="galones[{{ $combustible }}]" id="saldo-{{ $combustible }}-galones"
+                                class="form-control form-control-sm text-end" inputmode="decimal"
+                                value="{{ $saldoInicial ? $aforoInput((float) $saldoInicial->galones, 3) : '' }}">
+                        </div>
                     @endforeach
+                    <button type="submit" class="btn btn-outline-primary btn-sm">Guardar</button>
                 </div>
-            </div>
+            </form>
         </div>
     @endif
 
@@ -251,7 +246,7 @@
                                 <th colspan="3" class="ct-{{ $combustible }} ct-inicio-bloque">MOVIMIENTO DE GALONES</th>
                                 <th class="ct-{{ $combustible }}-aforo ct-inicio-aforo">AFORO</th>
                                 <th class="ct-{{ $combustible }}-aforo">SALDO FINAL</th>
-                                <th class="ct-{{ $combustible }}">FALTANTE</th>
+                                <th rowspan="2" class="ct-{{ $combustible }}">FALTANTE/<br>SOBRANTE</th>
                             @endforeach
                             <th class="ct-saldos ct-inicio-bloque">VR. VENTA</th>
                             <th class="ct-saldos">VR. VENTA</th>
@@ -263,7 +258,6 @@
                                 <th class="ct-{{ $combustible }}">SALDO</th>
                                 <th class="ct-{{ $combustible }}-aforo ct-inicio-aforo">S/VARA</th>
                                 <th class="ct-{{ $combustible }}-aforo">S/TABLA AFORO</th>
-                                <th class="ct-{{ $combustible }} ct-sobrante-titulo">(SOBRANTE)</th>
                             @endforeach
                             <th class="ct-saldos ct-inicio-bloque">DIARIA</th>
                             <th class="ct-saldos">ACUMULADA</th>
@@ -304,7 +298,7 @@
                                             name="aforos[{{ $fila['fecha'] }}][tabla_{{ $combustible }}]"
                                             value="{{ $aforoInput($dato['tabla'], 3) }}" aria-label="Galones tabla de aforo {{ $nombre }} {{ $fila['fecha'] }}">
                                     </td>
-                                    <td class="ct-{{ $combustible }} ct-faltante {{ ($dato['faltante'] ?? 0) < 0 ? 'ct-negativo' : '' }}">{{ $galones($dato['faltante']) }}</td>
+                                    <td class="ct-{{ $combustible }} ct-faltante {{ ($dato['faltante_sobrante'] ?? 0) < 0 ? 'ct-negativo' : '' }}">{{ $galones($dato['faltante_sobrante']) }}</td>
                                 @endforeach
                                 <td class="ct-saldos ct-inicio-bloque">{{ $galones($fila['venta_diaria']) }}</td>
                                 <td class="ct-saldos">{{ $galones($fila['venta_acumulada']) }}</td>
@@ -333,6 +327,6 @@
     </form>
 
     <div class="small text-muted mt-2">ESTE INFORME SOLO CONTIENE GALONES. Ingresos desde compras y ventas según cortes de
-        IAPROPIADA de la planilla de turnos (suma de los turnos de cada fecha). FALTANTE = saldo en libros − saldo final
-        según tabla de aforo; en rojo (negativo) es sobrante.</div>
+        IAPROPIADA de la planilla de turnos (suma de los turnos de cada fecha). FALTANTE/SOBRANTE = saldo final según
+        tabla de aforo − saldo del movimiento de galones: positivo es sobrante; en rojo (negativo) es faltante.</div>
 @endsection
