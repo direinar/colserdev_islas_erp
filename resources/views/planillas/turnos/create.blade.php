@@ -107,7 +107,8 @@
         }
 
         // CARTERA - CRÉDITO DIRECTO, RECAUDOS Y ANTICIPOS POR ISLAS y RECAUDOS POR
-        // ADMINISTRACIÓN: no se digita el valor sin haber SELECCIONADO el cliente.
+        // ADMINISTRACIÓN: no se digita el valor sin haber SELECCIONADO el cliente; en PAGOS
+        // ELECTRONICOS Y TRANSFERENCIAS, sin haber SELECCIONADO el concepto.
         const SECCIONES_CON_CLIENTE = [{
                 valor: '.cartera-valor-input',
                 cliente: '.cartera-cliente-select',
@@ -123,6 +124,12 @@
                 cliente: '.recaudos-admin-responsable',
                 titulo: 'RECAUDOS POR ADMINISTRACIÓN'
             },
+            {
+                valor: '.qr-valor',
+                cliente: '.qr-concepto',
+                titulo: 'PAGOS ELECTRONICOS Y TRANSFERENCIAS',
+                campo: 'concepto'
+            },
         ];
 
         function seccionDelValor(input) {
@@ -134,9 +141,11 @@
         }
 
         function avisarSinCliente(seccion, select) {
+            const campo = seccion.campo ?? 'cliente';
+
             Swal.fire({
-                title: 'Seleccione el cliente',
-                text: 'En ' + seccion.titulo + ' primero debe SELECCIONAR el cliente y luego digitar el valor.',
+                title: 'Seleccione el ' + campo,
+                text: 'En ' + seccion.titulo + ' primero debe SELECCIONAR el ' + campo + ' y luego digitar el valor.',
                 icon: 'warning',
                 confirmButtonText: 'Entendido',
             }).then(() => select?.focus());

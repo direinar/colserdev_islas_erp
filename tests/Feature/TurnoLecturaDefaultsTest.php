@@ -263,6 +263,10 @@ test('medios de pago renders as three independent tables with add row actions', 
     $response->assertSee('CARTERA - CRÉDITO DIRECTO', false);
     // Pagos electrónicos va a la izquierda y cartera a la derecha.
     $response->assertSeeInOrder(['DESCUENTOS', 'PAGOS ELECTRONICOS Y TRANSFERENCIAS', 'CARTERA - CRÉDITO DIRECTO'], false);
+    // Pagos electrónicos: el valor exige el concepto, y las filas nuevas no traen uno preseleccionado.
+    $response->assertSeeInOrder(["valor: '.qr-valor'", "cliente: '.qr-concepto'", "campo: 'concepto'"], false);
+    $response->assertSee('class="form-select form-select-sm border-0 bg-transparent qr-concepto">
+                        <option value="" selected>Seleccione concepto</option>', false);
     $response->assertSee('+ AGREGAR FILA', false);
     $response->assertSee('remove-row', false);
 });
