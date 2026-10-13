@@ -261,6 +261,8 @@ test('medios de pago renders as three independent tables with add row actions', 
     $response->assertSee('CONSIGNACIONES', false);
     $response->assertSee('DESCUENTOS', false);
     $response->assertSee('CARTERA - CRÉDITO DIRECTO', false);
+    // Pagos electrónicos va a la izquierda y cartera a la derecha.
+    $response->assertSeeInOrder(['DESCUENTOS', 'PAGOS ELECTRONICOS Y TRANSFERENCIAS', 'CARTERA - CRÉDITO DIRECTO'], false);
     $response->assertSee('+ AGREGAR FILA', false);
     $response->assertSee('remove-row', false);
 });

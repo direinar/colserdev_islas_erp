@@ -120,6 +120,10 @@
             </div>
         </div>
 
+        <div class="medio-pago-section qr-section">
+            @include('planillas.turnos.partials.qr')
+        </div>
+
         <div class="medio-pago-section">
             <div class="medio-pago-toolbar">
                 <div class="medio-pago-title">CARTERA - CRÉDITO DIRECTO</div>
@@ -206,9 +210,6 @@
                     </tfoot>
                 </table>
             </div>
-        </div>
-        <div class="medio-pago-section qr-section">
-            @include('planillas.turnos.partials.qr')
         </div>
 
     </div>
