@@ -4,7 +4,7 @@
 
 @section('content')
     <x-page-header title="Inventarios canastilla" icon="clipboard-data"
-        subtitle="Kardex al costo promedio por producto. Se alimenta desde la venta de canastilla de la planilla de turnos y desde compras de lubricantes; las correcciones se hacen allá.">
+        subtitle="Kardex al costo promedio por producto. Se alimenta desde la venta de canastilla de la planilla de turnos y desde compras de canastilla; las correcciones se hacen allá.">
         <form method="GET" action="{{ route('inventarios-lubricantes.create') }}">
             <label class="form-label d-block" for="producto">REFERENCIA</label>
             <select name="producto" id="producto" class="form-select form-select-sm" onchange="this.form.submit()">

@@ -45,7 +45,8 @@ test('el informe lista cada recaudo del periodo con su banco y concepto', functi
         ->get(route('informes.recaudos-cartera.index', ['desde' => '2026-09-01', 'hasta' => '2026-09-30']))
         ->assertOk()
         ->assertSee('Informe de recaudos de cartera')
-        ->assertSee('COMPROBANTE CONTABLE - RECAUDOS DE CARTERA');
+        // El comprobante está en su propio módulo.
+        ->assertDontSee('COMPROBANTE CONTABLE');
 
     $recaudos = array_map(fn (array $r): array => array_values($r), $response->viewData('recaudos'));
 
@@ -64,7 +65,9 @@ test('el comprobante debita caja y cada banco y acredita la cartera de cada clie
     recaudosDelPeriodo();
 
     $comprobante = $this->actingAs($admin)
-        ->get(route('informes.recaudos-cartera.index', ['desde' => '2026-09-01', 'hasta' => '2026-09-30']))
+        ->get(route('informes.comprobante-recaudos.index', ['desde' => '2026-09-01', 'hasta' => '2026-09-30']))
+        ->assertOk()
+        ->assertSee('COMPROBANTE CONTABLE DE RECAUDOS DE CARTERA')
         ->viewData('comprobante');
 
     expect(array_map(fn (array $linea): array => array_values($linea), $comprobante['lineas']))->toBe([
@@ -92,8 +95,8 @@ test('solo el administrador cambia las cuentas de caja, cartera y bancos', funct
         'bancos' => [$bancos['DAVIVIENDA']->id => '11100599'],
     ];
 
-    $this->actingAs($jefe)->post(route('informes.recaudos-cartera.cuentas'), $datos)->assertForbidden();
-    $this->actingAs($admin)->post(route('informes.recaudos-cartera.cuentas'), $datos)->assertRedirect();
+    $this->actingAs($jefe)->post(route('informes.comprobante-recaudos.cuentas'), $datos)->assertForbidden();
+    $this->actingAs($admin)->post(route('informes.comprobante-recaudos.cuentas'), $datos)->assertRedirect();
 
     expect(ComprobanteRecaudoCuenta::query()->where('clave', ComprobanteRecaudoCuenta::CARTERA_CLIENTES)->value('cuenta'))->toBe('13050599')
         ->and($bancos['DAVIVIENDA']->fresh()->cuenta_contable)->toBe('11100599');
@@ -122,7 +125,26 @@ test('el informe de recaudos de cartera se exporta a Excel', function () {
     expect($hoja->getCell('C5')->getValue())->toBe('JUAN CARLOS GIL')
         ->and($hoja->getCell('E10')->getValue())->toBe('TOTAL DEL PERIODO')
         ->and((float) $hoja->getCell('F10')->getValue())->toBe(1150000.0)
-        ->and($hoja->getCell('H5')->getValue())->toBe('11050501')
-        ->and($hoja->getCell('I14')->getValue())->toBe('TOTALES')
-        ->and((float) $hoja->getCell('J14')->getValue())->toBe(1150000.0);
+        // El comprobante se exporta en su propio módulo.
+        ->and($hoja->getCell('H5')->getValue())->toBeNull();
+});
+
+test('el comprobante contable de recaudos de cartera se exporta a Excel', function () {
+    $admin = User::factory()->create(['role' => User::ROLE_ADMINISTRADOR]);
+    recaudosDelPeriodo();
+
+    $response = $this->actingAs($admin)
+        ->get(route('informes.comprobante-recaudos.exportar', ['desde' => '2026-09-01', 'hasta' => '2026-09-30']))
+        ->assertOk()
+        ->assertDownload('comprobante-recaudos-cartera-2026-09-01-a-2026-09-30.xlsx');
+
+    $archivo = tempnam(sys_get_temp_dir(), 'recaudos').'.xlsx';
+    file_put_contents($archivo, $response->streamedContent());
+    $hoja = IOFactory::load($archivo)->getActiveSheet();
+    unlink($archivo);
+
+    expect($hoja->getCell('A1')->getValue())->toBe('COMPROBANTE CONTABLE DE RECAUDOS DE CARTERA')
+        ->and($hoja->getCell('A5')->getValue())->toBe('11050501')
+        ->and($hoja->getCell('B14')->getValue())->toBe('TOTALES')
+        ->and((float) $hoja->getCell('C14')->getValue())->toBe(1150000.0);
 });

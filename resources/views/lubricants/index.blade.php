@@ -4,7 +4,7 @@
     <div class="container">
 
         <x-page-header title="Canastilla" icon="box-seam"
-            subtitle="Tabla de precios de lubricantes, urea y aditivos.">
+            subtitle="Tabla de precios de canastilla.">
             <a href="{{ route('lubricants.create') }}" class="btn btn-light">Nueva referencia</a>
         </x-page-header>
 

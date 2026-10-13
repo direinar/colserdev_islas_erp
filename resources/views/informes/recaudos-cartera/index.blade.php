@@ -9,7 +9,7 @@
     $pesos = fn (float $valor): string => $valor ? number_format($valor, 0, ',', '.') : '';
     $pesosSiempre = fn (float $valor): string => number_format($valor, 0, ',', '.');
     $rango = ['desde' => $desde, 'hasta' => $hasta];
-    $esAdministrador = auth()->user()->isAdministrador();
+
 @endphp
 
 @section('content')
@@ -101,7 +101,7 @@
     @endif
 
     <div class="row g-3">
-        <div class="col-12 col-xl-7">
+        <div class="col-12 col-xl-9">
             <div class="card">
                 <div class="table-responsive">
                     <table class="rc-tabla">
@@ -148,88 +148,5 @@
             </div>
         </div>
 
-        <div class="col-12 col-xl-5 d-flex flex-column gap-3">
-            <div class="card">
-                <div class="table-responsive">
-                    <table class="rc-tabla">
-                        <thead>
-                            <tr>
-                                <th colspan="4" class="rc-titulo-tabla">COMPROBANTE CONTABLE - RECAUDOS DE CARTERA</th>
-                            </tr>
-                            <tr>
-                                <th>CUENTA</th>
-                                <th>NOMBRE</th>
-                                <th>DEBITO</th>
-                                <th>CREDITO</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach ($comprobante['lineas'] as $linea)
-                                <tr>
-                                    <td>{{ $linea['cuenta'] }}</td>
-                                    <td>{{ $linea['nombre'] }}</td>
-                                    <td class="num">{{ $pesos($linea['debito']) }}</td>
-                                    <td class="num">{{ $pesos($linea['credito']) }}</td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                        <tfoot>
-                            <tr>
-                                <td colspan="2" class="text-end">TOTALES</td>
-                                <td class="num">{{ $pesosSiempre($comprobante['debito']) }}</td>
-                                <td class="num">{{ $pesosSiempre($comprobante['credito']) }}</td>
-                            </tr>
-                            <tr>
-                                <td colspan="2" class="text-end">DIFERENCIA</td>
-                                <td colspan="2" class="num">{{ $pesosSiempre($comprobante['diferencia']) }}</td>
-                            </tr>
-                        </tfoot>
-                    </table>
-                </div>
-            </div>
-
-            @if ($bancos->contains(fn ($banco) => blank($banco->cuenta_contable)))
-                <div class="alert alert-warning small mb-0 d-print-none">
-                    Hay bancos sin cuenta contable: {{ $bancos->filter(fn ($banco) => blank($banco->cuenta_contable))->pluck('name')->implode(', ') }}.
-                    @unless ($esAdministrador)
-                        Solicítela al administrador.
-                    @endunless
-                </div>
-            @endif
-
-            @if ($esAdministrador)
-                <details class="card d-print-none">
-                    <summary class="card-body py-2 fw-semibold small" style="cursor:pointer;">Cuentas contables del comprobante</summary>
-                    <form method="POST" action="{{ route('informes.recaudos-cartera.cuentas') }}" class="card-body pt-0">
-                        @csrf
-                        <input type="hidden" name="desde" value="{{ $desde }}">
-                        <input type="hidden" name="hasta" value="{{ $hasta }}">
-                        <table class="table table-sm align-middle mb-2">
-                            <tbody>
-                                @foreach ($cuentas as $clave => $cuenta)
-                                    <tr>
-                                        <td class="small">{{ $cuenta->descripcion }}</td>
-                                        <td style="width:9rem;">
-                                            <input type="text" name="cuentas[{{ $clave }}][cuenta]" class="form-control form-control-sm"
-                                                value="{{ $cuenta->cuenta }}" required maxlength="30">
-                                        </td>
-                                    </tr>
-                                @endforeach
-                                @foreach ($bancos as $banco)
-                                    <tr>
-                                        <td class="small">Banco / caja: {{ $banco->name }} (débito)</td>
-                                        <td>
-                                            <input type="text" name="bancos[{{ $banco->id }}]" class="form-control form-control-sm"
-                                                value="{{ $banco->cuenta_contable }}" maxlength="30">
-                                        </td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                        <button type="submit" class="btn btn-outline-primary btn-sm">Guardar cuentas</button>
-                    </form>
-                </details>
-            @endif
-        </div>
     </div>
 @endsection

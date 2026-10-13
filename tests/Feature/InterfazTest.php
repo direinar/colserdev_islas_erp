@@ -41,11 +41,11 @@ test('cada pantalla tiene un solo título y sus etiquetas apuntan a campos exist
     'fuel-prices.index', 'fuel-prices.create', 'lubricants.index', 'lubricants.create',
     'bancos.index', 'bancos.create', 'proveedores.index', 'proveedores.create', 'users.index', 'users.create',
     'control-tanques.index', 'informes.control-caja.index', 'informes.recaudos-cartera.index', 'informes.saldos.index',
-    'informes.comprobante-contable-compras.index', 'informes.margen-mayorista.index',
+    'informes.comprobante-contable-compras.index', 'informes.comprobante-ventas.index', 'informes.comprobante-recaudos.index', 'informes.margen-mayorista.index', 'inventarios-saldos-iniciales.index',
     'informes.anticipo-bimestral.index', 'informes.cierre.index',
 ]);
 
-test('el menú Informes solo tiene consultas; los registros manuales están en Compras', function () {
+test('el menú tiene los nombres acordados y Compras ya no muestra los registros manuales', function () {
     $admin = User::factory()->create(['role' => User::ROLE_ADMINISTRADOR]);
 
     $html = $this->actingAs($admin)->get(route('dashboard'))->assertOk()->getContent();
@@ -59,7 +59,15 @@ test('el menú Informes solo tiene consultas; los registros manuales están en C
 
     expect($menuInformes)->not->toContain('(manual)')
         ->and($menuInformes)->toContain(route('informes.cierre.index'))
-        ->and($menuCompras)->toContain(route('anticipo-bimestral.create'))
-        ->and($menuCompras)->toContain(route('comprobante-contable-compras.create'))
-        ->and($menuCompras)->toContain('Registros manuales');
+        ->and($menuInformes)->toContain('Informe de gestión')
+        ->and($menuInformes)->toContain('Control de caja')
+        ->and($menuInformes)->toContain(route('informes.comprobante-recaudos.index'))
+        // Margen mayorista en Operación, antes de Cartera y saldos.
+        ->and(strpos($menuInformes, route('informes.margen-mayorista.index')))->toBeLessThan(strpos($menuInformes, 'Cartera y saldos'))
+        ->and($menuCompras)->toContain('Compras de canastilla')
+        ->and($menuCompras)->not->toContain(route('anticipo-bimestral.create'))
+        ->and($menuCompras)->not->toContain(route('comprobante-contable-compras.create'))
+        ->and($menuCompras)->not->toContain('Registros manuales')
+        ->and($html)->toContain('Precios de canastilla')
+        ->and($html)->toContain('Bancos recaudadores');
 });

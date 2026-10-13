@@ -160,12 +160,12 @@
                                     </li>
                                     <li>
                                         <a class="dropdown-item" href="{{ route('lubricants.index') }}">
-                                            Canastilla (precios)
+                                            Precios de canastilla
                                         </a>
                                     </li>
                                     <li>
                                         <a class="dropdown-item" href="{{ route('bancos.index') }}">
-                                            Bancos
+                                            Bancos recaudadores
                                         </a>
                                     </li>
                                 @endif
@@ -201,27 +201,7 @@
                                 @if ($user->canAccessComprasLubricantes())
                                     <li>
                                         <a class="dropdown-item" href="{{ route('compras-lubricantes.create') }}">
-                                            Compras de lubricantes
-                                        </a>
-                                    </li>
-                                @endif
-
-                                {{-- Formularios de captura manual: los informes automáticos están en Informes. --}}
-                                @if ($user->canAccessComprobanteContableCompras() || $user->canAccessAnticipoBimestral())
-                                    <li><hr class="dropdown-divider"></li>
-                                    <li><h6 class="dropdown-header">Registros manuales</h6></li>
-                                @endif
-                                @if ($user->canAccessComprobanteContableCompras())
-                                    <li>
-                                        <a class="dropdown-item" href="{{ route('comprobante-contable-compras.create') }}">
-                                            Comprobante contable (manual)
-                                        </a>
-                                    </li>
-                                @endif
-                                @if ($user->canAccessAnticipoBimestral())
-                                    <li>
-                                        <a class="dropdown-item" href="{{ route('anticipo-bimestral.create') }}">
-                                            Anticipo bimestral (manual)
+                                            Compras de canastilla
                                         </a>
                                     </li>
                                 @endif
@@ -249,7 +229,12 @@
                                 @if ($user->isAdministrador())
                                     <li>
                                         <a class="dropdown-item" href="{{ route('informes.control-caja.index') }}">
-                                            Control caja
+                                            Control de caja
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" href="{{ route('informes.margen-mayorista.index') }}">
+                                            Margen mayorista
                                         </a>
                                     </li>
                                 @endif
@@ -259,7 +244,7 @@
                                     <li><h6 class="dropdown-header">Cartera y saldos</h6></li>
                                     <li>
                                         <a class="dropdown-item" href="{{ route('informes.recaudos-cartera.index') }}">
-                                            Recaudos de cartera
+                                            Informe de recaudos de cartera
                                         </a>
                                     </li>
                                     <li>
@@ -283,8 +268,8 @@
                                         </a>
                                     </li>
                                     <li>
-                                        <a class="dropdown-item" href="{{ route('informes.margen-mayorista.index') }}">
-                                            Margen mayorista
+                                        <a class="dropdown-item" href="{{ route('informes.comprobante-recaudos.index') }}">
+                                            Comprobante contable de recaudos de cartera
                                         </a>
                                     </li>
                                 @endif
@@ -299,7 +284,7 @@
                                     </li>
                                     <li>
                                         <a class="dropdown-item" href="{{ route('informes.cierre.index') }}">
-                                            Informe de cierre
+                                            Informe de gestión
                                         </a>
                                     </li>
                                 @endif

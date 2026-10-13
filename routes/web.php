@@ -14,6 +14,7 @@ use App\Http\Controllers\FuelPriceController;
 use App\Http\Controllers\InformeAnticipoBimestralController;
 use App\Http\Controllers\InformeCierreController;
 use App\Http\Controllers\InformeComprobanteComprasController;
+use App\Http\Controllers\InformeComprobanteRecaudosController;
 use App\Http\Controllers\InformeComprobanteVentasController;
 use App\Http\Controllers\InformeControlCajaController;
 use App\Http\Controllers\InformeMargenMayoristaController;
@@ -186,8 +187,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/informes/margen-mayorista/parametros', [InformeMargenMayoristaController::class, 'guardarParametros'])
             ->name('informes.margen-mayorista.parametros');
 
-        Route::post('/informes/recaudos-cartera/cuentas', [InformeRecaudosCarteraController::class, 'guardarCuentas'])
-            ->name('informes.recaudos-cartera.cuentas');
+        Route::get('/informes/comprobante-recaudos', [InformeComprobanteRecaudosController::class, 'index'])
+            ->name('informes.comprobante-recaudos.index');
+
+        Route::get('/informes/comprobante-recaudos/exportar', [InformeComprobanteRecaudosController::class, 'exportar'])
+            ->name('informes.comprobante-recaudos.exportar');
+
+        Route::post('/informes/comprobante-recaudos/cuentas', [InformeComprobanteRecaudosController::class, 'guardarCuentas'])
+            ->name('informes.comprobante-recaudos.cuentas');
 
         Route::get('/informes/cierre', [InformeCierreController::class, 'index'])
             ->name('informes.cierre.index');

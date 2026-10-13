@@ -23,15 +23,48 @@ class RecaudosCarteraService
     public const CONCEPTO_ADMIN = 'Recaudo por Admón';
 
     /**
+     * Informe de recaudos de cartera: los recaudos del periodo y su total.
+     *
      * @return array{
      *     recaudos: list<array{planilla: int, fecha: string, cliente: string, banco: string, concepto: string, valor: float}>,
-     *     total: float,
+     *     total: float
+     * }
+     */
+    public function informe(string $desde, string $hasta): array
+    {
+        $recaudos = $this->recaudos($desde, $hasta);
+
+        return [
+            'recaudos' => $recaudos->all(),
+            'total' => (float) $recaudos->sum('valor'),
+        ];
+    }
+
+    /**
+     * Comprobante contable de recaudos de cartera (módulo aparte) con sus cuentas.
+     *
+     * @return array{
      *     comprobante: array{lineas: list<array{cuenta: string, nombre: string, debito: float, credito: float}>, debito: float, credito: float, diferencia: float},
      *     cuentas: Collection<string, ComprobanteRecaudoCuenta>,
      *     bancos: Collection<int, Banco>
      * }
      */
-    public function informe(string $desde, string $hasta): array
+    public function comprobanteRecaudos(string $desde, string $hasta): array
+    {
+        $cuentas = ComprobanteRecaudoCuenta::query()->get()->keyBy('clave');
+        $bancos = Banco::query()->orderBy('name')->get();
+
+        return [
+            'comprobante' => $this->comprobante($this->recaudos($desde, $hasta), $cuentas, $bancos),
+            'cuentas' => $cuentas,
+            'bancos' => $bancos,
+        ];
+    }
+
+    /**
+     * @return Collection<int, array{planilla: int, fecha: string, cliente: string, banco: string, concepto: string, valor: float}>
+     */
+    private function recaudos(string $desde, string $hasta): Collection
     {
         $enPeriodo = fn ($query) => $query->whereHas('turno', fn ($turno) => $turno
             ->whereDate('fecha', '>=', $desde)
@@ -64,7 +97,7 @@ class RecaudosCarteraService
             ]);
 
         // Por planilla y fecha; dentro de cada planilla, primero los de islas.
-        $recaudos = $islas->concat($administracion)
+        return $islas->concat($administracion)
             ->sortBy([
                 ['fecha', 'asc'],
                 ['planilla', 'asc'],
@@ -76,17 +109,6 @@ class RecaudosCarteraService
                 return $recaudo;
             })
             ->values();
-
-        $cuentas = ComprobanteRecaudoCuenta::query()->get()->keyBy('clave');
-        $bancos = Banco::query()->orderBy('name')->get();
-
-        return [
-            'recaudos' => $recaudos->all(),
-            'total' => (float) $recaudos->sum('valor'),
-            'comprobante' => $this->comprobante($recaudos, $cuentas, $bancos),
-            'cuentas' => $cuentas,
-            'bancos' => $bancos,
-        ];
     }
 
     /**
