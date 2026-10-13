@@ -78,7 +78,8 @@ trait ValidaPlanillaTurno
     /**
      * CARTERA - CRÉDITO DIRECTO, RECAUDOS Y ANTICIPOS POR ISLAS y RECAUDOS POR
      * ADMINISTRACIÓN no admiten un valor sin CLIENTE; en CRÉDITO DIRECTO el cliente y el
-     * valor exigen el No. de FACTURA, y un pago electrónico con valor exige su CONCEPTO.
+     * valor exigen el No. de FACTURA, en RECAUDOS POR ADMINISTRACIÓN el BANCO/CAJA, y un
+     * pago electrónico con valor exige su CONCEPTO.
      */
     protected function validarReglasDeNegocioPlanilla(Request $request): void
     {
@@ -101,6 +102,19 @@ trait ValidaPlanillaTurno
 
             if (! empty($row['cliente_id']) || NumberParser::money($row['cartera_valor'] ?? null) != 0) {
                 $errores['cartera'] = 'En CARTERA - CRÉDITO DIRECTO hay filas sin No. de FACTURA. Digite la factura antes del cliente y el valor.';
+            }
+        }
+
+        // RECAUDOS POR ADMINISTRACIÓN: el cliente y el valor exigen el BANCO/CAJA.
+        if (! $request->user()->isIslero()) {
+            foreach ((array) $request->input('recaudos_admin', []) as $row) {
+                if (! is_array($row) || trim((string) ($row['banco'] ?? '')) !== '') {
+                    continue;
+                }
+
+                if (! empty($row['responsable_id']) || NumberParser::money($row['valor'] ?? null) != 0) {
+                    $errores['recaudos_admin'] = 'En RECAUDOS POR ADMINISTRACIÓN hay filas sin BANCO/CAJA. Seleccione el banco antes del cliente y el valor.';
+                }
             }
         }
 

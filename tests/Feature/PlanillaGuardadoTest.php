@@ -64,6 +64,26 @@ test('un pago electrónico con valor y sin concepto no se guarda', function () {
     expect(Turno::count())->toBe(0);
 });
 
+test('un recaudo por administración con cliente o valor y sin banco no se guarda', function () {
+    $admin = User::factory()->create(['role' => User::ROLE_ADMINISTRADOR]);
+    $cliente = Customer::create(['name' => 'Cliente A', 'document' => '1']);
+
+    guardarPlanilla($admin, 3, ['recaudos_admin' => [['banco' => '', 'responsable_id' => $cliente->id, 'valor' => '']]])
+        ->assertSessionHasErrors('recaudos_admin');
+    guardarPlanilla($admin, 3, ['recaudos_admin' => [['banco' => '', 'responsable_id' => '', 'valor' => '50.000']]])
+        ->assertSessionHasErrors('recaudos_admin');
+
+    expect(Turno::count())->toBe(0);
+
+    guardarPlanilla($admin, 3, ['recaudos_admin' => [['banco' => 'CAJA', 'responsable_id' => $cliente->id, 'valor' => '50.000']]])
+        ->assertSessionHasNoErrors();
+
+    // En pantalla: el cliente y el valor exigen primero el banco.
+    $this->actingAs($admin)->get(route('turnos.create'))
+        ->assertSeeInOrder(["campos: '.recaudos-admin-responsable, .recaudo-admin-valor'", "requisito: '.recaudos-admin-banco'"], false)
+        ->assertSee('recaudos-admin-banco"', false);
+});
+
 test('si el guardado falla, la planilla vuelve con lo que se había digitado', function () {
     $admin = User::factory()->create(['role' => User::ROLE_ADMINISTRADOR]);
 

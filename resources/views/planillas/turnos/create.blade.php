@@ -151,50 +151,68 @@
             }).then(() => select?.focus());
         }
 
+        // Campos que exigen otro dato de la misma fila antes de alimentarse:
         // CARTERA - CRÉDITO DIRECTO: ni cliente ni valor sin el No. de FACTURA.
-        const CAMPOS_CON_FACTURA = '.cartera-cliente-select, .cartera-valor-input';
+        // RECAUDOS POR ADMINISTRACIÓN: ni cliente ni valor sin el BANCO/CAJA.
+        const REQUISITOS_PREVIOS = [{
+                campos: '.cartera-cliente-select, .cartera-valor-input',
+                requisito: '.cartera-no-input',
+                titulo: 'Digite el No. de factura',
+                texto: 'En CARTERA - CRÉDITO DIRECTO primero debe digitar el No. de FACTURA y luego el cliente y el valor.',
+            },
+            {
+                campos: '.recaudos-admin-responsable, .recaudo-admin-valor',
+                requisito: '.recaudos-admin-banco',
+                titulo: 'Seleccione el banco',
+                texto: 'En RECAUDOS POR ADMINISTRACIÓN primero debe SELECCIONAR el BANCO/CAJA y luego el cliente y el valor.',
+            },
+        ];
+        const CAMPOS_CON_REQUISITO = REQUISITOS_PREVIOS.map(regla => regla.campos).join(', ');
 
-        function facturaVaciaDeLaFila(campo) {
-            if (!campo.matches?.(CAMPOS_CON_FACTURA) || campo.disabled) return null;
+        // Devuelve la regla y el campo previo vacío de la fila, o null si se puede alimentar.
+        function requisitoFaltante(campo) {
+            if (campo.disabled) return null;
 
-            const factura = campo.closest('tr')?.querySelector('.cartera-no-input');
-            return factura && factura.value.trim() === '' ? factura : null;
+            const regla = REQUISITOS_PREVIOS.find(r => campo.matches?.(r.campos));
+            const requisito = regla && campo.closest('tr')?.querySelector(regla.requisito);
+
+            return requisito && requisito.value.trim() === '' ? { regla, requisito } : null;
         }
 
-        function avisarSinFactura(factura) {
+        function avisarRequisito({ regla, requisito }) {
             Swal.fire({
-                title: 'Digite el No. de factura',
-                text: 'En CARTERA - CRÉDITO DIRECTO primero debe digitar el No. de FACTURA y luego el cliente y el valor.',
+                title: regla.titulo,
+                text: regla.texto,
                 icon: 'warning',
                 confirmButtonText: 'Entendido',
-            }).then(() => factura.focus());
+            }).then(() => requisito.focus());
         }
 
         // Con el mouse: evita que se abra la lista de clientes.
         document.addEventListener('mousedown', function(event) {
-            const factura = facturaVaciaDeLaFila(event.target);
-            if (factura) {
+            const faltante = requisitoFaltante(event.target);
+            if (faltante) {
                 event.preventDefault();
-                avisarSinFactura(factura);
+                avisarRequisito(faltante);
             }
         });
 
-        // Con el teclado (Tab): se registra antes que la regla del cliente para avisar primero la factura.
+        // Con el teclado (Tab): se registra antes que la regla del cliente para avisar primero el requisito.
         document.addEventListener('focusin', function(event) {
-            const factura = facturaVaciaDeLaFila(event.target);
-            if (factura) {
+            const faltante = requisitoFaltante(event.target);
+            if (faltante) {
                 event.stopImmediatePropagation();
                 event.target.blur();
-                avisarSinFactura(factura);
+                avisarRequisito(faltante);
             }
         });
 
-        // Respaldo (p. ej. si se pega un valor): deshace lo alimentado sin factura.
+        // Respaldo (p. ej. si se pega un valor): deshace lo alimentado sin el requisito.
         document.addEventListener('input', function(event) {
-            if (facturaVaciaDeLaFila(event.target)) event.target.value = '';
+            if (requisitoFaltante(event.target)) event.target.value = '';
         });
         document.addEventListener('change', function(event) {
-            if (facturaVaciaDeLaFila(event.target)) event.target.value = '';
+            if (requisitoFaltante(event.target)) event.target.value = '';
         });
 
         document.addEventListener('focusin', function(event) {
@@ -221,15 +239,15 @@
 
         document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('turno-form')?.addEventListener('submit', function(event) {
-                for (const campo of this.querySelectorAll(CAMPOS_CON_FACTURA)) {
+                for (const campo of this.querySelectorAll(CAMPOS_CON_REQUISITO)) {
                     const lleno = campo.tagName === 'SELECT' ? campo.value !== '' :
                         (Number(String(campo.value).replace(/\./g, '').replace(/,/g, '.')) || 0) !== 0;
-                    const factura = facturaVaciaDeLaFila(campo);
+                    const faltante = requisitoFaltante(campo);
 
-                    if (lleno && factura) {
+                    if (lleno && faltante) {
                         event.preventDefault();
                         event.stopImmediatePropagation();
-                        avisarSinFactura(factura);
+                        avisarRequisito(faltante);
                         return;
                     }
                 }

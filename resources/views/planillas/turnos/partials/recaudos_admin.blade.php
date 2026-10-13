@@ -29,7 +29,7 @@
                         <tr data-index="{{ $i }}">
                             <td>
                                 <select name="recaudos_admin[{{ $i }}][banco]"
-                                    class="form-select form-select-sm border-0 bg-transparent"
+                                    class="form-select form-select-sm border-0 bg-transparent recaudos-admin-banco"
                                     @disabled($bloqueadoIslero)>
                                     <option value="">Seleccione banco</option>
                                     @foreach ($bancos ?? collect() as $banco)
@@ -68,7 +68,7 @@
                     <tr data-index="0">
                         <td>
                             <select name="recaudos_admin[0][banco]"
-                                class="form-select form-select-sm border-0 bg-transparent" @disabled($bloqueadoIslero)>
+                                class="form-select form-select-sm border-0 bg-transparent recaudos-admin-banco" @disabled($bloqueadoIslero)>
                                 <option value="">Seleccione banco</option>
                                 @foreach ($bancos ?? collect() as $banco)
                                     <option value="{{ $banco->name }}">{{ $banco->name }}</option>
@@ -169,7 +169,7 @@
             tr.dataset.index = index;
             tr.innerHTML = `
                 <td>
-                    <select name="recaudos_admin[${index}][banco]" class="form-select form-select-sm border-0 bg-transparent">
+                    <select name="recaudos_admin[${index}][banco]" class="form-select form-select-sm border-0 bg-transparent recaudos-admin-banco">
                         ${bancosHtml}
                     </select>
                 </td>
