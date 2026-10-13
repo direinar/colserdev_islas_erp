@@ -19,7 +19,7 @@
             @include('informes.partials.filtro-rango', [
                 'ruta' => 'inventarios-lubricantes.create',
                 'rutaExportar' => 'inventarios-lubricantes.exportar',
-                'parametros' => ['producto' => $producto],
+                'filtrosExtra' => ['producto' => $producto],
             ])
         @endif
     </x-page-header>
