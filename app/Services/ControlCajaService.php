@@ -175,7 +175,10 @@ class ControlCajaService
         $costoCanastilla = $this->costoDeVentas($this->kardex->canastillaControl()['rows'], $desde, $hasta);
 
         $lineas = [
-            $linea('consignaciones_pagos', 'CONSIGNACIONES, TC, QR Y TRANSF.', $totales['consignaciones'] + $totales['pagos_electronicos'], 0),
+            // Los recaudos y anticipos por islas ($totales['recaudos'] ya es negativo) se
+            // restan aquí y van en su propia línea: el comprobante sigue cuadrando.
+            $linea('consignaciones_pagos', 'CONSIGNACIONES, TC, QR Y TRANSF.', $totales['consignaciones'] + $totales['pagos_electronicos'] + $totales['recaudos'], 0),
+            $linea('recaudos_anticipos', 'RECAUDOS Y ANTICIPOS', -$totales['recaudos'], 0),
             $linea('descuentos_ventas', 'DESCUENTOS EN VENTAS', $totales['puntos'] + $totales['descuentos'], 0),
             $linea('gastos_gasolina_eds', 'GASTOS DE GASOLINA EDS', $totales['gasolina_eds'], 0),
             $linea('varios', 'VARIOS', array_sum($totales['varios']), 0),

@@ -100,7 +100,9 @@ test('el comprobante contable de ventas del periodo cuadra débitos y créditos'
     $lineas = array_map(fn (array $linea): array => array_values($linea), $comprobante['lineas']);
 
     expect($lineas)->toBe([
-        ['11050501', 'CONSIGNACIONES, TC, QR Y TRANSF.', '', '', 1410000.0, 0.0],
+        // Consignaciones y pagos electrónicos (1.410.000) menos los recaudos y anticipos (70.000), que van aparte.
+        ['11050501', 'CONSIGNACIONES, TC, QR Y TRANSF.', '', '', 1340000.0, 0.0],
+        ['11050501', 'RECAUDOS Y ANTICIPOS', '', '', 70000.0, 0.0],
         ['413601', 'DESCUENTOS EN VENTAS', '', '', 30000.0, 0.0],
         ['519535', 'GASTOS DE GASOLINA EDS', '', '', 15000.0, 0.0],
         ['11050501', 'VARIOS', '', '', 68000.0, 0.0],
