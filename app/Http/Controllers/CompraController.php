@@ -4,11 +4,15 @@ namespace App\Http\Controllers;
 
 use App\Models\Compra;
 use App\Models\Proveedor;
+use App\Support\DescargaExcel;
 use App\Support\NumberParser;
+use App\Support\TablaExcel;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class CompraController extends Controller
 {
@@ -32,6 +36,58 @@ class CompraController extends Controller
         $proveedores = Proveedor::orderBy('name')->get();
 
         return view('compras.create', compact('comprasRegistradas', 'proveedores', 'desde', 'hasta'));
+    }
+
+    /**
+     * Compras registradas del rango en Excel.
+     */
+    public function exportar(Request $request): StreamedResponse
+    {
+        $request->validate([
+            'desde' => ['nullable', 'date'],
+            'hasta' => ['nullable', 'date'],
+        ]);
+
+        $desde = $request->query('desde') ?: now()->startOfMonth()->toDateString();
+        $hasta = $request->query('hasta') ?: now()->toDateString();
+
+        $compras = Compra::query()
+            ->whereDate('fecha', '>=', $desde)
+            ->whereDate('fecha', '<=', $hasta)
+            ->with('proveedor')
+            ->orderBy('fecha')
+            ->orderBy('id')
+            ->get();
+
+        $filas = $compras->map(fn (Compra $compra): array => [
+            $compra->fecha->format('d/m/Y'),
+            (string) $compra->factura,
+            (string) $compra->proveedor?->name,
+            (float) $compra->gasolina,
+            (float) $compra->distribucion_gasolina,
+            (float) $compra->acpm,
+            (float) $compra->distribucion_acpm,
+            (float) $compra->vr_total_fra,
+            (float) $compra->total,
+        ]);
+
+        $totales = ['TOTALES', null, null,
+            (float) $compras->sum('gasolina'), (float) $compras->sum('distribucion_gasolina'),
+            (float) $compras->sum('acpm'), (float) $compras->sum('distribucion_acpm'),
+            (float) $compras->sum('vr_total_fra'), (float) $compras->sum('total'),
+        ];
+
+        return DescargaExcel::respuesta(
+            TablaExcel::generar(
+                'Compras de combustible',
+                'DESDE '.Carbon::parse($desde)->format('d/m/Y').'  HASTA '.Carbon::parse($hasta)->format('d/m/Y'),
+                ['FECHA', 'No. FACTURA', 'PROVEEDOR', 'GASOLINA GALONES', 'GASOLINA DISTRIB. COSTO', 'ACPM GALONES', 'ACPM DISTRIB. COSTO', 'TOTAL VALOR', 'TOTAL GALONES'],
+                $filas,
+                [0, 1, 2],
+                $totales,
+            ),
+            'compras-combustible-'.$desde.'-a-'.$hasta.'.xlsx',
+        );
     }
 
     public function store(Request $request): RedirectResponse

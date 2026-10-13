@@ -3,8 +3,16 @@
 @section('content')
     <div class="container">
 
-        <x-page-header title="Canastilla" icon="box-seam"
+        @include('informes.partials.impresion')
+
+        <x-page-header title="Precios de canastilla" icon="box-seam"
             subtitle="Tabla de precios de canastilla.">
+            <button type="button" class="btn btn-outline-light btn-sm" onclick="window.print()">
+                <i class="bi bi-printer" aria-hidden="true"></i> IMPRIMIR
+            </button>
+            <a href="{{ route('lubricants.exportar') }}" class="btn btn-outline-light btn-sm">
+                <i class="bi bi-file-earmark-excel" aria-hidden="true"></i> EXCEL
+            </a>
             <a href="{{ route('lubricants.create') }}" class="btn btn-light">Nueva referencia</a>
         </x-page-header>
 
@@ -22,7 +30,7 @@
                     <th>Costo</th>
                     <th>Proveedor</th>
                     <th>Estado</th>
-                    <th width="220">Acciones</th>
+                    <th width="220" class="d-print-none">Acciones</th>
 
                 </tr>
 
@@ -65,7 +73,7 @@
                             @endif
                         </td>
 
-                        <td>
+                        <td class="d-print-none">
                             <x-action-buttons :showRoute="'lubricants.show'" :editRoute="'lubricants.edit'" :deleteRoute="'lubricants.destroy'" :id="$lubricant" />
                         </td>
 

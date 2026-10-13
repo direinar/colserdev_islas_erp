@@ -11,11 +11,11 @@
     </x-page-header>
 
     @if (session('success'))
-        <div class="alert alert-success">{{ session('success') }}</div>
+        <div class="alert alert-success d-print-none">{{ session('success') }}</div>
     @endif
 
     @if ($errors->any())
-        <div class="alert alert-danger">
+        <div class="alert alert-danger d-print-none">
             <ul class="mb-0">
                 @foreach ($errors->all() as $error)
                     <li>{{ $error }}</li>
@@ -24,7 +24,8 @@
         </div>
     @endif
 
-    <form id="compras-form" method="POST" action="{{ route('compras.store') }}">
+    {{-- Al imprimir solo sale COMPRAS REGISTRADAS. --}}
+    <form id="compras-form" method="POST" action="{{ route('compras.store') }}" class="d-print-none">
         @csrf
 
         <x-erp-card title="INFORMACION DE COMPRAS">
@@ -160,21 +161,36 @@
         }
     </style>
 
+    @include('informes.partials.impresion')
+
     <x-erp-card title="COMPRAS REGISTRADAS">
-        <form method="GET" action="{{ route('compras.create') }}"
-            class="d-flex flex-wrap align-items-end gap-2 p-3 pb-2">
-            <div>
-                <label for="compras-desde" class="form-label small mb-1">Desde</label>
-                <input type="date" id="compras-desde" name="desde" class="form-control form-control-sm"
-                    value="{{ $desde }}">
+        {{-- Rango de fechas a la izquierda; imprimir y Excel a la derecha. --}}
+        <div class="d-flex flex-wrap justify-content-between align-items-end gap-2 p-3 pb-2 d-print-none">
+            <form method="GET" action="{{ route('compras.create') }}" class="d-flex flex-wrap align-items-end gap-2">
+                <div>
+                    <label for="compras-desde" class="form-label small mb-1">Desde</label>
+                    <input type="date" id="compras-desde" name="desde" class="form-control form-control-sm"
+                        value="{{ $desde }}">
+                </div>
+                <div>
+                    <label for="compras-hasta" class="form-label small mb-1">Hasta</label>
+                    <input type="date" id="compras-hasta" name="hasta" class="form-control form-control-sm"
+                        value="{{ $hasta }}">
+                </div>
+                <button type="submit" class="btn btn-sm btn-outline-primary">Consultar</button>
+            </form>
+            <div class="d-flex gap-2">
+                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="window.print()">
+                    <i class="bi bi-printer" aria-hidden="true"></i> IMPRIMIR
+                </button>
+                <a href="{{ route('compras.exportar', ['desde' => $desde, 'hasta' => $hasta]) }}" class="btn btn-sm btn-outline-success">
+                    <i class="bi bi-file-earmark-excel" aria-hidden="true"></i> EXCEL
+                </a>
             </div>
-            <div>
-                <label for="compras-hasta" class="form-label small mb-1">Hasta</label>
-                <input type="date" id="compras-hasta" name="hasta" class="form-control form-control-sm"
-                    value="{{ $hasta }}">
-            </div>
-            <button type="submit" class="btn btn-sm btn-outline-primary">Consultar</button>
-        </form>
+        </div>
+        <div class="d-none d-print-block px-3 small">
+            Compras registradas del {{ \Illuminate\Support\Carbon::parse($desde)->format('d/m/Y') }} al {{ \Illuminate\Support\Carbon::parse($hasta)->format('d/m/Y') }}
+        </div>
 
         <div class="table-responsive">
             <table class="table table-bordered table-sm mb-0 align-middle" id="compras-registradas">
@@ -186,7 +202,7 @@
                         <th colspan="2" class="text-center">GASOLINA</th>
                         <th colspan="2" class="text-center">ACPM</th>
                         <th colspan="2" class="text-center">TOTAL</th>
-                        <th rowspan="2" class="text-center align-middle">ACCION</th>
+                        <th rowspan="2" class="text-center align-middle d-print-none">ACCION</th>
                     </tr>
                     <tr>
                         <th class="text-center">GALONES</th>
@@ -209,7 +225,7 @@
                             <td class="text-end">{{ number_format((float) $compra->distribucion_acpm, 0, ',', '.') }}</td>
                             <td class="text-end">{{ number_format((float) $compra->vr_total_fra, 0, ',', '.') }}</td>
                             <td class="text-end">{{ number_format((float) $compra->total, 0, ',', '.') }}</td>
-                            <td class="text-center text-nowrap">
+                            <td class="text-center text-nowrap d-print-none">
                                 <a href="{{ route('compras.edit', $compra) }}" class="btn btn-sm btn-outline-primary">Editar</a>
                                 <form method="POST" action="{{ route('compras.destroy', $compra) }}" class="d-inline"
                                     onsubmit="return confirm('¿Eliminar la compra {{ $compra->factura }}? El inventario se recalcula sin ella.');">
@@ -234,7 +250,7 @@
                         <td class="text-end">{{ number_format((float) $comprasRegistradas->sum('distribucion_acpm'), 0, ',', '.') }}</td>
                         <td class="text-end">{{ number_format((float) $comprasRegistradas->sum('vr_total_fra'), 0, ',', '.') }}</td>
                         <td class="text-end">{{ number_format((float) $comprasRegistradas->sum('total'), 0, ',', '.') }}</td>
-                        <td></td>
+                        <td class="d-print-none"></td>
                     </tr>
                 </tfoot>
             </table>

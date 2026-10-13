@@ -3,7 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Lubricant;
+use App\Support\DescargaExcel;
+use App\Support\TablaExcel;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class LubricantController extends Controller
 {
@@ -12,9 +15,30 @@ class LubricantController extends Controller
      */
     public function index()
     {
-         $lubricants = Lubricant::latest()->get();
+        $lubricants = Lubricant::latest()->get();
 
         return view('lubricants.index', compact('lubricants'));
+    }
+
+    /**
+     * Precios de canastilla en Excel.
+     */
+    public function exportar(): StreamedResponse
+    {
+        $filas = Lubricant::query()->orderBy('reference')->get()->map(fn (Lubricant $lubricant): array => [
+            $lubricant->reference,
+            (float) $lubricant->sale_price,
+            (float) $lubricant->iva,
+            (float) $lubricant->total,
+            (float) $lubricant->cost_price,
+            (string) $lubricant->supplier,
+            $lubricant->active ? 'ACTIVO' : 'INACTIVO',
+        ]);
+
+        return DescargaExcel::respuesta(
+            TablaExcel::generar('Precios de canastilla', 'Generado el '.now()->format('d/m/Y'), ['REFERENCIA', 'VENTA', 'IVA', 'TOTAL', 'COSTO', 'PROVEEDOR', 'ESTADO'], $filas, [0, 5, 6]),
+            'precios-de-canastilla.xlsx',
+        );
     }
 
     /**
@@ -46,7 +70,7 @@ class LubricantController extends Controller
         Lubricant::create($validated + [
 
             'supplier' => $request->supplier,
-            'active' => $request->active ?? 1
+            'active' => $request->active ?? 1,
 
         ]);
 
@@ -92,7 +116,7 @@ class LubricantController extends Controller
         $lubricant->update($validated + [
 
             'supplier' => $request->supplier,
-            'active' => $request->active ?? 1
+            'active' => $request->active ?? 1,
 
         ]);
 
@@ -105,11 +129,11 @@ class LubricantController extends Controller
      * Remove the specified resource from storage.
      */
     public function destroy(Lubricant $lubricant)
-{
-    $lubricant->delete();
+    {
+        $lubricant->delete();
 
-    return redirect()
-        ->route('lubricants.index')
-        ->with('success', 'Eliminado correctamente');
-}
+        return redirect()
+            ->route('lubricants.index')
+            ->with('success', 'Eliminado correctamente');
+    }
 }

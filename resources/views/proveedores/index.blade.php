@@ -3,12 +3,20 @@
 @section('content')
     <div class="container">
 
+        @include('informes.partials.impresion')
+
         <x-page-header title="Proveedores" icon="truck">
+            <button type="button" class="btn btn-outline-light btn-sm" onclick="window.print()">
+                <i class="bi bi-printer" aria-hidden="true"></i> IMPRIMIR
+            </button>
+            <a href="{{ route('proveedores.exportar') }}" class="btn btn-outline-light btn-sm">
+                <i class="bi bi-file-earmark-excel" aria-hidden="true"></i> EXCEL
+            </a>
             <a href="{{ route('proveedores.create') }}" class="btn btn-light">Nuevo proveedor</a>
         </x-page-header>
 
         @if (session('success'))
-            <div class="alert alert-success">{{ session('success') }}</div>
+            <div class="alert alert-success d-print-none">{{ session('success') }}</div>
         @endif
 
         <div class="table-responsive">
@@ -17,7 +25,7 @@
                 <tr>
                     <th>Nombre</th>
                     <th>Documento</th>
-                    <th width="200">Acciones</th>
+                    <th width="200" class="d-print-none">Acciones</th>
                 </tr>
             </thead>
             <tbody>
@@ -25,7 +33,7 @@
                     <tr>
                         <td>{{ $proveedor->name }}</td>
                         <td>{{ $proveedor->document }}</td>
-                        <td>
+                        <td class="d-print-none">
                             <x-action-buttons :showRoute="'proveedores.show'" :editRoute="'proveedores.edit'" :deleteRoute="'proveedores.destroy'" :id="$proveedor" />
                         </td>
                     </tr>

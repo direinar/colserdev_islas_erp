@@ -3,7 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Proveedor;
+use App\Support\DescargaExcel;
+use App\Support\TablaExcel;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ProveedorController extends Controller
 {
@@ -12,6 +15,20 @@ class ProveedorController extends Controller
         $proveedores = Proveedor::latest()->get();
 
         return view('proveedores.index', compact('proveedores'));
+    }
+
+    /**
+     * Proveedores en Excel.
+     */
+    public function exportar(): StreamedResponse
+    {
+        $filas = Proveedor::query()->orderBy('name')->get()
+            ->map(fn (Proveedor $proveedor): array => [$proveedor->name, (string) $proveedor->document]);
+
+        return DescargaExcel::respuesta(
+            TablaExcel::generar('Proveedores', 'Generado el '.now()->format('d/m/Y'), ['NOMBRE', 'DOCUMENTO'], $filas, [0, 1]),
+            'proveedores.xlsx',
+        );
     }
 
     public function create()

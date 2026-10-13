@@ -82,6 +82,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/compras/create', [CompraController::class, 'create'])
             ->name('compras.create');
 
+        Route::get('/compras/exportar', [CompraController::class, 'exportar'])
+            ->name('compras.exportar');
+
         Route::post('/compras', [CompraController::class, 'store'])
             ->name('compras.store');
 
@@ -225,6 +228,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         Route::resource('fuel-prices', FuelPriceController::class);
 
+        Route::get('/lubricants/exportar', [LubricantController::class, 'exportar'])
+            ->name('lubricants.exportar');
+
         Route::resource('lubricants', LubricantController::class);
 
         Route::resource('customers', CustomerController::class);
@@ -241,6 +247,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
             ->only(['index', 'store', 'edit', 'update', 'destroy'])
             ->parameters(['saldos-iniciales' => 'saldoInicial'])
             ->names('cartera-saldos-iniciales');
+
+        Route::get('/proveedores/exportar', [ProveedorController::class, 'exportar'])
+            ->name('proveedores.exportar');
 
         Route::resource('proveedores', ProveedorController::class)
             ->parameters(['proveedores' => 'proveedor']);
