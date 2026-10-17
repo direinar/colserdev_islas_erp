@@ -1,6 +1,6 @@
 {{--
     Encabezado de las tablas de compras de combustible (plantilla con IVA): tres filas como en
-    el Excel. Los números entre paréntesis remiten a la leyenda de la pantalla.
+    el Excel.
 --}}
 @php($accionImprimible = $accionImprimible ?? true)
 <tr>
@@ -15,13 +15,13 @@
 <tr>
     @foreach (['gasolina' => 'GASOLINA', 'acpm' => 'ACPM'] as $combustible => $nombre)
         <th rowspan="2" class="text-center align-middle compra-sub-{{ $combustible }} compra-inicio-{{ $combustible }}">GALONES</th>
-        <th colspan="2" class="text-center compra-sub-{{ $combustible }}">BASE <span class="compra-ref">(1)</span></th>
-        <th rowspan="2" class="text-center align-middle compra-sub-{{ $combustible }} compra-th-calc">LIQUIDACIÓN<br>IVA <span class="compra-ref">(2)</span></th>
-        <th rowspan="2" class="text-center align-middle compra-sub-{{ $combustible }}">COSTO<br>PRODUCTO <span class="compra-ref">(1)</span></th>
-        <th rowspan="2" class="text-center align-middle compra-sub-{{ $combustible }}">SOBRETASA <span class="compra-ref">(1)</span></th>
-        <th rowspan="2" class="text-center align-middle compra-sub-{{ $combustible }}">SOLDICOM <span class="compra-ref">(1)</span></th>
-        <th rowspan="2" class="text-center align-middle compra-sub-{{ $combustible }} compra-th-calc">COSTO<br>{{ $nombre }} <span class="compra-ref">(3)</span></th>
-        <th rowspan="2" class="text-center align-middle compra-sub-{{ $combustible }} compra-th-calc">COSTO<br>UNITARIO <span class="compra-ref">(4)</span></th>
+        <th colspan="2" class="text-center compra-sub-{{ $combustible }}">BASE</th>
+        <th rowspan="2" class="text-center align-middle compra-sub-{{ $combustible }} compra-th-calc">LIQUIDACIÓN<br>IVA</th>
+        <th rowspan="2" class="text-center align-middle compra-sub-{{ $combustible }}">COSTO<br>PRODUCTO</th>
+        <th rowspan="2" class="text-center align-middle compra-sub-{{ $combustible }}">SOBRETASA</th>
+        <th rowspan="2" class="text-center align-middle compra-sub-{{ $combustible }}">SOLDICOM</th>
+        <th rowspan="2" class="text-center align-middle compra-sub-{{ $combustible }} compra-th-calc">COSTO<br>{{ $nombre }}</th>
+        <th rowspan="2" class="text-center align-middle compra-sub-{{ $combustible }} compra-th-calc">COSTO<br>UNITARIO</th>
     @endforeach
     <th rowspan="2" class="text-center align-middle compra-sub-total compra-inicio-total">VALOR</th>
     <th rowspan="2" class="text-center align-middle compra-sub-total">GALONES</th>

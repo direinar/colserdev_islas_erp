@@ -57,7 +57,6 @@
         .compras-tabla .compra-inicio-acpm,
         .compras-tabla .compra-inicio-total { border-left: 3px solid #595959; }
 
-        .compras-tabla .compra-ref { color: #c00000; font-weight: 700; }
 
         /* Fórmulas: no se digitan. */
         .compras-tabla .compra-calc {
@@ -115,14 +114,6 @@
                         </tr>
                     </tfoot>
                 </table>
-            </div>
-
-            <div class="small text-muted p-3 pt-2">
-                <span class="compra-ref text-danger fw-bold">(1)</span> Celdas blancas: las llena el administrador.
-                <span class="text-danger fw-bold ms-2">(2)</span> Liquidación IVA = base 19% × 19% + base 5% × 5%.
-                <span class="text-danger fw-bold ms-2">(3)</span> Costo = liquidación IVA + costo producto + sobretasa + Soldicom (alimenta los inventarios).
-                <span class="text-danger fw-bold ms-2">(4)</span> Costo unitario = costo ÷ galones.
-                Las celdas grises son fórmulas.
             </div>
         </x-erp-card>
     </form>
@@ -243,7 +234,7 @@
                 if (salida) salida.textContent = texto;
             }
 
-            // Fórmulas de la plantilla: (2) IVA, (3) costo y (4) costo unitario.
+            // Fórmulas de la plantilla: liquidación IVA, costo y costo unitario.
             function liquidarFila(fila) {
                 const resultado = { vr_total_fra: 0, total: 0 };
 

@@ -29,7 +29,6 @@
             text-align: right;
         }
 
-        .compra-edicion .compra-ref { color: #c00000; font-weight: 700; }
         .compra-edicion .grupo-gasolina { background: #fbe5d6; }
         .compra-edicion .grupo-acpm { background: #e2efda; }
     </style>
@@ -69,7 +68,7 @@
                         <fieldset class="border rounded p-2 h-100">
                             <legend class="float-none w-auto px-2 mb-0 small fw-bold grupo-{{ $combustible }}">{{ $nombre }}</legend>
                             <div class="row g-2">
-                                @foreach (['' => 'Galones', 'base19_' => 'Base 19% (1)', 'base5_' => 'Base 5% (1)', 'costo_producto_' => 'Costo producto (1)', 'sobretasa_' => 'Sobretasa (1)', 'soldicom_' => 'Soldicom (1)'] as $prefijo => $titulo)
+                                @foreach (['' => 'Galones', 'base19_' => 'Base 19%', 'base5_' => 'Base 5%', 'costo_producto_' => 'Costo producto', 'sobretasa_' => 'Sobretasa', 'soldicom_' => 'Soldicom'] as $prefijo => $titulo)
                                     <div class="col-6 col-md-4">
                                         <label for="{{ $prefijo.$combustible }}" class="form-label small mb-1">{{ $titulo }}</label>
                                         <input type="text" id="{{ $prefijo.$combustible }}" name="{{ $prefijo.$combustible }}"
@@ -78,15 +77,15 @@
                                     </div>
                                 @endforeach
                                 <div class="col-6 col-md-4">
-                                    <span class="form-label small mb-1 d-block">Liquidación IVA <span class="compra-ref">(2)</span></span>
+                                    <span class="form-label small mb-1 d-block">Liquidación IVA</span>
                                     <output class="form-control form-control-sm compra-calc" data-calc="iva_{{ $combustible }}">0</output>
                                 </div>
                                 <div class="col-6 col-md-4">
-                                    <span class="form-label small mb-1 d-block">Costo {{ $combustible === 'acpm' ? 'ACPM' : 'gasolina' }} <span class="compra-ref">(3)</span></span>
+                                    <span class="form-label small mb-1 d-block">Costo {{ $combustible === 'acpm' ? 'ACPM' : 'gasolina' }}</span>
                                     <output class="form-control form-control-sm compra-calc" data-calc="costo_{{ $combustible }}">0</output>
                                 </div>
                                 <div class="col-6 col-md-4">
-                                    <span class="form-label small mb-1 d-block">Costo unitario <span class="compra-ref">(4)</span></span>
+                                    <span class="form-label small mb-1 d-block">Costo unitario</span>
                                     <output class="form-control form-control-sm compra-calc" data-calc="unitario_{{ $combustible }}">0</output>
                                 </div>
                             </div>
@@ -95,12 +94,8 @@
                 @endforeach
             </div>
 
-            <div class="small text-muted px-3 pb-3">
-                <span class="compra-ref">(1)</span> Las digita el administrador.
-                <span class="compra-ref ms-2">(2)</span> Liquidación IVA = base 19% × 19% + base 5% × 5%.
-                <span class="compra-ref ms-2">(3)</span> Costo = liquidación IVA + costo producto + sobretasa + Soldicom.
-                <span class="compra-ref ms-2">(4)</span> Costo unitario = costo ÷ galones.
-                Total de la factura: <strong data-calc="vr_total_fra">0</strong>.
+            <div class="small px-3 pb-3">
+                Total de la factura: <strong data-calc="vr_total_fra">0</strong>
             </div>
         </x-erp-card>
     </form>

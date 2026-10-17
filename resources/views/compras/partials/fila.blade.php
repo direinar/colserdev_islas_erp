@@ -1,7 +1,7 @@
 {{--
     Fila de compra de combustible (plantilla con IVA). Parámetros: $index (número o "__INDEX__"
     para la plantilla de filas nuevas), $row (valores digitados) y $proveedores.
-    Celdas blancas: las digita el administrador (1). Celdas sombreadas: fórmulas (2), (3) y (4),
+    Celdas blancas: las digita el administrador. Celdas sombreadas: fórmulas (IVA, costo y costo unitario),
     que se ven mientras se digita y el servidor vuelve a calcular al guardar.
 --}}
 @php($row = $row ?? [])
