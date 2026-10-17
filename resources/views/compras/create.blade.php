@@ -2,9 +2,15 @@
 
 @section('title', 'Compras')
 
+@php
+    $pesos = fn (float $valor): string => number_format($valor, 0, ',', '.');
+    $galones = fn (float $valor): string => rtrim(rtrim(number_format($valor, 3, ',', '.'), '0'), ',');
+    $columnasValor = ['base19_', 'base5_', 'iva_', 'costo_producto_', 'sobretasa_', 'soldicom_', 'distribucion_'];
+@endphp
+
 @section('content')
     <x-page-header title="Compras de combustible" icon="fuel-pump"
-        subtitle="Registre compras por factura con distribución de costo entre gasolina y ACPM.">
+        subtitle="Registre cada factura con la liquidación de IVA y el costo de gasolina y ACPM.">
         <button type="submit" form="compras-form" class="btn btn-light">
             <i class="bi bi-save" aria-hidden="true"></i> Guardar factura
         </button>
@@ -24,6 +30,54 @@
         </div>
     @endif
 
+    <style>
+        /* Compras con IVA: grupos de color por combustible, como en la plantilla. */
+        .compras-tabla th,
+        .compras-tabla td {
+            white-space: nowrap;
+            vertical-align: middle;
+        }
+
+        .compras-tabla thead th {
+            font-size: .72rem;
+            line-height: 1.15;
+        }
+
+        .compras-tabla .compra-grupo-gasolina,
+        .compras-tabla .compra-sub-gasolina { background: #fbe5d6; }
+        .compras-tabla .compra-grupo-acpm,
+        .compras-tabla .compra-sub-acpm { background: #e2efda; }
+        .compras-tabla .compra-grupo-total,
+        .compras-tabla .compra-sub-total { background: #ddebf7; }
+        .compras-tabla .compra-grupo-gasolina,
+        .compras-tabla .compra-grupo-acpm,
+        .compras-tabla .compra-grupo-total { font-size: .9rem; letter-spacing: .05rem; }
+
+        .compras-tabla .compra-inicio-gasolina,
+        .compras-tabla .compra-inicio-acpm,
+        .compras-tabla .compra-inicio-total { border-left: 3px solid #595959; }
+
+        .compras-tabla .compra-ref { color: #c00000; font-weight: 700; }
+
+        /* Fórmulas: no se digitan. */
+        .compras-tabla .compra-calc {
+            background: #f2f2f2;
+            text-align: right;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .compras-tabla .compra-costo { font-weight: 700; }
+
+        .compras-tabla .compra-numero { min-width: 7.5rem; }
+        .compras-tabla .compra-texto { min-width: 7rem; }
+        .compras-tabla .compra-proveedor { min-width: 11rem; }
+        .compras-tabla td.compra-calc { min-width: 7rem; }
+
+        #compras-registradas { font-size: .78rem; }
+        #compras-registradas td.num { text-align: right; font-variant-numeric: tabular-nums; }
+        #compras-registradas tr:target td { background-color: #fff3cd; }
+    </style>
+
     {{-- Al imprimir solo sale COMPRAS REGISTRADAS. --}}
     <form id="compras-form" method="POST" action="{{ route('compras.store') }}" class="d-print-none">
         @csrf
@@ -34,134 +88,51 @@
             </div>
 
             <div class="table-responsive">
-                <table class="table table-bordered table-sm mb-0" id="compras-table">
-                    <thead class="table-light">
-                        <tr>
-                            <th class="text-center align-middle border-end">FECHA</th>
-                            <th class="text-center align-middle border-end">No. FACTURA</th>
-                            <th class="text-center align-middle border-end">PROVEEDOR</th>
-                            <th colspan="2" class="text-center align-middle border-end">GASOLINA</th>
-                            <th colspan="2" class="text-center align-middle border-end">ACPM</th>
-                            <th colspan="2" class="text-center align-middle border-end">TOTAL</th>
-                            <th class="text-center align-middle">ACCION</th>
-                        </tr>
-                        <tr>
-                            <th colspan="3" class="border-end"></th>
-                            <th class="text-center border-end">UNIDADES</th>
-                            <th class="text-center border-end">DISTRIB. COSTO</th>
-                            <th class="text-center border-end">UNIDADES</th>
-                            <th class="text-center border-end">DISTRIB. COSTO</th>
-                            <th class="text-center border-end">VALOR</th>
-                            <th class="text-center border-end">UNIDADES</th>
-                            <th></th>
-                        </tr>
+                <table class="table table-bordered table-sm mb-0 compras-tabla" id="compras-table">
+                    <thead>
+                        @include('compras.partials.encabezado')
                     </thead>
 
                     <tbody id="compras-body">
-                        @php
-                            $rows = old('compras', [
-                                [
-                                    'fecha' => date('Y-m-d'),
-                                    'factura' => '',
-                                    'proveedor_id' => '',
-                                    'vr_total_fra' => '',
-                                    'gasolina' => '',
-                                    'acpm' => '',
-                                    'total' => '',
-                                    'distribucion_gasolina' => '',
-                                    'distribucion_acpm' => '',
-                                ],
-                            ]);
-                        @endphp
-
-                        @foreach ($rows as $index => $row)
-                            <tr data-index="{{ $index }}">
-                                <td>
-                                    <input type="date" name="compras[{{ $index }}][fecha]"
-                                        class="form-control form-control-sm" value="{{ $row['fecha'] ?? '' }}">
-                                </td>
-                                <td>
-                                    <input type="text" name="compras[{{ $index }}][factura]"
-                                        class="form-control form-control-sm" value="{{ $row['factura'] ?? '' }}">
-                                </td>
-                                <td>
-                                    <select name="compras[{{ $index }}][proveedor_id]" class="form-select form-select-sm"
-                                        aria-label="Proveedor">
-                                        <option value="">Seleccione proveedor</option>
-                                        @foreach ($proveedores as $proveedor)
-                                            <option value="{{ $proveedor->id }}" @selected(($row['proveedor_id'] ?? '') == $proveedor->id)>
-                                                {{ $proveedor->name }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                </td>
-                                <td>
-                                    <input type="text" name="compras[{{ $index }}][gasolina]"
-                                        class="form-control form-control-sm text-end gasolina-input" inputmode="decimal"
-                                        value="{{ $row['gasolina'] ?? '' }}">
-                                </td>
-                                <td>
-                                    <input type="text" name="compras[{{ $index }}][distribucion_gasolina]"
-                                        class="form-control form-control-sm text-end distribucion-gasolina-input"
-                                        inputmode="decimal" value="{{ $row['distribucion_gasolina'] ?? '' }}">
-                                </td>
-                                <td>
-                                    <input type="text" name="compras[{{ $index }}][acpm]"
-                                        class="form-control form-control-sm text-end acpm-input" inputmode="decimal"
-                                        value="{{ $row['acpm'] ?? '' }}">
-                                </td>
-                                <td>
-                                    <input type="text" name="compras[{{ $index }}][distribucion_acpm]"
-                                        class="form-control form-control-sm text-end distribucion-acpm-input"
-                                        inputmode="decimal" value="{{ $row['distribucion_acpm'] ?? '' }}">
-                                </td>
-                                <td>
-                                    <input type="text" name="compras[{{ $index }}][vr_total_fra]"
-                                        class="form-control form-control-sm text-end vr-total-fra-input" readonly>
-                                </td>
-                                <td>
-                                    <input type="text" name="compras[{{ $index }}][total]"
-                                        class="form-control form-control-sm text-end total-input" readonly>
-                                </td>
-                                <td class="text-center">
-                                    <button type="button" class="btn btn-sm btn-danger remove-row">×</button>
-                                </td>
-                            </tr>
+                        @foreach (old('compras', [['fecha' => date('Y-m-d')]]) as $index => $row)
+                            @include('compras.partials.fila', ['index' => $index, 'row' => $row])
                         @endforeach
                     </tbody>
 
                     <tfoot>
                         <tr class="table-secondary fw-bold">
                             <td colspan="3" class="text-end">TOTALES</td>
-                            <td id="total-gasolina" class="text-end">0</td>
-                            <td id="total-distrib-gasolina" class="text-end">0</td>
-                            <td id="total-acpm" class="text-end">0</td>
-                            <td id="total-distrib-acpm" class="text-end">0</td>
-                            <td id="total-valor" class="text-end">0</td>
-                            <td id="total-unidades" class="text-end">0</td>
+                            @foreach (['gasolina', 'acpm'] as $combustible)
+                                <td class="text-end compra-inicio-{{ $combustible }}" data-total="{{ $combustible }}">0</td>
+                                @foreach (['base19', 'base5', 'iva', 'costo_producto', 'sobretasa', 'soldicom', 'costo'] as $campo)
+                                    <td class="text-end" data-total="{{ $campo }}_{{ $combustible }}">0</td>
+                                @endforeach
+                                <td></td>
+                            @endforeach
+                            <td class="text-end compra-inicio-total" data-total="vr_total_fra">0</td>
+                            <td class="text-end" data-total="total">0</td>
                             <td></td>
                         </tr>
                     </tfoot>
                 </table>
             </div>
+
+            <div class="small text-muted p-3 pt-2">
+                <span class="compra-ref text-danger fw-bold">(1)</span> Celdas blancas: las llena el administrador.
+                <span class="text-danger fw-bold ms-2">(2)</span> Liquidación IVA = base 19% × 19% + base 5% × 5%.
+                <span class="text-danger fw-bold ms-2">(3)</span> Costo = liquidación IVA + costo producto + sobretasa + Soldicom (alimenta los inventarios).
+                <span class="text-danger fw-bold ms-2">(4)</span> Costo unitario = costo ÷ galones.
+                Las celdas grises son fórmulas.
+            </div>
         </x-erp-card>
     </form>
 
-    {{-- Molde de opciones de proveedor para las filas que se agregan con JS. --}}
-    <select id="proveedores-options-template" class="d-none" aria-hidden="true" tabindex="-1">
-        <option value="">Seleccione proveedor</option>
-        @foreach ($proveedores as $proveedor)
-            <option value="{{ $proveedor->id }}">{{ $proveedor->name }}</option>
-        @endforeach
-    </select>
+    {{-- Molde de las filas que se agregan con "+ Agregar fila". --}}
+    <template id="compra-fila-template">
+        @include('compras.partials.fila', ['index' => '__INDEX__', 'row' => ['fecha' => date('Y-m-d')]])
+    </template>
 
-    <style>
-        #compras-registradas tr:target td {
-            background-color: #fff3cd;
-        }
-    </style>
-
-    @include('informes.partials.impresion')
+    @include('informes.partials.impresion', ['horizontal' => true])
 
     <x-erp-card title="COMPRAS REGISTRADAS">
         {{-- Rango de fechas a la izquierda; imprimir y Excel a la derecha. --}}
@@ -193,25 +164,9 @@
         </div>
 
         <div class="table-responsive">
-            <table class="table table-bordered table-sm mb-0 align-middle" id="compras-registradas">
-                <thead class="table-light">
-                    <tr>
-                        <th rowspan="2" class="text-center align-middle">FECHA</th>
-                        <th rowspan="2" class="text-center align-middle">No. FACTURA</th>
-                        <th rowspan="2" class="text-center align-middle">PROVEEDOR</th>
-                        <th colspan="2" class="text-center">GASOLINA</th>
-                        <th colspan="2" class="text-center">ACPM</th>
-                        <th colspan="2" class="text-center">TOTAL</th>
-                        <th rowspan="2" class="text-center align-middle d-print-none">ACCION</th>
-                    </tr>
-                    <tr>
-                        <th class="text-center">GALONES</th>
-                        <th class="text-center">DISTRIB. COSTO</th>
-                        <th class="text-center">GALONES</th>
-                        <th class="text-center">DISTRIB. COSTO</th>
-                        <th class="text-center">VALOR</th>
-                        <th class="text-center">GALONES</th>
-                    </tr>
+            <table class="table table-bordered table-sm mb-0 compras-tabla" id="compras-registradas">
+                <thead>
+                    @include('compras.partials.encabezado', ['accionImprimible' => false])
                 </thead>
                 <tbody>
                     @forelse ($comprasRegistradas as $compra)
@@ -219,12 +174,15 @@
                             <td class="text-center">{{ $compra->fecha->format('d/m/Y') }}</td>
                             <td>{{ $compra->factura }}</td>
                             <td>{{ $compra->proveedor?->name }}</td>
-                            <td class="text-end">{{ number_format((float) $compra->gasolina, 0, ',', '.') }}</td>
-                            <td class="text-end">{{ number_format((float) $compra->distribucion_gasolina, 0, ',', '.') }}</td>
-                            <td class="text-end">{{ number_format((float) $compra->acpm, 0, ',', '.') }}</td>
-                            <td class="text-end">{{ number_format((float) $compra->distribucion_acpm, 0, ',', '.') }}</td>
-                            <td class="text-end">{{ number_format((float) $compra->vr_total_fra, 0, ',', '.') }}</td>
-                            <td class="text-end">{{ number_format((float) $compra->total, 0, ',', '.') }}</td>
+                            @foreach (['gasolina', 'acpm'] as $combustible)
+                                <td class="num compra-inicio-{{ $combustible }}">{{ $galones((float) $compra->{$combustible}) }}</td>
+                                @foreach ($columnasValor as $prefijo)
+                                    <td class="num {{ in_array($prefijo, ['iva_', 'distribucion_'], true) ? 'compra-calc' : '' }} {{ $prefijo === 'distribucion_' ? 'compra-costo' : '' }}">{{ $pesos((float) $compra->{$prefijo.$combustible}) }}</td>
+                                @endforeach
+                                <td class="num compra-calc">{{ number_format($compra->costoUnitario($combustible), 2, ',', '.') }}</td>
+                            @endforeach
+                            <td class="num compra-calc compra-costo compra-inicio-total">{{ $pesos((float) $compra->vr_total_fra) }}</td>
+                            <td class="num compra-calc">{{ $galones((float) $compra->total) }}</td>
                             <td class="text-center text-nowrap d-print-none">
                                 <a href="{{ route('compras.edit', $compra) }}" class="btn btn-sm btn-outline-primary">Editar</a>
                                 <form method="POST" action="{{ route('compras.destroy', $compra) }}" class="d-inline"
@@ -237,19 +195,22 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="10" class="text-center text-muted py-3">No hay compras en el rango seleccionado.</td>
+                            <td colspan="24" class="text-center text-muted py-3">No hay compras en el rango seleccionado.</td>
                         </tr>
                     @endforelse
                 </tbody>
                 <tfoot>
                     <tr class="table-secondary fw-bold">
                         <td colspan="3" class="text-end">TOTALES</td>
-                        <td class="text-end">{{ number_format((float) $comprasRegistradas->sum('gasolina'), 0, ',', '.') }}</td>
-                        <td class="text-end">{{ number_format((float) $comprasRegistradas->sum('distribucion_gasolina'), 0, ',', '.') }}</td>
-                        <td class="text-end">{{ number_format((float) $comprasRegistradas->sum('acpm'), 0, ',', '.') }}</td>
-                        <td class="text-end">{{ number_format((float) $comprasRegistradas->sum('distribucion_acpm'), 0, ',', '.') }}</td>
-                        <td class="text-end">{{ number_format((float) $comprasRegistradas->sum('vr_total_fra'), 0, ',', '.') }}</td>
-                        <td class="text-end">{{ number_format((float) $comprasRegistradas->sum('total'), 0, ',', '.') }}</td>
+                        @foreach (['gasolina', 'acpm'] as $combustible)
+                            <td class="num compra-inicio-{{ $combustible }}">{{ $galones((float) $comprasRegistradas->sum($combustible)) }}</td>
+                            @foreach ($columnasValor as $prefijo)
+                                <td class="num">{{ $pesos((float) $comprasRegistradas->sum($prefijo.$combustible)) }}</td>
+                            @endforeach
+                            <td></td>
+                        @endforeach
+                        <td class="num compra-inicio-total">{{ $pesos((float) $comprasRegistradas->sum('vr_total_fra')) }}</td>
+                        <td class="num">{{ $galones((float) $comprasRegistradas->sum('total')) }}</td>
                         <td class="d-print-none"></td>
                     </tr>
                 </tfoot>
@@ -260,167 +221,104 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const tbody = document.getElementById('compras-body');
-            const addBtn = document.getElementById('add-compra-row');
-            let nextIndex = tbody.querySelectorAll('tr').length;
+            const plantilla = document.getElementById('compra-fila-template');
+            const IVA_GENERAL = {{ \App\Models\Compra::TARIFA_IVA_GENERAL }};
+            const IVA_REDUCIDO = {{ \App\Models\Compra::TARIFA_IVA_REDUCIDA }};
+            const COMBUSTIBLES = ['gasolina', 'acpm'];
+            // Índice libre para las filas nuevas (tras un error se recargan las filas con sus índices).
+            let siguiente = Math.max(-1, ...[...tbody.querySelectorAll('tr')].map(fila => Number(fila.dataset.index) || 0)) + 1;
 
-            function parseNumber(value) {
-                if (value === null || value === undefined || value === '') {
-                    return 0;
+            // Formato es-CO: el punto separa miles y la coma los decimales.
+            const leer = (valor) => Number(String(valor ?? '').trim().replace(/\s+/g, '').replace(/\./g, '').replace(/,/g, '.')) || 0;
+            const pesos = new Intl.NumberFormat('es-CO', { maximumFractionDigits: 0 });
+            const unitario = new Intl.NumberFormat('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            const galones = new Intl.NumberFormat('es-CO', { maximumFractionDigits: 3 });
+
+            function valor(fila, campo) {
+                return leer(fila.querySelector(`[data-campo="${campo}"]`)?.value);
+            }
+
+            function mostrar(fila, campo, texto) {
+                const salida = fila.querySelector(`[data-calc="${campo}"]`);
+                if (salida) salida.textContent = texto;
+            }
+
+            // Fórmulas de la plantilla: (2) IVA, (3) costo y (4) costo unitario.
+            function liquidarFila(fila) {
+                const resultado = { vr_total_fra: 0, total: 0 };
+
+                for (const c of COMBUSTIBLES) {
+                    const iva = valor(fila, `base19_${c}`) * IVA_GENERAL + valor(fila, `base5_${c}`) * IVA_REDUCIDO;
+                    const costo = iva + valor(fila, `costo_producto_${c}`) + valor(fila, `sobretasa_${c}`) + valor(fila, `soldicom_${c}`);
+                    const gal = valor(fila, c);
+
+                    resultado[`iva_${c}`] = iva;
+                    resultado[`costo_${c}`] = costo;
+                    resultado.vr_total_fra += costo;
+                    resultado.total += gal;
+
+                    mostrar(fila, `iva_${c}`, pesos.format(iva));
+                    mostrar(fila, `costo_${c}`, pesos.format(costo));
+                    mostrar(fila, `unitario_${c}`, unitario.format(gal > 0 ? costo / gal : 0));
                 }
 
-                const clean = String(value).trim()
-                    .replace(/\s+/g, '')
-                    .replace(/\./g, '')
-                    .replace(/,/g, '.');
+                mostrar(fila, 'vr_total_fra', pesos.format(resultado.vr_total_fra));
+                mostrar(fila, 'total', galones.format(resultado.total));
 
-                return Number(clean) || 0;
+                return resultado;
             }
 
-            function formatNumber(number) {
-                const value = Number(number);
+            function actualizarTotales() {
+                const totales = {};
+                const sumar = (campo, cantidad) => totales[campo] = (totales[campo] ?? 0) + cantidad;
 
-                if (!Number.isFinite(value)) {
-                    return '0';
-                }
+                tbody.querySelectorAll('tr').forEach(fila => {
+                    const resultado = liquidarFila(fila);
 
-                return value.toString();
-            }
-
-            function setFormattedValue(input, value) {
-                input.value = formatNumber(value);
-            }
-
-            function updateRow(row) {
-                const vrTotalFraInput = row.querySelector('.vr-total-fra-input');
-                const gasolinaInput = row.querySelector('.gasolina-input');
-                const acpmInput = row.querySelector('.acpm-input');
-                const totalInput = row.querySelector('.total-input');
-                const distribucionGasolinaInput = row.querySelector('.distribucion-gasolina-input');
-                const distribucionAcpmInput = row.querySelector('.distribucion-acpm-input');
-
-                const gasolina = parseNumber(gasolinaInput.value);
-                const acpm = parseNumber(acpmInput.value);
-                const distribucionGasolina = parseNumber(distribucionGasolinaInput.value);
-                const distribucionAcpm = parseNumber(distribucionAcpmInput.value);
-                const totalUnidades = gasolina + acpm;
-                const totalValor = distribucionGasolina + distribucionAcpm;
-
-                setFormattedValue(totalInput, totalUnidades);
-                setFormattedValue(vrTotalFraInput, totalValor);
-            }
-
-            function updateTotals() {
-                let totalGasolina = 0;
-                let totalDistribGasolina = 0;
-                let totalAcpm = 0;
-                let totalDistribAcpm = 0;
-                let totalValor = 0;
-                let totalUnidades = 0;
-
-                tbody.querySelectorAll('tr').forEach(row => {
-                    updateRow(row);
-
-                    totalGasolina += parseNumber(row.querySelector('.gasolina-input')?.value);
-                    totalDistribGasolina += parseNumber(row.querySelector('.distribucion-gasolina-input')
-                        ?.value);
-                    totalAcpm += parseNumber(row.querySelector('.acpm-input')?.value);
-                    totalDistribAcpm += parseNumber(row.querySelector('.distribucion-acpm-input')?.value);
-                    totalValor += parseNumber(row.querySelector('.vr-total-fra-input')?.value);
-                    totalUnidades += parseNumber(row.querySelector('.total-input')?.value);
+                    for (const c of COMBUSTIBLES) {
+                        sumar(c, valor(fila, c));
+                        for (const campo of ['base19', 'base5', 'costo_producto', 'sobretasa', 'soldicom']) {
+                            sumar(`${campo}_${c}`, valor(fila, `${campo}_${c}`));
+                        }
+                        sumar(`iva_${c}`, resultado[`iva_${c}`]);
+                        sumar(`costo_${c}`, resultado[`costo_${c}`]);
+                    }
+                    sumar('vr_total_fra', resultado.vr_total_fra);
+                    sumar('total', resultado.total);
                 });
 
-                document.getElementById('total-gasolina').textContent = formatNumber(totalGasolina);
-                document.getElementById('total-distrib-gasolina').textContent = formatNumber(totalDistribGasolina);
-                document.getElementById('total-acpm').textContent = formatNumber(totalAcpm);
-                document.getElementById('total-distrib-acpm').textContent = formatNumber(totalDistribAcpm);
-                document.getElementById('total-valor').textContent = formatNumber(totalValor);
-                document.getElementById('total-unidades').textContent = formatNumber(totalUnidades);
+                document.querySelectorAll('#compras-table [data-total]').forEach(celda => {
+                    const campo = celda.dataset.total;
+                    const esGalones = COMBUSTIBLES.includes(campo) || campo === 'total';
+                    celda.textContent = (esGalones ? galones : pesos).format(totales[campo] ?? 0);
+                });
             }
 
-            function attachEvents(row) {
-                row.querySelectorAll(
-                        '.gasolina-input, .distribucion-gasolina-input, .acpm-input, .distribucion-acpm-input')
-                    .forEach(input => {
-                        input.addEventListener('input', updateTotals);
-                        input.addEventListener('change', updateTotals);
-                        input.addEventListener('blur', function() {
-                            const value = parseNumber(input.value);
-                            setFormattedValue(input, value);
-                        });
-                    });
+            function agregarFila() {
+                const html = plantilla.innerHTML.replaceAll('__INDEX__', siguiente++);
+                tbody.insertAdjacentHTML('beforeend', html);
+                actualizarTotales();
             }
 
-            function createRow(index) {
-                const tr = document.createElement('tr');
-                tr.dataset.index = index;
-                tr.innerHTML = `
-                    <td>
-                        <input type="date" name="compras[${index}][fecha]" class="form-control form-control-sm" value="{{ date('Y-m-d') }}">
-                    </td>
-                    <td>
-                        <input type="text" name="compras[${index}][factura]" class="form-control form-control-sm">
-                    </td>
-                    <td>
-                        <select name="compras[${index}][proveedor_id]" class="form-select form-select-sm" aria-label="Proveedor">
-                            ${document.getElementById('proveedores-options-template').innerHTML}
-                        </select>
-                    </td>
-                    <td>
-                        <input type="text" name="compras[${index}][gasolina]" class="form-control form-control-sm text-end gasolina-input" inputmode="decimal">
-                    </td>
-                    <td>
-                        <input type="text" name="compras[${index}][distribucion_gasolina]" class="form-control form-control-sm text-end distribucion-gasolina-input" inputmode="decimal">
-                    </td>
-                    <td>
-                        <input type="text" name="compras[${index}][acpm]" class="form-control form-control-sm text-end acpm-input" inputmode="decimal">
-                    </td>
-                    <td>
-                        <input type="text" name="compras[${index}][distribucion_acpm]" class="form-control form-control-sm text-end distribucion-acpm-input" inputmode="decimal">
-                    </td>
-                    <td>
-                        <input type="text" name="compras[${index}][vr_total_fra]" class="form-control form-control-sm text-end vr-total-fra-input" readonly>
-                    </td>
-                    <td>
-                        <input type="text" name="compras[${index}][total]" class="form-control form-control-sm text-end total-input" readonly>
-                    </td>
-                    <td class="text-center">
-                        <button type="button" class="btn btn-sm btn-danger remove-row">×</button>
-                    </td>
-                `;
+            tbody.addEventListener('input', actualizarTotales);
+            tbody.addEventListener('change', actualizarTotales);
 
-                return tr;
-            }
+            document.getElementById('add-compra-row').addEventListener('click', agregarFila);
 
-            tbody.querySelectorAll('tr').forEach(row => attachEvents(row));
+            tbody.addEventListener('click', function(evento) {
+                if (!evento.target.classList.contains('remove-row')) return;
 
-            addBtn.addEventListener('click', function() {
-                const row = createRow(nextIndex);
-                tbody.appendChild(row);
-                attachEvents(row);
-                nextIndex += 1;
-                updateTotals();
-            });
-
-            tbody.addEventListener('click', function(e) {
-                if (!e.target.classList.contains('remove-row')) {
-                    return;
-                }
-
-                const rows = tbody.querySelectorAll('tr');
-                if (rows.length === 1) {
-                    rows[0].querySelectorAll('input').forEach(input => {
-                        if (input.type !== 'date') {
-                            input.value = '';
-                        }
-                    });
+                const filas = tbody.querySelectorAll('tr');
+                if (filas.length === 1) {
+                    filas[0].querySelectorAll('input:not([type="date"]), select').forEach(campo => campo.value = '');
                 } else {
-                    e.target.closest('tr').remove();
+                    evento.target.closest('tr').remove();
                 }
 
-                updateTotals();
+                actualizarTotales();
             });
 
-            updateTotals();
+            actualizarTotales();
         });
     </script>
 @endsection

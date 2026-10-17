@@ -22,7 +22,19 @@
         </div>
     @endif
 
-    <form id="compra-edit-form" method="POST" action="{{ route('compras.update', $compra) }}">
+    <style>
+        .compra-edicion .compra-calc {
+            background: #f2f2f2;
+            font-weight: 700;
+            text-align: right;
+        }
+
+        .compra-edicion .compra-ref { color: #c00000; font-weight: 700; }
+        .compra-edicion .grupo-gasolina { background: #fbe5d6; }
+        .compra-edicion .grupo-acpm { background: #e2efda; }
+    </style>
+
+    <form id="compra-edit-form" method="POST" action="{{ route('compras.update', $compra) }}" class="compra-edicion">
         @csrf
         @method('PUT')
 
@@ -49,29 +61,75 @@
                         @endforeach
                     </select>
                 </div>
-                <div class="col-6 col-md-3">
-                    <label for="gasolina" class="form-label small mb-1">Gasolina - galones</label>
-                    <input type="text" id="gasolina" name="gasolina" class="form-control form-control-sm text-end"
-                        inputmode="decimal" value="{{ old('gasolina', $valores['gasolina']) }}">
-                </div>
-                <div class="col-6 col-md-3">
-                    <label for="distribucion_gasolina" class="form-label small mb-1">Gasolina - distrib. costo</label>
-                    <input type="text" id="distribucion_gasolina" name="distribucion_gasolina"
-                        class="form-control form-control-sm text-end" inputmode="decimal"
-                        value="{{ old('distribucion_gasolina', $valores['distribucion_gasolina']) }}">
-                </div>
-                <div class="col-6 col-md-3">
-                    <label for="acpm" class="form-label small mb-1">ACPM - galones</label>
-                    <input type="text" id="acpm" name="acpm" class="form-control form-control-sm text-end"
-                        inputmode="decimal" value="{{ old('acpm', $valores['acpm']) }}">
-                </div>
-                <div class="col-6 col-md-3">
-                    <label for="distribucion_acpm" class="form-label small mb-1">ACPM - distrib. costo</label>
-                    <input type="text" id="distribucion_acpm" name="distribucion_acpm"
-                        class="form-control form-control-sm text-end" inputmode="decimal"
-                        value="{{ old('distribucion_acpm', $valores['distribucion_acpm']) }}">
-                </div>
+            </div>
+
+            <div class="row g-3 px-3 pb-3">
+                @foreach (['gasolina' => 'GASOLINA', 'acpm' => 'ACPM'] as $combustible => $nombre)
+                    <div class="col-12 col-xl-6">
+                        <fieldset class="border rounded p-2 h-100">
+                            <legend class="float-none w-auto px-2 mb-0 small fw-bold grupo-{{ $combustible }}">{{ $nombre }}</legend>
+                            <div class="row g-2">
+                                @foreach (['' => 'Galones', 'base19_' => 'Base 19% (1)', 'base5_' => 'Base 5% (1)', 'costo_producto_' => 'Costo producto (1)', 'sobretasa_' => 'Sobretasa (1)', 'soldicom_' => 'Soldicom (1)'] as $prefijo => $titulo)
+                                    <div class="col-6 col-md-4">
+                                        <label for="{{ $prefijo.$combustible }}" class="form-label small mb-1">{{ $titulo }}</label>
+                                        <input type="text" id="{{ $prefijo.$combustible }}" name="{{ $prefijo.$combustible }}"
+                                            data-campo="{{ $prefijo.$combustible }}" class="form-control form-control-sm text-end" inputmode="decimal"
+                                            value="{{ old($prefijo.$combustible, $valores[$prefijo.$combustible]) }}">
+                                    </div>
+                                @endforeach
+                                <div class="col-6 col-md-4">
+                                    <span class="form-label small mb-1 d-block">Liquidación IVA <span class="compra-ref">(2)</span></span>
+                                    <output class="form-control form-control-sm compra-calc" data-calc="iva_{{ $combustible }}">0</output>
+                                </div>
+                                <div class="col-6 col-md-4">
+                                    <span class="form-label small mb-1 d-block">Costo {{ $combustible === 'acpm' ? 'ACPM' : 'gasolina' }} <span class="compra-ref">(3)</span></span>
+                                    <output class="form-control form-control-sm compra-calc" data-calc="costo_{{ $combustible }}">0</output>
+                                </div>
+                                <div class="col-6 col-md-4">
+                                    <span class="form-label small mb-1 d-block">Costo unitario <span class="compra-ref">(4)</span></span>
+                                    <output class="form-control form-control-sm compra-calc" data-calc="unitario_{{ $combustible }}">0</output>
+                                </div>
+                            </div>
+                        </fieldset>
+                    </div>
+                @endforeach
+            </div>
+
+            <div class="small text-muted px-3 pb-3">
+                <span class="compra-ref">(1)</span> Las digita el administrador.
+                <span class="compra-ref ms-2">(2)</span> Liquidación IVA = base 19% × 19% + base 5% × 5%.
+                <span class="compra-ref ms-2">(3)</span> Costo = liquidación IVA + costo producto + sobretasa + Soldicom.
+                <span class="compra-ref ms-2">(4)</span> Costo unitario = costo ÷ galones.
+                Total de la factura: <strong data-calc="vr_total_fra">0</strong>.
             </div>
         </x-erp-card>
     </form>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const formulario = document.getElementById('compra-edit-form');
+            const leer = (valor) => Number(String(valor ?? '').trim().replace(/\s+/g, '').replace(/\./g, '').replace(/,/g, '.')) || 0;
+            const pesos = new Intl.NumberFormat('es-CO', { maximumFractionDigits: 0 });
+            const unitario = new Intl.NumberFormat('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            const valor = (campo) => leer(formulario.querySelector(`[data-campo="${campo}"]`)?.value);
+            const mostrar = (campo, texto) => formulario.querySelector(`[data-calc="${campo}"]`).textContent = texto;
+
+            function liquidar() {
+                let total = 0;
+                for (const c of ['gasolina', 'acpm']) {
+                    const iva = valor(`base19_${c}`) * {{ \App\Models\Compra::TARIFA_IVA_GENERAL }} + valor(`base5_${c}`) * {{ \App\Models\Compra::TARIFA_IVA_REDUCIDA }};
+                    const costo = iva + valor(`costo_producto_${c}`) + valor(`sobretasa_${c}`) + valor(`soldicom_${c}`);
+                    const galones = valor(c);
+                    total += costo;
+                    mostrar(`iva_${c}`, pesos.format(iva));
+                    mostrar(`costo_${c}`, pesos.format(costo));
+                    mostrar(`unitario_${c}`, unitario.format(galones > 0 ? costo / galones : 0));
+                }
+                mostrar('vr_total_fra', pesos.format(total));
+            }
+
+            formulario.addEventListener('input', liquidar);
+            liquidar();
+        });
+    </script>
 @endsection

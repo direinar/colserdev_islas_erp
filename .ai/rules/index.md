@@ -7,7 +7,7 @@ Before planning or editing, find the row whose globs match the file's path and r
 | app/Actions/** | .ai/rules/actions.md |
 | app/** | .ai/rules/app.md |
 | app/Concerns/** | .ai/rules/concerns.md |
-| app/Http/Controllers/**, app/Http/Controllers/TurnoController.php | .ai/rules/controllers.md |
+| app/Http/Controllers/**, app/Http/Controllers/TurnoController.php, app/Http/Controllers/CompraController.php | .ai/rules/controllers.md |
 | app/DTOs/** | .ai/rules/d-t-os.md |
 | app/Livewire/** | .ai/rules/livewire.md |
 | app/Models/** | .ai/rules/models.md |

@@ -45,22 +45,59 @@ test('una compra de combustible se corrige desde compras', function () {
         ->assertOk()
         ->assertSee('value="3000"', false);
 
+    // El costo ya no se digita: sale de la liquidación (costo producto, sobretasa, Soldicom e IVA).
     $this->actingAs($admin)
         ->put(route('compras.update', $compra), [
             'fecha' => '2026-09-26',
             'factura' => '1006',
             'gasolina' => '2.500',
-            'distribucion_gasolina' => '25.000.000',
+            'costo_producto_gasolina' => '25.000.000',
             'acpm' => '1000',
-            'distribucion_acpm' => '10000000',
+            'costo_producto_acpm' => '10000000',
+            // Lo que mande el navegador como costo no cuenta.
+            'distribucion_gasolina' => '1',
         ])
         ->assertRedirect(route('compras.create', ['desde' => '2026-09-01', 'hasta' => '2026-09-30']));
 
     expect($compra->fresh())
         ->fecha->toDateString()->toBe('2026-09-26')
         ->gasolina->toEqual('2500.000')
+        ->distribucion_gasolina->toEqual('25000000.00')
         ->total->toEqual('3500.000')
         ->vr_total_fra->toEqual('35000000.00');
+});
+
+test('la compra liquida IVA, costo y costo unitario como la plantilla con IVA (fila 49)', function () {
+    $admin = User::factory()->create(['role' => User::ROLE_ADMINISTRADOR]);
+
+    $this->actingAs($admin)->post(route('compras.store'), ['compras' => [[
+        'fecha' => '2026-10-15', 'factura' => 'F-49',
+        'gasolina' => '2.320', 'base19_gasolina' => '1.436.034', 'base5_gasolina' => '22.531.306',
+        'costo_producto_gasolina' => '29.810.562', 'sobretasa_gasolina' => '3.641.472', 'soldicom_gasolina' => '13.410',
+        'acpm' => '3.490', 'base19_acpm' => '2.160.240', 'base5_acpm' => '19.776.434',
+        'costo_producto_acpm' => '33.340.459', 'sobretasa_acpm' => '1.441.370', 'soldicom_acpm' => '0',
+    ]]])->assertSessionHasNoErrors();
+
+    $compra = Compra::query()->sole();
+
+    // (2) IVA = base 19% x 19% + base 5% x 5%; (3) costo = IVA + producto + sobretasa + Soldicom; (4) costo / galones.
+    expect((float) $compra->iva_gasolina)->toBe(1399411.76)
+        ->and((float) $compra->distribucion_gasolina)->toBe(34864855.76)
+        ->and(round($compra->costoUnitario('gasolina'), 4))->toBe(15027.9551)
+        ->and((float) $compra->iva_acpm)->toBe(1399267.3)
+        ->and((float) $compra->distribucion_acpm)->toBe(36181096.3)
+        ->and(round($compra->costoUnitario('acpm'), 4))->toBe(10367.0763)
+        ->and((float) $compra->vr_total_fra)->toBe(71045952.06)
+        ->and((float) $compra->total)->toBe(5810.0);
+
+    // Pantalla: encabezado como el Excel, leyenda y la compra registrada con sus fórmulas.
+    $this->actingAs($admin)->get(route('compras.create', ['desde' => '2026-10-01', 'hasta' => '2026-10-31']))
+        ->assertOk()
+        ->assertSeeInOrder(['GASOLINA', 'GALONES', 'BASE', 'LIQUIDACIÓN', 'COSTO<br>PRODUCTO', 'SOBRETASA', 'SOLDICOM', 'COSTO<br>GASOLINA', 'COSTO<br>UNITARIO'], false)
+        ->assertSee('COSTO<br>ACPM', false)
+        ->assertDontSee('DISTRIB. COSTO')
+        ->assertSee('Liquidación IVA = base 19% × 19% + base 5% × 5%')
+        ->assertSeeInOrder(['>F-49<', '>1.399.412<', '>34.864.856<', '>15.027,96<', '>71.045.952<'], false);
 });
 
 test('la compra de combustible guarda el proveedor, lo lista y se puede corregir', function () {

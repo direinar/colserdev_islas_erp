@@ -4,8 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Compra;
 use App\Models\Proveedor;
+use App\Services\LiquidacionCompraCombustibleService;
 use App\Support\DescargaExcel;
-use App\Support\NumberParser;
 use App\Support\TablaExcel;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -16,6 +16,8 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class CompraController extends Controller
 {
+    public function __construct(private LiquidacionCompraCombustibleService $liquidacion) {}
+
     public function create(Request $request): View
     {
         $request->validate([
@@ -59,29 +61,45 @@ class CompraController extends Controller
             ->orderBy('id')
             ->get();
 
-        $filas = $compras->map(fn (Compra $compra): array => [
-            $compra->fecha->format('d/m/Y'),
-            (string) $compra->factura,
-            (string) $compra->proveedor?->name,
-            (float) $compra->gasolina,
-            (float) $compra->distribucion_gasolina,
-            (float) $compra->acpm,
-            (float) $compra->distribucion_acpm,
-            (float) $compra->vr_total_fra,
-            (float) $compra->total,
-        ]);
+        // Por combustible, las mismas columnas de la pantalla (plantilla con IVA).
+        $columnas = ['' => 'GALONES', 'base19_' => 'BASE 19%', 'base5_' => 'BASE 5%', 'iva_' => 'LIQUIDACION IVA',
+            'costo_producto_' => 'COSTO PRODUCTO', 'sobretasa_' => 'SOBRETASA', 'soldicom_' => 'SOLDICOM', 'distribucion_' => 'COSTO'];
+        $encabezados = ['FECHA', 'No. FACTURA', 'PROVEEDOR'];
+        foreach (Compra::COMBUSTIBLES as $combustible) {
+            $nombre = strtoupper($combustible);
+            foreach ($columnas as $titulo) {
+                $encabezados[] = $nombre.' '.($titulo === 'COSTO' ? 'COSTO '.$nombre : $titulo);
+            }
+            $encabezados[] = $nombre.' COSTO UNITARIO';
+        }
+        array_push($encabezados, 'TOTAL VALOR', 'TOTAL GALONES');
 
-        $totales = ['TOTALES', null, null,
-            (float) $compras->sum('gasolina'), (float) $compras->sum('distribucion_gasolina'),
-            (float) $compras->sum('acpm'), (float) $compras->sum('distribucion_acpm'),
-            (float) $compras->sum('vr_total_fra'), (float) $compras->sum('total'),
-        ];
+        $filas = $compras->map(function (Compra $compra) use ($columnas): array {
+            $fila = [$compra->fecha->format('d/m/Y'), (string) $compra->factura, (string) $compra->proveedor?->name];
+            foreach (Compra::COMBUSTIBLES as $combustible) {
+                foreach (array_keys($columnas) as $prefijo) {
+                    $fila[] = (float) $compra->{$prefijo.$combustible};
+                }
+                $fila[] = round($compra->costoUnitario($combustible), 2);
+            }
+
+            return [...$fila, (float) $compra->vr_total_fra, (float) $compra->total];
+        });
+
+        $totales = ['TOTALES', null, null];
+        foreach (Compra::COMBUSTIBLES as $combustible) {
+            foreach (array_keys($columnas) as $prefijo) {
+                $totales[] = (float) $compras->sum($prefijo.$combustible);
+            }
+            $totales[] = null;
+        }
+        array_push($totales, (float) $compras->sum('vr_total_fra'), (float) $compras->sum('total'));
 
         return DescargaExcel::respuesta(
             TablaExcel::generar(
                 'Compras de combustible',
                 'DESDE '.Carbon::parse($desde)->format('d/m/Y').'  HASTA '.Carbon::parse($hasta)->format('d/m/Y'),
-                ['FECHA', 'No. FACTURA', 'PROVEEDOR', 'GASOLINA GALONES', 'GASOLINA DISTRIB. COSTO', 'ACPM GALONES', 'ACPM DISTRIB. COSTO', 'TOTAL VALOR', 'TOTAL GALONES'],
+                $encabezados,
                 $filas,
                 [0, 1, 2],
                 $totales,
@@ -143,18 +161,19 @@ class CompraController extends Controller
 
     public function edit(Compra $compra): View
     {
+        $valores = [
+            'fecha' => $compra->fecha->format('Y-m-d'),
+            'factura' => $compra->factura,
+            'proveedor_id' => $compra->proveedor_id,
+        ];
+        foreach (array_slice($this->camposDigitados(), 3) as $campo) {
+            $valores[$campo] = $this->formatInputValue((float) $compra->{$campo});
+        }
+
         return view('compras.edit', [
             'compra' => $compra,
             'proveedores' => Proveedor::orderBy('name')->get(),
-            'valores' => [
-                'fecha' => $compra->fecha->format('Y-m-d'),
-                'factura' => $compra->factura,
-                'proveedor_id' => $compra->proveedor_id,
-                'gasolina' => $this->formatInputValue((float) $compra->gasolina),
-                'distribucion_gasolina' => $this->formatInputValue((float) $compra->distribucion_gasolina),
-                'acpm' => $this->formatInputValue((float) $compra->acpm),
-                'distribucion_acpm' => $this->formatInputValue((float) $compra->distribucion_acpm),
-            ],
+            'valores' => $valores,
         ]);
     }
 
@@ -162,9 +181,7 @@ class CompraController extends Controller
     {
         $request->validate($this->reglasFila());
 
-        $datos = $this->normalizarFila($request->only([
-            'fecha', 'factura', 'proveedor_id', 'gasolina', 'distribucion_gasolina', 'acpm', 'distribucion_acpm',
-        ]));
+        $datos = $this->normalizarFila($request->only($this->camposDigitados()));
 
         if ($datos === null) {
             return back()->withInput()->withErrors(['compra' => 'La compra no tiene galones ni valores.']);
@@ -191,72 +208,65 @@ class CompraController extends Controller
     }
 
     /**
+     * Campos que se digitan en cada compra (fecha, factura, proveedor y, por combustible,
+     * galones y los valores de la liquidación). Lo demás lo calcula el servidor.
+     *
+     * @return list<string>
+     */
+    private function camposDigitados(): array
+    {
+        $campos = ['fecha', 'factura', 'proveedor_id'];
+
+        foreach (Compra::COMBUSTIBLES as $combustible) {
+            $campos[] = $combustible;
+            foreach (LiquidacionCompraCombustibleService::CAMPOS_DIGITADOS as $campo) {
+                $campos[] = $campo.'_'.$combustible;
+            }
+        }
+
+        return $campos;
+    }
+
+    /**
      * @return array<string, list<string>>
      */
     private function reglasFila(string $prefijo = ''): array
     {
-        return [
+        $reglas = [
             $prefijo.'fecha' => ['nullable', 'date'],
             $prefijo.'factura' => ['nullable', 'string', 'max:60'],
             $prefijo.'proveedor_id' => ['nullable', 'integer', 'exists:proveedores,id'],
-            $prefijo.'vr_total_fra' => ['nullable', 'string', 'max:40'],
-            $prefijo.'gasolina' => ['nullable', 'string', 'max:40'],
-            $prefijo.'distribucion_gasolina' => ['nullable', 'string', 'max:40'],
-            $prefijo.'acpm' => ['nullable', 'string', 'max:40'],
-            $prefijo.'distribucion_acpm' => ['nullable', 'string', 'max:40'],
-            $prefijo.'total' => ['nullable', 'string', 'max:40'],
         ];
+
+        foreach (array_slice($this->camposDigitados(), 3) as $campo) {
+            $reglas[$prefijo.$campo] = ['nullable', 'string', 'max:40'];
+        }
+
+        return $reglas;
     }
 
     /**
      * Convierte una fila del formulario en los datos a guardar, o null si la fila no trae datos.
+     * Las fórmulas (IVA, costo, totales) se calculan aquí; nunca se toman del navegador.
+     * El proveedor solo no hace que una fila cuente como compra.
      *
      * @param  array<string, mixed>  $row
-     *                                     El proveedor solo no hace que una fila cuente como compra.
-     * @return array{fecha: string, factura: string, proveedor_id: int|null, vr_total_fra: float, gasolina: float, acpm: float, total: float, distribucion_gasolina: float, distribucion_acpm: float}|null
+     * @return array<string, mixed>|null
      */
     private function normalizarFila(array $row): ?array
     {
-        $fecha = $row['fecha'] ?? null;
         $factura = trim((string) ($row['factura'] ?? ''));
-        $gasolina = NumberParser::decimal($row['gasolina'] ?? null);
-        $acpm = NumberParser::decimal($row['acpm'] ?? null);
-        $distribucionGasolina = NumberParser::decimal($row['distribucion_gasolina'] ?? null);
-        $distribucionAcpm = NumberParser::decimal($row['distribucion_acpm'] ?? null);
-        $vrTotalFra = NumberParser::decimal($row['vr_total_fra'] ?? null);
-        $total = NumberParser::decimal($row['total'] ?? null);
+        $liquidacion = $this->liquidacion->liquidar($row);
 
-        if ($factura === '' && $gasolina === 0.0 && $acpm === 0.0 && $distribucionGasolina === 0.0 && $distribucionAcpm === 0.0 && $vrTotalFra === 0.0 && $total === 0.0) {
+        if ($factura === '' && $this->liquidacion->vacia($liquidacion)) {
             return null;
         }
 
-        if ($total === 0.0) {
-            $total = $gasolina + $acpm;
-        }
-
-        if ($vrTotalFra === 0.0 && $total > 0) {
-            $vrTotalFra = $distribucionGasolina + $distribucionAcpm;
-        }
-
-        if ($distribucionGasolina === 0.0 && $total > 0) {
-            $distribucionGasolina = $vrTotalFra > 0 ? ($vrTotalFra * $gasolina) / $total : 0;
-        }
-
-        if ($distribucionAcpm === 0.0 && $total > 0) {
-            $distribucionAcpm = $vrTotalFra > 0 ? ($vrTotalFra * $acpm) / $total : 0;
-        }
-
         return [
-            'fecha' => $fecha ?: now()->toDateString(),
+            'fecha' => ($row['fecha'] ?? null) ?: now()->toDateString(),
             'factura' => $factura,
             'proveedor_id' => ($row['proveedor_id'] ?? null) ? (int) $row['proveedor_id'] : null,
-            'vr_total_fra' => $vrTotalFra,
-            'gasolina' => $gasolina,
-            'acpm' => $acpm,
-            'total' => $total,
-            'distribucion_gasolina' => $distribucionGasolina,
-            'distribucion_acpm' => $distribucionAcpm,
-        ];
+        ] + $liquidacion;
     }
 
     /**

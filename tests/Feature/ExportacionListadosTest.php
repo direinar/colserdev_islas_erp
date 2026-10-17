@@ -5,6 +5,7 @@ use App\Models\Lubricant;
 use App\Models\Proveedor;
 use App\Models\User;
 use Illuminate\Testing\TestResponse;
+use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
@@ -73,6 +74,14 @@ test('las compras registradas del rango se exportan a Excel', function () {
         ->and($hoja->getCell('A5')->getValue())->toBe('25/09/2026')
         ->and($hoja->getCell('B5')->getValue())->toBe('1006')
         ->and($hoja->getCell('C5')->getValue())->toBe('TERPEL')
-        ->and($hoja->getCell('A6')->getValue())->toBe('TOTALES')
-        ->and((float) $hoja->getCell('H6')->getValue())->toBe(40000000.0);
+        ->and($hoja->getCell('A6')->getValue())->toBe('TOTALES');
+
+    // Mismas columnas de la pantalla: por combustible la liquidación y el costo; al final el total.
+    $encabezados = $hoja->rangeToArray('A4:'.$hoja->getHighestColumn().'4')[0];
+    $columna = fn (string $titulo): string => Coordinate::stringFromColumnIndex(array_search($titulo, $encabezados, true) + 1);
+
+    expect($encabezados)->toContain('GASOLINA LIQUIDACION IVA', 'GASOLINA COSTO GASOLINA', 'ACPM COSTO ACPM', 'ACPM COSTO UNITARIO')
+        ->and((float) $hoja->getCell($columna('GASOLINA COSTO GASOLINA').'5')->getValue())->toBe(30000000.0)
+        ->and((float) $hoja->getCell($columna('GASOLINA COSTO UNITARIO').'5')->getValue())->toBe(10000.0)
+        ->and((float) $hoja->getCell($columna('TOTAL VALOR').'6')->getValue())->toBe(40000000.0);
 });
