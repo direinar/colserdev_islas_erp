@@ -51,6 +51,19 @@ test('un saldo inicial negativo es saldo a favor del cliente', function () {
         ->and((float) $saldo->abonos)->toBe(80000.0)
         ->and((float) $saldo->vr_neto_cargo)->toBe(0.0)
         ->and((float) $saldo->saldo)->toBe(-80000.0);
+
+    // El campo Valor deja digitar el signo '-' (data-negativo) al crear y al editar.
+    $this->actingAs($admin)->get(route('cartera-saldos-iniciales.index'))
+        ->assertSee('inputmode="decimal" data-negativo', false);
+    $this->actingAs($admin)->get(route('cartera-saldos-iniciales.edit', $saldo))
+        ->assertSee('inputmode="decimal" data-negativo', false)
+        ->assertSee('value="-80.000"', false);
+
+    $this->actingAs($admin)->put(route('cartera-saldos-iniciales.update', $saldo), [
+        'fecha' => '2026-10-31', 'valor' => '-95.500',
+    ])->assertRedirect(route('cartera-saldos-iniciales.index'));
+
+    expect((float) $saldo->fresh()->saldo)->toBe(-95500.0);
 });
 
 test('cada cliente tiene un solo saldo inicial que se edita y se elimina', function () {

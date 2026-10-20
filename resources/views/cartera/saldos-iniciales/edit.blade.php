@@ -36,7 +36,7 @@
                 </div>
                 <div class="col-md-3 mb-3">
                     <label class="form-label" for="valor">Valor</label>
-                    <input type="text" name="valor" id="valor" class="form-control text-end" inputmode="decimal" required
+                    <input type="text" name="valor" id="valor" class="form-control text-end" inputmode="decimal" data-negativo required
                         value="{{ old('valor', number_format((float) $saldoInicial->saldo_inicial, 0, ',', '.')) }}">
                     <small class="text-muted">Negativo = saldo a favor del cliente.</small>
                 </div>

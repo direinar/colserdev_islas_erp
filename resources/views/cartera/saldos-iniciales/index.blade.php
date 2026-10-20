@@ -66,7 +66,7 @@
                                 <div class="col-md-2">
                                     <label class="form-label" for="valor">Valor</label>
                                     <input type="text" name="valor" id="valor" class="form-control text-end"
-                                        inputmode="decimal" value="{{ old('valor') }}" placeholder="-150.000" required>
+                                        inputmode="decimal" data-negativo value="{{ old('valor') }}" placeholder="-150.000" required>
                                 </div>
                                 <div class="col-md-2">
                                     <button type="submit" class="btn btn-primary w-100">Guardar</button>

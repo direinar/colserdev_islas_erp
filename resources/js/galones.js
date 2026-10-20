@@ -6,32 +6,43 @@ function initGalones() {
     // Bloquea letras/símbolos en los campos de valores (galones, lecturas,
     // valores monetarios): solo dígitos, punto y coma. Delegado en document
     // para cubrir también filas agregadas dinámicamente por JS.
+    // Los campos con data-negativo (ej. saldo inicial de cartera a favor del
+    // cliente) admiten además un signo '-' al inicio.
     if (!document.body.dataset.numericGuardInit) {
         document.body.dataset.numericGuardInit = '1';
         const isValueField = el => el.matches?.(
             'input[inputmode="decimal"], .galones-input, .valor-total, .lectura-inicial, .lectura-final'
         );
+        const allowsNegative = el => el.matches?.('[data-negativo]');
+        const clean = (el, value) => {
+            if (!allowsNegative(el)) return value.replace(/[^0-9.,]/g, '');
+            const sign = value.trim().startsWith('-') ? '-' : '';
+            return sign + value.replace(/[^0-9.,]/g, '');
+        };
 
         document.addEventListener('input', function (e) {
             const el = e.target;
             if (!isValueField(el)) return;
-            const cleaned = el.value.replace(/[^0-9.,]/g, '');
+            const cleaned = clean(el, el.value);
             if (cleaned !== el.value) el.value = cleaned;
         });
 
         document.addEventListener('keypress', function (e) {
             if (!isValueField(e.target)) return;
-            if (e.key.length === 1 && !/[0-9.,]/.test(e.key)) {
+            const allowed = allowsNegative(e.target) ? /[0-9.,-]/ : /[0-9.,]/;
+            if (e.key.length === 1 && !allowed.test(e.key)) {
                 e.preventDefault();
             }
         });
 
         document.addEventListener('paste', function (e) {
-            if (!isValueField(e.target)) return;
+            const el = e.target;
+            if (!isValueField(el)) return;
             const text = (e.clipboardData || window.clipboardData).getData('text');
-            if (/[^0-9.,]/.test(text)) {
+            const cleaned = clean(el, text);
+            if (cleaned !== text) {
                 e.preventDefault();
-                document.execCommand('insertText', false, text.replace(/[^0-9.,]/g, ''));
+                document.execCommand('insertText', false, cleaned);
             }
         });
     }
