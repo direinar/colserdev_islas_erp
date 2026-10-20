@@ -16,7 +16,7 @@ class TurnoLubricante extends Model
     ];
 
     protected $casts = [
-        'cantidad' => 'integer',
+        'cantidad' => 'decimal:3',
         'valor_sin_iva' => 'decimal:2',
         'iva' => 'decimal:2',
         'total' => 'decimal:2',

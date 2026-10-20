@@ -59,7 +59,7 @@ test('el menú tiene los nombres acordados y Compras ya no muestra los registros
 
     expect($menuInformes)->not->toContain('(manual)')
         ->and($menuInformes)->toContain(route('informes.cierre.index'))
-        ->and($menuInformes)->toContain('Informe de gestión')
+        ->and($menuInformes)->toContain('Informes de gestión')
         ->and($menuInformes)->toContain('Control de caja')
         ->and($menuInformes)->toContain(route('informes.comprobante-recaudos.index'))
         // Margen mayorista en Operación, antes de Cartera y saldos.

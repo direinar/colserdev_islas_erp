@@ -2,6 +2,7 @@
 paths:
   - 'app/Services/**'
   - app/Services/KardexInventarioService.php
+  - 'app/Services/ControlTanques*.php'
 ---
 
 # Services
@@ -14,3 +15,6 @@ A turno's precio_corriente/precio_acpm comes from FuelPrice::precioParaTurno(nam
 
 ## Kardex opening balance lives in inventario_saldos_iniciales
 Never seed opening stock as a fake Compra: it would show up in the comprobante contable de compras and as an ingreso in Control de tanques. Opening stock is an InventarioSaldoInicial row (inventario gasolina|acpm|canastilla, referencia for canastilla, fecha_corte, unidades, costo_unitario). KardexInventarioService::conSaldoInicial() makes it the first kardex row (tipo 'saldo_inicial') and drops movements dated before fecha_corte. Code that branches on row 'tipo' must handle 'saldo_inicial' (no compra_id, no numero_turno). Tank balances for Control de tanques are a separate table (tanques_saldos_iniciales).
+
+## Control de tanques: FALTANTE/SOBRANTE = saldo − saldo final s/tabla de aforo
+Since 2026-10-20 the client's rule is faltante_sobrante = saldo del movimiento de galones − saldo final s/tabla de aforo (it was tabla − saldo before; don't flip it back). Negative = FALTANTE: shown in red with the word FALTANTE on screen (ct-negativo + ct-palabra-faltante), in the PDF and in Excel (number format on columns G and M). ACPM follows the same rule and display as corriente.

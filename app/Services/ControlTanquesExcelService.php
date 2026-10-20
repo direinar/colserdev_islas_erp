@@ -17,6 +17,9 @@ class ControlTanquesExcelService
 {
     private const FORMATO_GALONES = '#,##0.00;[Red]-#,##0.00';
 
+    /** Faltante/sobrante: el negativo es FALTANTE, en rojo. */
+    private const FORMATO_FALTANTE = '#,##0.00;[Red]"FALTANTE "-#,##0.00';
+
     /**
      * @var array<string, string>
      */
@@ -91,6 +94,9 @@ class ControlTanquesExcelService
         $hoja->getStyle("A{$fila}:O{$fila}")->getFont()->setBold(true);
 
         $hoja->getStyle("B6:O{$fila}")->getNumberFormat()->setFormatCode(self::FORMATO_GALONES);
+        foreach (['G', 'M'] as $columna) {
+            $hoja->getStyle("{$columna}6:{$columna}{$fila}")->getNumberFormat()->setFormatCode(self::FORMATO_FALTANTE);
+        }
 
         // Mismos colores por bloque que la plantilla: movimiento, aforo y saldos.
         foreach (self::COLORES as $rango => $color) {

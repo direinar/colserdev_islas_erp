@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Informe de Cierre')
+@section('title', 'Informes de Gestión')
 
 @php
     use Illuminate\Support\Carbon;
@@ -167,7 +167,7 @@
         }
     </style>
 
-    <x-page-header title="Informe de cierre" icon="bar-chart-line"
+    <x-page-header title="INFORMES DE GESTIÓN" icon="bar-chart-line"
         :subtitle="'Periodo del '.Carbon::parse($desde)->format('d/m/Y').' al '.Carbon::parse($hasta)->format('d/m/Y')">
         @include('informes.partials.filtro-rango', [
             'ruta' => 'informes.cierre.index',

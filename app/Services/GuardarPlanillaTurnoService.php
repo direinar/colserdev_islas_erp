@@ -277,7 +277,7 @@ class GuardarPlanillaTurnoService
     private function saveUreaLubricantes(Turno $turno, array $rows): void
     {
         foreach ($rows as $row) {
-            $cantidad = (int) ($row['cantidad'] ?? 0);
+            $cantidad = (float) ($row['cantidad'] ?? 0);
             $producto = $row['producto'] ?? null;
             $valorSinIva = NumberParser::money($row['valor_sin_iva'] ?? null);
             $iva = NumberParser::money($row['iva'] ?? null);

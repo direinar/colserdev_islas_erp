@@ -40,7 +40,7 @@ class DashboardService
      *     agrupacion: string,
      *     periodos: list<array{etiqueta: string, gasolina: float, acpm: float, canastilla: float, galones_corriente: float, galones_acpm: float}>,
      *     formas_pago: list<array{etiqueta: string, valor: float}>,
-     *     productos: list<array{producto: string, cantidad: int, total: float}>,
+     *     productos: list<array{producto: string, cantidad: float, total: float}>,
      *     ultimos: Collection<int, Turno>
      * }
      */
@@ -144,7 +144,7 @@ class DashboardService
      * Las cinco referencias de canastilla con mayor venta (con IVA) en las planillas del rango.
      *
      * @param  Collection<int, int>  $turnoIds
-     * @return list<array{producto: string, cantidad: int, total: float}>
+     * @return list<array{producto: string, cantidad: float, total: float}>
      */
     private function productosMasVendidos(Collection $turnoIds): array
     {
@@ -162,7 +162,7 @@ class DashboardService
             ->get()
             ->map(fn (TurnoLubricante $fila): array => [
                 'producto' => (string) $fila->producto,
-                'cantidad' => (int) $fila->cantidad,
+                'cantidad' => (float) $fila->cantidad,
                 'total' => (float) $fila->total,
             ])
             ->all();

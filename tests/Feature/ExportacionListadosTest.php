@@ -85,3 +85,18 @@ test('las compras registradas del rango se exportan a Excel', function () {
         ->and((float) $hoja->getCell($columna('GASOLINA COSTO UNITARIO').'5')->getValue())->toBe(10000.0)
         ->and((float) $hoja->getCell($columna('TOTAL VALOR').'6')->getValue())->toBe(40000000.0);
 });
+
+test('los precios de canastilla se ordenan por el número de la referencia', function () {
+    $admin = User::factory()->create(['role' => User::ROLE_ADMINISTRADOR]);
+    foreach (['10 - LIMPIADOR INYECTORES AUTOS', '2-HAVOLINE 20W50', '1-HAVOLINE SUPER'] as $referencia) {
+        Lubricant::create(['reference' => $referencia, 'sale_price' => 1000, 'iva' => 0, 'total' => 1000, 'cost_price' => 800, 'active' => true]);
+    }
+
+    $this->actingAs($admin)->get(route('lubricants.index'))
+        ->assertSeeInOrder(['1-HAVOLINE SUPER', '2-HAVOLINE 20W50', '10 - LIMPIADOR INYECTORES AUTOS']);
+
+    $hoja = hojaDescargada($this->actingAs($admin)->get(route('lubricants.exportar')));
+
+    expect([$hoja->getCell('A5')->getValue(), $hoja->getCell('A6')->getValue(), $hoja->getCell('A7')->getValue()])
+        ->toBe(['1-HAVOLINE SUPER', '2-HAVOLINE 20W50', '10 - LIMPIADOR INYECTORES AUTOS']);
+});

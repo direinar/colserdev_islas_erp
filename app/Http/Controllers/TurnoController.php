@@ -29,7 +29,7 @@ class TurnoController extends Controller
 
     public function create(Request $request, BorradorPlanillaTurnoService $borrador): View
     {
-        $lubricants = Lubricant::orderBy('reference', 'asc')->get();
+        $lubricants = Lubricant::query()->get()->sortBy('reference', SORT_NATURAL | SORT_FLAG_CASE)->values();
         $customers = Customer::orderBy('name', 'asc')->get();
         $bancos = Banco::orderBy('name', 'asc')->get();
 

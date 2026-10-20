@@ -96,8 +96,8 @@
                         <tr data-index="{{ $i }}">
                             <td>
                                 <input type="number" name="urea_lubricantes[{{ $i }}][cantidad]"
-                                    min="0" step="1" class="form-control form-control-sm cantidad-input"
-                                    value="{{ $l->cantidad }}" />
+                                    min="0" step="0.001" class="form-control form-control-sm cantidad-input"
+                                    value="{{ (float) $l->cantidad }}" />
                             </td>
                             <td>
                                 <select name="urea_lubricantes[{{ $i }}][producto]"
@@ -142,7 +142,7 @@
                         <tr data-index="{{ $index }}">
                             <td>
                                 <input type="number" name="urea_lubricantes[{{ $index }}][cantidad]"
-                                    min="0" step="1" class="form-control form-control-sm cantidad-input" />
+                                    min="0" step="0.001" class="form-control form-control-sm cantidad-input" />
                             </td>
                             <td>
                                 <select name="urea_lubricantes[{{ $index }}][producto]"

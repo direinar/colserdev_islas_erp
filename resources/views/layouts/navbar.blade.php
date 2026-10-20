@@ -284,7 +284,7 @@
                                     </li>
                                     <li>
                                         <a class="dropdown-item" href="{{ route('informes.cierre.index') }}">
-                                            Informe de gestión
+                                            Informes de gestión
                                         </a>
                                     </li>
                                 @endif

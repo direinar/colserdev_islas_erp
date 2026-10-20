@@ -13,7 +13,7 @@ Before planning or editing, find the row whose globs match the file's path and r
 | app/Models/** | .ai/rules/models.md |
 | resources/views/planillas/turnos/partials/** | .ai/rules/partials.md |
 | resources/js/galones.js,resources/views/planillas/turnos/** | .ai/rules/planillas-turnos.md |
-| app/Services/**, app/Services/KardexInventarioService.php | .ai/rules/services.md |
+| app/Services/**, app/Services/KardexInventarioService.php, app/Services/ControlTanques*.php | .ai/rules/services.md |
 | tests/** | .ai/rules/tests.md |
 | resources/views/planillas/turnos/** | .ai/rules/turnos.md |
 | resources/views/** | .ai/rules/views.md |

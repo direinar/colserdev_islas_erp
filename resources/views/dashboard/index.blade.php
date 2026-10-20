@@ -200,7 +200,7 @@
                                         @foreach ($productos as $producto)
                                             <tr>
                                                 <th scope="row">{{ $producto['producto'] }}</th>
-                                                <td class="text-end">{{ $producto['cantidad'] }}</td>
+                                                <td class="text-end">{{ number_format($producto['cantidad'], fmod($producto['cantidad'], 1.0) == 0.0 ? 0 : 2, ',', '.') }}</td>
                                                 <td class="text-end">{{ $pesos($producto['total']) }}</td>
                                             </tr>
                                         @endforeach

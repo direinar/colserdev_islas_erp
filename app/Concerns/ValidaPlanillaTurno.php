@@ -51,7 +51,7 @@ trait ValidaPlanillaTurno
             'lecturas.*.lectura_inicial' => ['nullable', 'string', 'max:30'],
             'lecturas.*.lectura_final' => ['nullable', 'string', 'max:30'],
             'urea_lubricantes.*.producto' => ['nullable', 'string', 'max:150'],
-            'urea_lubricantes.*.cantidad' => ['nullable', 'integer', 'min:0', 'max:100000'],
+            'urea_lubricantes.*.cantidad' => ['nullable', 'numeric', 'min:0', 'max:100000'],
             'urea_lubricantes.*.valor_sin_iva' => ['nullable', 'string', 'max:30'],
             'urea_lubricantes.*.iva' => ['nullable', 'string', 'max:30'],
             'urea_lubricantes.*.total' => ['nullable', 'string', 'max:30'],

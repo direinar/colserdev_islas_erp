@@ -15,7 +15,8 @@ class LubricantController extends Controller
      */
     public function index()
     {
-        $lubricants = Lubricant::latest()->get();
+        // Las referencias empiezan por su número ("2-HAVOLINE", "10 - LIMPIADOR"): orden natural ascendente.
+        $lubricants = Lubricant::query()->get()->sortBy('reference', SORT_NATURAL | SORT_FLAG_CASE)->values();
 
         return view('lubricants.index', compact('lubricants'));
     }
@@ -25,7 +26,7 @@ class LubricantController extends Controller
      */
     public function exportar(): StreamedResponse
     {
-        $filas = Lubricant::query()->orderBy('reference')->get()->map(fn (Lubricant $lubricant): array => [
+        $filas = Lubricant::query()->get()->sortBy('reference', SORT_NATURAL | SORT_FLAG_CASE)->values()->map(fn (Lubricant $lubricant): array => [
             $lubricant->reference,
             (float) $lubricant->sale_price,
             (float) $lubricant->iva,

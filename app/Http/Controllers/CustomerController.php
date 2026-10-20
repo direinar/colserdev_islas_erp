@@ -13,7 +13,7 @@ class CustomerController extends Controller
 {
     public function index()
     {
-        $customers = Customer::latest()->get();
+        $customers = Customer::query()->orderBy('name')->get();
 
         return view('customers.index', compact('customers'));
     }
@@ -25,12 +25,7 @@ class CustomerController extends Controller
 
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'document' => 'required|string|max:100',
-        ]);
-
-        Customer::create($validated);
+        Customer::create($this->validar($request));
 
         return redirect()
             ->route('customers.index')
@@ -49,12 +44,7 @@ class CustomerController extends Controller
 
     public function update(Request $request, Customer $customer)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'document' => 'required|string|max:100',
-        ]);
-
-        $customer->update($validated);
+        $customer->update($this->validar($request));
 
         return redirect()
             ->route('customers.index')
@@ -81,5 +71,23 @@ class CustomerController extends Controller
         return redirect()
             ->route('customers.index')
             ->with('success', 'Cliente eliminado correctamente.');
+    }
+
+    /**
+     * Si no se digita el D.V., se calcula del NIT con el algoritmo de la DIAN.
+     *
+     * @return array{name: string, document: string, dv: string|null}
+     */
+    private function validar(Request $request): array
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'document' => 'required|string|max:100',
+            'dv' => 'nullable|digits:1',
+        ]);
+
+        $validated['dv'] = ($validated['dv'] ?? null) ?: Customer::digitoVerificacion($validated['document']);
+
+        return $validated;
     }
 }

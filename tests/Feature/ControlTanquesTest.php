@@ -50,7 +50,7 @@ test('el control de tanques arma el saldo diario con compras, los cortes de IAPR
     turnoTanques('2026-09-25', 3, 44, 3);
     compraTanques('2026-09-26', 3800, 4000);
     turnoTanques('2026-09-26', 4, 100, 50);
-    AforoTanque::create(['fecha' => '2026-09-26', 'vara_corriente' => 321, 'tabla_corriente' => 7800, 'vara_acpm' => 92.26, 'tabla_acpm' => 9700]);
+    AforoTanque::create(['fecha' => '2026-09-26', 'vara_corriente' => 321, 'tabla_corriente' => 7800, 'vara_acpm' => 92.26, 'tabla_acpm' => 8500]);
 
     $response = $this->actingAs($jefe)
         ->get(route('control-tanques.index', ['desde' => '2026-09-25', 'hasta' => '2026-09-27']))
@@ -65,9 +65,9 @@ test('el control de tanques arma el saldo diario con compras, los cortes de IAPR
     expect($dia25['corriente'])->toMatchArray(['ingreso' => 0.0, 'venta' => 104.0, 'saldo' => 4046.0, 'faltante_sobrante' => null])
         ->and($dia25['acpm'])->toMatchArray(['venta' => 43.0, 'saldo' => 4622.0])
         ->and($dia25)->toMatchArray(['venta_diaria' => 147.0, 'venta_acumulada' => 147.0])
-        // Tabla de aforo − saldo de movimiento: positivo es sobrante.
-        ->and($dia26['corriente'])->toMatchArray(['ingreso' => 3800.0, 'venta' => 100.0, 'saldo' => 7746.0, 'vara' => 321.0, 'tabla' => 7800.0, 'faltante_sobrante' => 54.0])
-        ->and($dia26['acpm'])->toMatchArray(['saldo' => 8572.0, 'tabla' => 9700.0, 'faltante_sobrante' => 1128.0])
+        // Saldo de movimiento − tabla de aforo: negativo es faltante, positivo es sobrante.
+        ->and($dia26['corriente'])->toMatchArray(['ingreso' => 3800.0, 'venta' => 100.0, 'saldo' => 7746.0, 'vara' => 321.0, 'tabla' => 7800.0, 'faltante_sobrante' => -54.0])
+        ->and($dia26['acpm'])->toMatchArray(['saldo' => 8572.0, 'tabla' => 8500.0, 'faltante_sobrante' => 72.0])
         ->and($dia26)->toMatchArray(['venta_diaria' => 150.0, 'venta_acumulada' => 297.0])
         ->and($dia27['corriente'])->toMatchArray(['venta' => 0.0, 'saldo' => 7746.0])
         ->and($response->viewData('totales'))->toMatchArray([
@@ -84,9 +84,9 @@ test('el control de tanques arma el saldo diario con compras, los cortes de IAPR
         ->assertSee('data-vienen="corriente">4.150<', false)
         ->assertDontSee('ct-corriente">VIENEN', false)
         ->assertDontSee('ct-acpm">VIENEN', false)
-        // Sobrante positivo, sin rojo; el rojo queda para el faltante (negativo).
-        ->assertSee('ct-faltante ">54<', false)
-        ->assertDontSee('ct-negativo">', false)
+        // El faltante (negativo) va en rojo con la palabra FALTANTE; el sobrante, sin rojo. ACPM igual.
+        ->assertSee('ct-corriente ct-faltante ct-negativo"><span class="ct-palabra-faltante">FALTANTE</span> -54<', false)
+        ->assertSee('ct-acpm ct-faltante ">72<', false)
         ->assertSee('FALTANTE/<br>SOBRANTE', false)
         ->assertDontSee('(SOBRANTE)')
         ->assertSee('name="aforos[2026-09-26][tabla_corriente]"', false)
@@ -221,7 +221,10 @@ test('el control de tanques se exporta a Excel', function () {
         ->and($hoja->getCell('A7')->getValue())->toBe('25/09/2026')
         ->and((float) $hoja->getCell('C7')->getValue())->toBe(60.0)
         ->and((float) $hoja->getCell('I7')->getValue())->toBe(40.0)
-        ->and((float) $hoja->getCell('N7')->getValue())->toBe(100.0);
+        ->and((float) $hoja->getCell('N7')->getValue())->toBe(100.0)
+        // FALTANTE/SOBRANTE de corriente (G) y ACPM (M): el negativo sale en rojo como FALTANTE.
+        ->and($hoja->getStyle('G7')->getNumberFormat()->getFormatCode())->toBe('#,##0.00;[Red]"FALTANTE "-#,##0.00')
+        ->and($hoja->getStyle('M7')->getNumberFormat()->getFormatCode())->toBe('#,##0.00;[Red]"FALTANTE "-#,##0.00');
 });
 
 test('el control de tanques se descarga en PDF y se puede compartir desde el módulo', function () {

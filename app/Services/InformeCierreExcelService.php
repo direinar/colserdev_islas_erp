@@ -8,7 +8,7 @@ use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
 
 /**
- * Informe de cierre en Excel: estado de resultados del periodo con la referencia y el
+ * Informes de gestión en Excel: estado de resultados del periodo con la referencia y el
  * origen de cada renglón, y las estadísticas del periodo, como en la plantilla.
  */
 class InformeCierreExcelService
@@ -25,9 +25,9 @@ class InformeCierreExcelService
 
         $libro = new Spreadsheet;
         $hoja = $libro->getActiveSheet();
-        $hoja->setTitle('Informe de cierre');
+        $hoja->setTitle('Informes de gestión');
 
-        $hoja->setCellValue('A1', 'INFORME DE CIERRE');
+        $hoja->setCellValue('A1', 'INFORMES DE GESTIÓN');
         $hoja->setCellValue('A2', 'DESDE '.Carbon::parse($desde)->format('d/m/Y').'  HASTA '.Carbon::parse($hasta)->format('d/m/Y'));
         $hoja->getStyle('A1')->getFont()->setBold(true)->setSize(14)->getColor()->setRGB('1F4E78');
 

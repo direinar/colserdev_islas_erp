@@ -97,7 +97,7 @@
                         <td class="saldo" style="background: {{ $colores[$combustible]['bloque'] }};">{{ $galones($dato['saldo']) }}</td>
                         <td style="background: {{ $colores[$combustible]['aforo'] }};">{{ $galones($dato['vara']) }}</td>
                         <td style="background: {{ $colores[$combustible]['aforo'] }};">{{ $galones($dato['tabla']) }}</td>
-                        <td class="faltante {{ ($dato['faltante_sobrante'] ?? 0) < 0 ? 'negativo' : '' }}" style="background: {{ $colores[$combustible]['bloque'] }};">{{ $galones($dato['faltante_sobrante']) }}</td>
+                        <td class="faltante {{ ($dato['faltante_sobrante'] ?? 0) < 0 ? 'negativo' : '' }}" style="background: {{ $colores[$combustible]['bloque'] }};">@if (($dato['faltante_sobrante'] ?? 0) < 0)FALTANTE @endif{{ $galones($dato['faltante_sobrante']) }}</td>
                     @endforeach
                     <td class="saldos">{{ $galones($fila['venta_diaria']) }}</td>
                     <td class="saldos">{{ $galones($fila['venta_acumulada']) }}</td>
@@ -122,8 +122,8 @@
     </table>
 
     <div class="nota">
-        Ingresos desde compras y ventas según cortes de IAPROPIADA de la planilla de turnos. FALTANTE/SOBRANTE = saldo final
-        según tabla de aforo − saldo del movimiento de galones: positivo es sobrante; en rojo (negativo) es faltante.
+        Ingresos desde compras y ventas según cortes de IAPROPIADA de la planilla de turnos. FALTANTE/SOBRANTE = saldo del
+        movimiento de galones − saldo final según tabla de aforo: positivo es sobrante; negativo es FALTANTE (en rojo).
         Generado el {{ now()->format('d/m/Y H:i') }}.
     </div>
 </body>

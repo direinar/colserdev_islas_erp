@@ -49,7 +49,7 @@ test('el informe de cierre arma el estado de resultados del periodo', function (
     $response = $this->actingAs($admin)
         ->get(route('informes.cierre.index', ['desde' => '2026-09-01', 'hasta' => '2026-09-30']))
         ->assertOk()
-        ->assertSee('Informe de cierre')
+        ->assertSee('INFORMES DE GESTIÓN')
         ->assertSee('UTILIDAD BRUTA TOTAL EDS')
         ->assertSee('$ 1.106.426')
         ->assertSee('Falta registrar los saldos iniciales del contrato de galonaje');
@@ -120,7 +120,7 @@ test('el informe de cierre se exporta a Excel', function () {
     $response = $this->actingAs($admin)
         ->get(route('informes.cierre.exportar', ['desde' => '2026-09-01', 'hasta' => '2026-09-30']))
         ->assertOk()
-        ->assertDownload('informe-cierre-2026-09-01-a-2026-09-30.xlsx');
+        ->assertDownload('informes-de-gestion-2026-09-01-a-2026-09-30.xlsx');
 
     $archivo = tempnam(sys_get_temp_dir(), 'cierre').'.xlsx';
     file_put_contents($archivo, $response->streamedContent());

@@ -33,7 +33,7 @@ class InformeCierreController extends Controller
 
         $libro = $excel->generar($desde, $hasta);
 
-        return DescargaExcel::respuesta($libro, 'informe-cierre-'.$desde.'-a-'.$hasta.'.xlsx');
+        return DescargaExcel::respuesta($libro, 'informes-de-gestion-'.$desde.'-a-'.$hasta.'.xlsx');
     }
 
     /**

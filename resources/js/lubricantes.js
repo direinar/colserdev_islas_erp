@@ -128,7 +128,7 @@ document.addEventListener('DOMContentLoaded', function () {
         tr.dataset.index = index;
         tr.innerHTML = `
             <td>
-                <input type="number" name="urea_lubricantes[${index}][cantidad]" min="0" step="1" class="form-control form-control-sm cantidad-input" />
+                <input type="number" name="urea_lubricantes[${index}][cantidad]" min="0" step="0.001" class="form-control form-control-sm cantidad-input" />
             </td>
             <td>
                 <select name="urea_lubricantes[${index}][producto]" class="form-select form-select-sm lubricantes-producto-select" disabled>

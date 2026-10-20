@@ -87,6 +87,7 @@
         .ct-tabla .ct-saldo { font-weight: 700; }
         .ct-tabla .ct-faltante { font-weight: 700; font-size: 1rem; }
         .ct-tabla .ct-negativo { color: #ff0000; }
+        .ct-tabla .ct-palabra-faltante { font-size: .72rem; }
 
         /* El aforo se digita en la celda, como en una hoja de cálculo. */
         .ct-tabla .ct-celda-input { padding: 0; }
@@ -183,42 +184,90 @@
     </x-page-header>
 
     <script>
-        // Comparte el PDF con el menú del celular (WhatsApp → el grupo). Si el navegador no
-        // permite compartir archivos (p. ej. en el computador), se descarga para adjuntarlo a mano.
-        document.getElementById('compartir-pdf')?.addEventListener('click', async function() {
-            const boton = this;
-            boton.disabled = true;
+        // COMPARTIR envía el PDF a WhatsApp.
+        // - Celular: menú de compartir del teléfono (WhatsApp → el grupo). El PDF se genera al abrir la
+        //   página, porque el navegador solo deja abrir el menú justo después del toque.
+        // - Computador: abre WhatsApp Web y descarga el PDF para adjuntarlo en el grupo.
+        (function() {
+            const boton = document.getElementById('compartir-pdf');
+            if (!boton) return;
 
-            try {
-                const respuesta = await fetch(boton.dataset.url, { credentials: 'same-origin' });
-                if (!respuesta.ok) throw new Error('No se pudo generar el PDF.');
+            const nombre = boton.dataset.archivo;
+            // En el computador el menú de compartir es el de Windows/Mac, que no abre WhatsApp Web.
+            const esCelular = navigator.userAgentData?.mobile ?? /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+            const compartirArchivos = esCelular && !!(navigator.canShare
+                && navigator.canShare({ files: [new File([''], nombre, { type: 'application/pdf' })] }));
 
-                const archivo = new File([await respuesta.blob()], boton.dataset.archivo, { type: 'application/pdf' });
+            const generarPdf = () => fetch(boton.dataset.url, { credentials: 'same-origin' })
+                .then(function(respuesta) {
+                    if (!respuesta.ok) throw new Error('No se pudo generar el PDF.');
+                    return respuesta.blob();
+                })
+                .then(blob => new File([blob], nombre, { type: 'application/pdf' }));
 
-                if (navigator.canShare && navigator.canShare({ files: [archivo] })) {
-                    await navigator.share({ files: [archivo], title: 'Informe de control de tanques' });
-                } else {
-                    const enlace = document.createElement('a');
-                    enlace.href = URL.createObjectURL(archivo);
-                    enlace.download = archivo.name;
-                    enlace.click();
-                    URL.revokeObjectURL(enlace.href);
-                    Swal.fire({
-                        title: 'PDF descargado',
-                        text: 'Este navegador no permite compartir archivos directamente. Adjunte el PDF descargado en el grupo de WhatsApp. Desde el celular, COMPARTIR abre WhatsApp directamente.',
-                        icon: 'info',
-                        confirmButtonText: 'Entendido',
-                    });
-                }
-            } catch (error) {
+            let pdf = compartirArchivos ? generarPdf() : null;
+            pdf?.catch(() => { pdf = null; });
+
+            const errorAlCompartir = function(error) {
                 // Cancelar el menú de compartir no es un error.
                 if (error.name !== 'AbortError') {
                     Swal.fire({ title: 'No se pudo compartir', text: error.message, icon: 'error', confirmButtonText: 'Entendido' });
                 }
-            } finally {
-                boton.disabled = false;
-            }
-        });
+            };
+
+            const compartir = archivo => navigator.share({ files: [archivo], title: 'Informe de control de tanques' });
+
+            boton.addEventListener('click', async function() {
+                if (!compartirArchivos) {
+                    // La ventana se abre antes de esperar el PDF para que el navegador no la bloquee.
+                    window.open('https://web.whatsapp.com/', 'whatsapp');
+                    boton.disabled = true;
+                    try {
+                        const archivo = await generarPdf();
+                        const enlace = document.createElement('a');
+                        enlace.href = URL.createObjectURL(archivo);
+                        enlace.download = archivo.name;
+                        enlace.click();
+                        setTimeout(() => URL.revokeObjectURL(enlace.href), 1000);
+                        Swal.fire({
+                            title: 'WhatsApp Web abierto',
+                            text: 'El PDF se descargó: en WhatsApp Web abra el grupo, toque el clip (adjuntar) y elija el archivo ' + archivo.name + '.',
+                            icon: 'info',
+                            confirmButtonText: 'Entendido',
+                        });
+                    } catch (error) {
+                        errorAlCompartir(error);
+                    } finally {
+                        boton.disabled = false;
+                    }
+                    return;
+                }
+
+                boton.disabled = true;
+                try {
+                    const archivo = await (pdf ??= generarPdf());
+                    try {
+                        await compartir(archivo);
+                    } catch (error) {
+                        if (error.name !== 'NotAllowedError') throw error;
+                        // El PDF tardó y el navegador ya no deja abrir el menú: se pide un segundo toque.
+                        await Swal.fire({
+                            title: 'PDF listo',
+                            text: 'Toque COMPARTIR para enviarlo por WhatsApp.',
+                            icon: 'success',
+                            confirmButtonText: 'COMPARTIR',
+                            showCancelButton: true,
+                            cancelButtonText: 'Cancelar',
+                            preConfirm: () => compartir(archivo).catch(errorAlCompartir),
+                        });
+                    }
+                } catch (error) {
+                    errorAlCompartir(error);
+                } finally {
+                    boton.disabled = false;
+                }
+            });
+        })();
     </script>
 
     @if (session('success'))
@@ -346,7 +395,7 @@
                                             name="aforos[{{ $fila['fecha'] }}][tabla_{{ $combustible }}]"
                                             value="{{ $aforoInput($dato['tabla'], 3) }}" aria-label="Galones tabla de aforo {{ $nombre }} {{ $fila['fecha'] }}">
                                     </td>
-                                    <td class="ct-{{ $combustible }} ct-faltante {{ ($dato['faltante_sobrante'] ?? 0) < 0 ? 'ct-negativo' : '' }}">{{ $galones($dato['faltante_sobrante']) }}</td>
+                                    <td class="ct-{{ $combustible }} ct-faltante {{ ($dato['faltante_sobrante'] ?? 0) < 0 ? 'ct-negativo' : '' }}">@if (($dato['faltante_sobrante'] ?? 0) < 0)<span class="ct-palabra-faltante">FALTANTE</span> @endif{{ $galones($dato['faltante_sobrante']) }}</td>
                                 @endforeach
                                 <td class="ct-saldos ct-inicio-bloque">{{ $galones($fila['venta_diaria']) }}</td>
                                 <td class="ct-saldos">{{ $galones($fila['venta_acumulada']) }}</td>
@@ -375,6 +424,6 @@
     </form>
 
     <div class="small text-muted mt-2">ESTE INFORME SOLO CONTIENE GALONES. Ingresos desde compras y ventas según cortes de
-        IAPROPIADA de la planilla de turnos (suma de los turnos de cada fecha). FALTANTE/SOBRANTE = saldo final según
-        tabla de aforo − saldo del movimiento de galones: positivo es sobrante; en rojo (negativo) es faltante.</div>
+        IAPROPIADA de la planilla de turnos (suma de los turnos de cada fecha). FALTANTE/SOBRANTE =
+        saldo del movimiento de galones − saldo final según tabla de aforo: positivo es sobrante; negativo es FALTANTE (en rojo).</div>
 @endsection

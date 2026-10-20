@@ -245,3 +245,20 @@ test('el precio del combustible rige desde un número de turno, aunque cambie en
         ->and($turnos->pluck('precio_corriente')->all())->toBe(['16500.00', '17000.00'])
         ->and($turnos->pluck('precio_acpm')->all())->toBe(['9850.00', '9850.00']);
 });
+
+test('la cantidad de canastilla admite decimales porque la urea se vende por litros', function () {
+    $admin = User::factory()->create(['role' => User::ROLE_ADMINISTRADOR]);
+
+    guardarPlanilla($admin, 4, [
+        'urea_lubricantes' => [['producto' => '22-UREA AUTOMOTRIZ', 'cantidad' => '2.5', 'valor_sin_iva' => '25.000', 'iva' => '0', 'total' => '25.000']],
+    ])->assertRedirect()->assertSessionHasNoErrors();
+
+    $turno = Turno::query()->with('lubricantes')->sole();
+
+    expect((float) $turno->lubricantes->sole()->cantidad)->toBe(2.5);
+
+    // Al volver a abrir la planilla se ven los 2,5 litros y el campo acepta decimales.
+    $this->actingAs($admin)->get(route('turnos.create', ['fecha' => '2026-09-25', 'numero_turno' => 4]))
+        ->assertSee('value="2.5"', false)
+        ->assertSee('step="0.001" class="form-control form-control-sm cantidad-input"', false);
+});

@@ -17,6 +17,10 @@
                     <strong>Documento:</strong>
                     <div>{{ $customer->document }}</div>
                 </div>
+                <div class="mb-3">
+                    <strong>D.V.:</strong>
+                    <div>{{ $customer->dv }}</div>
+                </div>
             </div>
         </div>
 

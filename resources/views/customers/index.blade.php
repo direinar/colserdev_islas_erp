@@ -20,6 +20,7 @@
                 <tr>
                     <th>Nombre</th>
                     <th>Documento</th>
+                    <th width="70" class="text-center"><abbr title="Dígito de verificación">D.V.</abbr></th>
                     <th width="200">Acciones</th>
                 </tr>
             </thead>
@@ -28,13 +29,14 @@
                     <tr>
                         <td>{{ $customer->name }}</td>
                         <td>{{ $customer->document }}</td>
+                        <td class="text-center">{{ $customer->dv }}</td>
                         <td>
                             <x-action-buttons :showRoute="'customers.show'" :editRoute="'customers.edit'" :deleteRoute="'customers.destroy'" :id="$customer" />
                         </td>
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="3" class="text-center">No hay clientes registrados.</td>
+                        <td colspan="4" class="text-center">No hay clientes registrados.</td>
                     </tr>
                 @endforelse
             </tbody>

@@ -65,7 +65,7 @@ class BorradorPlanillaTurnoService
             'galones' => max(0, NumberParser::quantity($r['lectura_final'] ?? null) - NumberParser::quantity($r['lectura_inicial'] ?? null)),
         ], $seccion('lecturas'))));
         $borrador->setRelation('lubricantes', $filas(TurnoLubricante::class, array_map(fn (array $r): array => [
-            'cantidad' => (int) ($r['cantidad'] ?? 0), 'producto' => $r['producto'] ?? null,
+            'cantidad' => (float) ($r['cantidad'] ?? 0), 'producto' => $r['producto'] ?? null,
             'valor_sin_iva' => NumberParser::money($r['valor_sin_iva'] ?? null), 'iva' => NumberParser::money($r['iva'] ?? null),
             'total' => NumberParser::money($r['total'] ?? null),
         ], $seccion('urea_lubricantes'))));
