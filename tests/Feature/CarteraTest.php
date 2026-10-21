@@ -9,6 +9,8 @@ use PhpOffice\PhpSpreadsheet\IOFactory;
 
 function guardarTurnoConCartera(User $user, int $numero, string $fecha, array $cartera, array $extra = [])
 {
+    turnoAbierto($user, $numero, $fecha);
+
     return test()->actingAs($user)->post(route('turnos.store'), array_merge([
         'fecha' => $fecha,
         'numero_turno' => $numero,
@@ -214,6 +216,7 @@ test('el candado del estado de cuenta indica si la planilla esta revisada', func
         ->assertSee('bi-unlock', false)
         ->assertDontSee('bi-lock-fill', false);
 
+    cerrarTurnos();
     $this->actingAs($admin)->post(route('turnos.revisar', Turno::firstOrFail()));
 
     $this->actingAs($admin)->get($url)

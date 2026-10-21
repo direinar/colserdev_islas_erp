@@ -1,5 +1,8 @@
 <?php
 
+use App\Models\Turno;
+use App\Models\TurnoSurtidor;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -44,7 +47,37 @@ expect()->extend('toBeOne', function () {
 |
 */
 
-function something()
+/**
+ * Planilla abierta con las doce mangueras, como la deja ABRIR TURNO: guardar ya no crea
+ * planillas. Si el turno ya existe no hace nada.
+ */
+function turnoAbierto(User $user, int $numero, string $fecha = '2026-09-25'): Turno
 {
-    // ..
+    $existente = Turno::query()->where('numero_turno', $numero)->first();
+
+    if ($existente) {
+        return $existente;
+    }
+
+    $turno = Turno::create([
+        'fecha' => $fecha,
+        'numero_turno' => $numero,
+        'estado' => Turno::ESTADO_ABIERTA,
+        'nombre_vendedor' => $user->name,
+        'user_id' => $user->id,
+    ]);
+
+    foreach (TurnoSurtidor::MANGUERAS as $manguera => $combustible) {
+        $turno->surtidores()->create(['manguera' => $manguera, 'combustible' => $combustible, 'lectura_inicial' => 0, 'lectura_final' => null, 'galones' => 0]);
+    }
+
+    return $turno;
+}
+
+/**
+ * Cierra las planillas de la prueba (revisar exige una planilla cerrada).
+ */
+function cerrarTurnos(): void
+{
+    Turno::query()->update(['estado' => Turno::ESTADO_CERRADA]);
 }

@@ -61,8 +61,11 @@ class BorradorPlanillaTurnoService
         $borrador->setRelation('surtidores', $filas(TurnoSurtidor::class, array_map(fn (array $r): array => [
             'manguera' => $r['manguera'] ?? '', 'combustible' => $r['combustible'] ?? null,
             'lectura_inicial' => NumberParser::quantity($r['lectura_inicial'] ?? null),
-            'lectura_final' => NumberParser::quantity($r['lectura_final'] ?? null),
-            'galones' => max(0, NumberParser::quantity($r['lectura_final'] ?? null) - NumberParser::quantity($r['lectura_inicial'] ?? null)),
+            // En blanco = lectura final pendiente (turno abierto), no cero.
+            'lectura_final' => trim((string) ($r['lectura_final'] ?? '')) === '' ? null : NumberParser::quantity($r['lectura_final']),
+            'galones' => trim((string) ($r['lectura_final'] ?? '')) === ''
+                ? 0
+                : max(0, NumberParser::quantity($r['lectura_final']) - NumberParser::quantity($r['lectura_inicial'] ?? null)),
         ], $seccion('lecturas'))));
         $borrador->setRelation('lubricantes', $filas(TurnoLubricante::class, array_map(fn (array $r): array => [
             'cantidad' => (float) ($r['cantidad'] ?? 0), 'producto' => $r['producto'] ?? null,

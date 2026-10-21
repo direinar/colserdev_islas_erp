@@ -191,11 +191,13 @@ test('el seeder de administradores no cambia la clave de un usuario existente', 
 test('la planilla rechaza un cliente que no existe', function () {
     $admin = User::factory()->create(['role' => User::ROLE_ADMINISTRADOR]);
 
+    turnoAbierto($admin, 3, '2026-09-25');
     $this->actingAs($admin)->post(route('turnos.store'), [
         'fecha' => '2026-09-25',
         'numero_turno' => 3,
         'recaudos' => [['cliente_id' => 999999, 'valor' => '10.000']],
     ])->assertSessionHasErrors('recaudos.0.cliente_id');
 
-    expect(Turno::count())->toBe(0);
+    // La planilla abierta quedó sin guardar.
+    expect(Turno::query()->whereNotNull('sobrante_pendiente')->count())->toBe(0);
 });

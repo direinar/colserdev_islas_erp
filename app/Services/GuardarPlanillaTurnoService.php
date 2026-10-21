@@ -4,10 +4,13 @@ namespace App\Services;
 
 use App\Models\FuelPrice;
 use App\Models\Turno;
+use App\Models\TurnoSurtidor;
 use App\Models\User;
 use App\Support\FilaPlanilla;
 use App\Support\NumberParser;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 /**
  * Guarda la planilla de turnos completa en una transacción: encabezado, las doce secciones,
@@ -22,6 +25,7 @@ class GuardarPlanillaTurnoService
     public function __construct(
         private CarteraTurnoSyncService $carteraSync,
         private CuadreTurnoService $cuadre,
+        private ManguerasTurnoService $mangueras,
     ) {}
 
     /**
@@ -55,7 +59,10 @@ class GuardarPlanillaTurnoService
                 'traslado_faltante' => $trasladoFaltante,
             ];
 
+            $lecturasGuardadas = collect();
+
             if ($turno) {
+                $lecturasGuardadas = $turno->surtidores()->get()->keyBy('manguera');
                 $turno->update($atributos);
                 $this->borrarFilas($turno, $usuario);
             } else {
@@ -63,7 +70,9 @@ class GuardarPlanillaTurnoService
             }
 
             $this->saveVentas($turno, $this->seccion($datos, 'ventas'));
-            $this->saveLecturas($turno, $this->seccion($datos, 'lecturas'));
+            $lecturasGuardadas->isEmpty()
+                ? $this->saveLecturas($turno, $this->seccion($datos, 'lecturas'))
+                : $this->saveLecturasDelTurno($turno, $this->seccion($datos, 'lecturas'), $lecturasGuardadas);
             $this->saveUreaLubricantes($turno, $this->seccion($datos, 'urea_lubricantes'));
             $this->saveConsignaciones($turno, $this->seccion($datos, 'consignaciones'));
             $this->saveDescuentos($turno, $this->seccion($datos, 'descuentos'));
@@ -221,15 +230,14 @@ class GuardarPlanillaTurnoService
     {
         $total = collect($rows)->sum(function (array $row): float {
             $inicial = NumberParser::quantity($row['lectura_inicial'] ?? null);
-            $final = NumberParser::quantity($row['lectura_final'] ?? null);
+            $final = $this->lecturaFinal($row);
 
-            return max(0, $final - $inicial);
+            return $final === null ? 0 : max(0, $final - $inicial);
         });
 
         foreach ($rows as $row) {
             $inicial = NumberParser::quantity($row['lectura_inicial'] ?? null);
-            $final = NumberParser::quantity($row['lectura_final'] ?? null);
-            $galones = max(0, $final - $inicial);
+            $final = $this->lecturaFinal($row);
             $manguera = trim($row['manguera'] ?? '');
             $combustible = $row['combustible'] ?? null;
 
@@ -242,10 +250,97 @@ class GuardarPlanillaTurnoService
                 'combustible' => $combustible,
                 'lectura_inicial' => $inicial,
                 'lectura_final' => $final,
-                'galones' => $galones,
+                'galones' => $final === null ? 0 : max(0, $final - $inicial),
                 'total' => $total,
             ]);
         }
+    }
+
+    /**
+     * Lecturas de una planilla que ya tiene sus mangueras (las tomadas al abrir el turno):
+     * solo se guardan esas mangueras y la lectura inicial no se recibe del navegador, salvo
+     * que la manguera no tenga una lectura cerrada anterior (primer registro). Una lectura
+     * final que un turno posterior ya tomó como inicial no se cambia aquí.
+     *
+     * @param  list<array<string, mixed>>  $rows
+     * @param  Collection<string, TurnoSurtidor>  $guardadas
+     */
+    private function saveLecturasDelTurno(Turno $turno, array $rows, Collection $guardadas): void
+    {
+        $enviadas = collect($rows)->keyBy(fn (array $row): string => trim((string) ($row['manguera'] ?? '')));
+        $anteriores = $this->mangueras->ultimasLecturas($turno->numero_turno);
+        $tomadasDespues = $this->mangueras->tomadasDespues($turno);
+        $errores = [];
+        $filas = [];
+
+        foreach ($guardadas as $manguera => $guardada) {
+            $enviada = $enviadas->get($manguera);
+
+            $inicial = array_key_exists($manguera, $anteriores) || ! $enviada
+                ? (float) $guardada->lectura_inicial
+                : NumberParser::quantity($enviada['lectura_inicial'] ?? null);
+            $final = $enviada ? $this->lecturaFinal($enviada) : ($guardada->lectura_final === null ? null : (float) $guardada->lectura_final);
+            $finalGuardada = $guardada->lectura_final === null ? null : round((float) $guardada->lectura_final, 3);
+
+            if (isset($tomadasDespues[$manguera]) && ($final === null ? null : round($final, 3)) !== $finalGuardada) {
+                $errores[] = 'La lectura final de '.$manguera.' ya es la inicial del turno #'.$tomadasDespues[$manguera]
+                    .': no se puede cambiar desde esta planilla.';
+            }
+
+            $filas[] = [
+                'manguera' => $manguera,
+                'combustible' => $guardada->combustible,
+                'lectura_inicial' => $inicial,
+                'lectura_final' => $final,
+                'galones' => $final === null ? 0 : max(0, $final - $inicial),
+            ];
+        }
+
+        if ($errores) {
+            throw ValidationException::withMessages(['lecturas' => $errores]);
+        }
+
+        $total = array_sum(array_column($filas, 'galones'));
+
+        foreach ($filas as $fila) {
+            $turno->surtidores()->create($fila + ['total' => $total]);
+        }
+    }
+
+    /**
+     * El jefe de patios cierra la planilla de un islero que no la cerró: solo registra las
+     * lecturas finales; el resto de la planilla no se toca.
+     *
+     * @param  array<string, mixed>  $finales  Lectura final por manguera.
+     */
+    public function registrarLecturasFinales(Turno $turno, array $finales): void
+    {
+        DB::transaction(function () use ($turno, $finales): void {
+            foreach ($turno->surtidores()->get() as $surtidor) {
+                $final = $this->lecturaFinal(['lectura_final' => $finales[$surtidor->manguera] ?? null]);
+
+                $surtidor->update([
+                    'lectura_final' => $final,
+                    'galones' => $final === null ? 0 : max(0, $final - (float) $surtidor->lectura_inicial),
+                ]);
+            }
+
+            $turno->surtidores()->update(['total' => (float) $turno->surtidores()->sum('galones')]);
+            $this->saveVentaLecturasTotales($turno);
+            $turno->update(['sobrante_pendiente' => $this->cuadre->pendiente($turno->fresh())]);
+        });
+    }
+
+    /**
+     * Lectura final digitada; en blanco = pendiente (null), distinta de una lectura en cero.
+     *
+     * @param  array<string, mixed>  $row
+     */
+    private function lecturaFinal(array $row): ?float
+    {
+        $valor = trim((string) ($row['lectura_final'] ?? ''));
+
+        return $valor === '' ? null : NumberParser::quantity($valor);
     }
 
     /**

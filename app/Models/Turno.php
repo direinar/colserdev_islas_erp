@@ -7,9 +7,20 @@ use Illuminate\Database\Eloquent\Model;
 
 class Turno extends Model
 {
+    /** El islero tiene tomadas sus mangueras y está registrando. */
+    public const ESTADO_ABIERTA = 'abierta';
+
+    /** Lecturas finales completas: las mangueras quedan libres y la planilla queda para revisión. */
+    public const ESTADO_CERRADA = 'cerrada';
+
     protected $fillable = [
         'fecha',
         'numero_turno',
+        'estado',
+        'turno_dia',
+        'hora_inicio',
+        'cerrado_at',
+        'cerrado_por',
         'nombre_vendedor',
         'revisado_por',          // nombre del administrador que revisó la planilla
         'revisado',
@@ -37,6 +48,8 @@ class Turno extends Model
         'fecha' => 'date',
         'revisado' => 'boolean',
         'revisado_at' => 'datetime',
+        'cerrado_at' => 'datetime',
+        'turno_dia' => 'integer',
         'precio_corriente' => 'decimal:2',
         'precio_acpm' => 'decimal:2',
         'tirillas_galones_corriente' => 'decimal:3',
@@ -73,6 +86,24 @@ class Turno extends Model
         }
 
         return $user->isAdministrador() || ! $this->exists || $this->user_id === $user->id;
+    }
+
+    public function estaAbierta(): bool
+    {
+        return $this->estado === self::ESTADO_ABIERTA;
+    }
+
+    /**
+     * Cierra el turno quien puede modificarlo y, si el islero no lo cerró, el jefe de patios
+     * (solo con las lecturas finales) o el administrador.
+     */
+    public function cerrablePor(User $user): bool
+    {
+        if (! $this->exists || ! $this->estaAbierta() || $this->revisado) {
+            return false;
+        }
+
+        return $this->editablePor($user) || ($user->isJefePatios() && $this->visiblePara($user));
     }
 
     /**

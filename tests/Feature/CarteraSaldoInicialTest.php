@@ -18,6 +18,7 @@ test('el saldo inicial entra al saldo anterior del estado de cuenta', function (
         'valor' => '1.250.000',
     ])->assertRedirect(route('cartera-saldos-iniciales.index'));
 
+    turnoAbierto($admin, 1, '2026-11-03');
     $this->actingAs($admin)->post(route('turnos.store'), [
         'fecha' => '2026-11-03',
         'numero_turno' => 1,
@@ -97,6 +98,7 @@ test('los movimientos de planilla no se editan ni eliminan como saldo inicial', 
     $admin = User::factory()->create(['role' => User::ROLE_ADMINISTRADOR]);
     $cliente = Customer::create(['name' => 'Cliente A', 'document' => '1']);
 
+    turnoAbierto($admin, 1, '2026-11-03');
     $this->actingAs($admin)->post(route('turnos.store'), [
         'fecha' => '2026-11-03',
         'numero_turno' => 1,
