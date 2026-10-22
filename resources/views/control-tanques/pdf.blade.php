@@ -122,8 +122,8 @@
     </table>
 
     <div class="nota">
-        Ingresos desde compras y ventas según cortes de IAPROPIADA de la planilla de turnos. FALTANTE/SOBRANTE = saldo del
-        movimiento de galones − saldo final según tabla de aforo: positivo es sobrante; negativo es FALTANTE (en rojo).
+        Ingresos desde compras y ventas según cortes de IAPROPIADA de la planilla de turnos. FALTANTE/SOBRANTE = saldo final
+        según tabla de aforo − saldo del movimiento de galones: positivo es sobrante (en negro); negativo es FALTANTE (en rojo).
         Generado el {{ now()->format('d/m/Y H:i') }}.
     </div>
 </body>

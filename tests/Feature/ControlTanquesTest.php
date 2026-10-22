@@ -5,6 +5,7 @@ use App\Models\Compra;
 use App\Models\TanqueSaldoInicial;
 use App\Models\Turno;
 use App\Models\User;
+use App\Services\ControlTanquesService;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 
 function compraTanques(string $fecha, float $gasolina, float $acpm): Compra
@@ -65,9 +66,9 @@ test('el control de tanques arma el saldo diario con compras, los cortes de IAPR
     expect($dia25['corriente'])->toMatchArray(['ingreso' => 0.0, 'venta' => 104.0, 'saldo' => 4046.0, 'faltante_sobrante' => null])
         ->and($dia25['acpm'])->toMatchArray(['venta' => 43.0, 'saldo' => 4622.0])
         ->and($dia25)->toMatchArray(['venta_diaria' => 147.0, 'venta_acumulada' => 147.0])
-        // Saldo de movimiento − tabla de aforo: negativo es faltante, positivo es sobrante.
-        ->and($dia26['corriente'])->toMatchArray(['ingreso' => 3800.0, 'venta' => 100.0, 'saldo' => 7746.0, 'vara' => 321.0, 'tabla' => 7800.0, 'faltante_sobrante' => -54.0])
-        ->and($dia26['acpm'])->toMatchArray(['saldo' => 8572.0, 'tabla' => 8500.0, 'faltante_sobrante' => 72.0])
+        // Tabla de aforo − saldo del movimiento: positivo es sobrante, negativo es faltante.
+        ->and($dia26['corriente'])->toMatchArray(['ingreso' => 3800.0, 'venta' => 100.0, 'saldo' => 7746.0, 'vara' => 321.0, 'tabla' => 7800.0, 'faltante_sobrante' => 54.0])
+        ->and($dia26['acpm'])->toMatchArray(['saldo' => 8572.0, 'tabla' => 8500.0, 'faltante_sobrante' => -72.0])
         ->and($dia26)->toMatchArray(['venta_diaria' => 150.0, 'venta_acumulada' => 297.0])
         ->and($dia27['corriente'])->toMatchArray(['venta' => 0.0, 'saldo' => 7746.0])
         ->and($response->viewData('totales'))->toMatchArray([
@@ -84,14 +85,23 @@ test('el control de tanques arma el saldo diario con compras, los cortes de IAPR
         ->assertSee('data-vienen="corriente">4.150<', false)
         ->assertDontSee('ct-corriente">VIENEN', false)
         ->assertDontSee('ct-acpm">VIENEN', false)
-        // El faltante (negativo) va en rojo con la palabra FALTANTE; el sobrante, sin rojo. ACPM igual.
-        ->assertSee('ct-corriente ct-faltante ct-negativo"><span class="ct-palabra-faltante">FALTANTE</span> -54<', false)
-        ->assertSee('ct-acpm ct-faltante ">72<', false)
+        // El sobrante (positivo) va en negro; el faltante (negativo), en rojo con la palabra FALTANTE. ACPM igual.
+        ->assertSee('ct-corriente ct-faltante ">54<', false)
+        ->assertSee('ct-acpm ct-faltante ct-negativo"><span class="ct-palabra-faltante">FALTANTE</span> -72<', false)
         ->assertSee('FALTANTE/<br>SOBRANTE', false)
         ->assertDontSee('(SOBRANTE)')
         ->assertSee('name="aforos[2026-09-26][tabla_corriente]"', false)
         ->assertSee('value="7800"', false)
         ->assertSee('value="92,26"', false);
+
+    // El PDF que se comparte por WhatsApp lleva la misma regla y los mismos colores.
+    $pdf = view('control-tanques.pdf', ['desde' => '2026-09-25', 'hasta' => '2026-09-27']
+        + app(ControlTanquesService::class)->informe('2026-09-25', '2026-09-27'))->render();
+
+    expect($pdf)->toContain('class="faltante " style="background: #e2efda;">54<')
+        ->toContain('class="faltante negativo"')
+        ->toContain('>FALTANTE -72<')
+        ->toContain('FALTANTE/SOBRANTE = saldo final');
 });
 
 test('el INGRESO se arrastra automáticamente del módulo de compras según su fecha', function () {
