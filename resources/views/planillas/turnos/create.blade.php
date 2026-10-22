@@ -415,7 +415,22 @@
             </div>
         @endif
 
-        @if ($errors->any())
+        @if ($errors->has('correccion'))
+            {{-- La lectura final corregida ya es la inicial del turno siguiente: se confirma antes de guardar. --}}
+            <div class="alert alert-warning">
+                <strong>CORRECCIÓN DE LECTURAS.</strong> Esta corrección también cambia otro turno:
+                <ul class="mb-2">
+                    @foreach ($errors->get('correccion') as $aviso)
+                        <li>{{ $aviso }}</li>
+                    @endforeach
+                </ul>
+                <button type="submit" name="confirmar_correccion" value="1" class="btn btn-sm btn-danger">
+                    CONFIRMAR CORRECCIÓN Y GUARDAR
+                </button>
+            </div>
+        @endif
+
+        @if ($errors->any() && ! $errors->has('correccion'))
             <div class="alert alert-danger">
                 <ul class="mb-0">
                     @foreach ($errors->all() as $error)
@@ -517,6 +532,76 @@
         @endif
 
     </form>
+
+    @if ($turno->exists && ! $turno->revisado && auth()->user()->isAdministrador() && $turno->surtidores->isNotEmpty())
+        {{-- Cambio o reinicio del contador de una manguera: solo lo autoriza el administrador o el gerente. --}}
+        <details class="pastel-section mt-3 d-print-none" @if ($errors->hasAny(['manguera', 'contador_retiro', 'contador_instalacion', 'observacion', 'contador'])) open @endif>
+            <summary class="fw-bold">CAMBIO DE CONTADOR (solo administrador)</summary>
+            <form method="POST" action="{{ route('turnos.cambio-contador', $turno) }}" class="mt-2"
+                onsubmit="return confirm('¿Registrar el cambio de contador?');">
+                @csrf
+                <p class="small text-muted mb-2">Si se cambió o reinició el contador durante el turno: lectura del contador
+                    viejo al retirarlo y del nuevo al instalarlo. La lectura final es la del contador nuevo. Galones =
+                    (retiro − inicial) + (final − instalación). Con las dos lecturas en blanco se quita el cambio.</p>
+                <div class="row g-2 align-items-end">
+                    <div class="col-md-2">
+                        <label class="form-label small mb-0" for="contador-manguera">Manguera</label>
+                        <select name="manguera" id="contador-manguera" class="form-select form-select-sm" required>
+                            @foreach ($turno->surtidores as $surtidor)
+                                <option value="{{ $surtidor->manguera }}" @selected(old('manguera') === $surtidor->manguera)>{{ $surtidor->manguera }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label small mb-0" for="contador-retiro">Lectura al retirar</label>
+                        <input type="text" name="contador_retiro" id="contador-retiro" class="form-control form-control-sm"
+                            inputmode="decimal" placeholder="1,250.000" value="{{ old('contador_retiro') }}">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label small mb-0" for="contador-instalacion">Lectura al instalar</label>
+                        <input type="text" name="contador_instalacion" id="contador-instalacion" class="form-control form-control-sm"
+                            inputmode="decimal" placeholder="0.000" value="{{ old('contador_instalacion') }}">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label small mb-0" for="contador-observacion">Observación</label>
+                        <input type="text" name="observacion" id="contador-observacion" class="form-control form-control-sm"
+                            maxlength="500" required value="{{ old('observacion') }}">
+                    </div>
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-sm btn-danger w-100">Registrar cambio</button>
+                    </div>
+                </div>
+            </form>
+        </details>
+    @endif
+
+    @if ($correcciones->isNotEmpty())
+        <div class="pastel-section mt-3">
+            <h2 class="h6 fw-bold">CORRECCIONES DE LECTURAS Y CAMBIOS DE CONTADOR</h2>
+            <ul class="small mb-0">
+                @foreach ($correcciones as $correccion)
+                    <li>
+                        {{ $correccion->created_at->format('d/m/Y H:i') }} — {{ $correccion->user?->name }}:
+                        @if ($correccion->tipo === \App\Models\LecturaCorreccion::TIPO_CAMBIO_CONTADOR)
+                            cambio de contador de {{ $correccion->manguera }} en el turno #{{ $correccion->turno?->numero_turno }}
+                            @if ($correccion->contador_retiro !== null)
+                                (retiro {{ number_format($correccion->contador_retiro, 3, '.', ',') }}, instalación
+                                {{ number_format($correccion->contador_instalacion, 3, '.', ',') }})
+                            @else
+                                (se quitó)
+                            @endif
+                            — {{ $correccion->observacion }}
+                        @else
+                            lectura final de {{ $correccion->manguera }} del turno #{{ $correccion->turno?->numero_turno }}
+                            {{ $correccion->valor_anterior === null ? 'en blanco' : number_format($correccion->valor_anterior, 3, '.', ',') }}
+                            → {{ number_format($correccion->valor_nuevo, 3, '.', ',') }}; también cambió la inicial del turno
+                            #{{ $correccion->turnoSiguiente?->numero_turno }}.
+                        @endif
+                    </li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
 
     {{-- Formulario independiente (no anidado) para marcar el turno como revisado --}}
     @if (isset($turno) && $turno && $turno->exists && !$turno->revisado && auth()->user()->isAdministrador())

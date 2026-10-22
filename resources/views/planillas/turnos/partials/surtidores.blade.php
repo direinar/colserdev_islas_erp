@@ -78,13 +78,20 @@
                         $lecturaInicialBloqueada = $turno->numero_turno > 1;
                     @endphp
                     @foreach ($turno->surtidores as $i => $s)
-                        <tr data-combustible="{{ $s->combustible }}">
+                        {{-- Con cambio de contador, galones.js suma (retiro - instalación) a final - inicial. --}}
+                        <tr data-combustible="{{ $s->combustible }}"
+                            @if ($s->tieneCambioContador()) data-ajuste-contador="{{ $s->ajusteContador() }}" @endif>
                             <td>
                                 <input type="hidden" name="lecturas[{{ $i }}][manguera]"
                                     value="{{ $s->manguera }}">
                                 <input type="hidden" name="lecturas[{{ $i }}][combustible]"
                                     value="{{ $s->combustible }}">
                                 {{ $s->manguera }}
+                                @if ($s->tieneCambioContador())
+                                    <div class="small text-danger fw-semibold">Cambio de contador: retiro
+                                        {{ number_format($s->contador_retiro, 3, '.', ',') }}, nuevo desde
+                                        {{ number_format($s->contador_instalacion, 3, '.', ',') }}</div>
+                                @endif
                             </td>
                             <td><input type="text" name="lecturas[{{ $i }}][lectura_inicial]"
                                     inputmode="decimal" placeholder="0,000"

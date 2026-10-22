@@ -155,8 +155,11 @@ class ManguerasTurnoService
         foreach ($surtidores as $surtidor) {
             if ($surtidor->lectura_final === null) {
                 $errores[] = 'Falta la lectura final de '.$surtidor->manguera.'.';
-            } elseif ((float) $surtidor->lectura_final < (float) $surtidor->lectura_inicial) {
-                $errores[] = 'La lectura final de '.$surtidor->manguera.' es menor que la inicial.';
+            } elseif ($surtidor->tieneCambioContador() && (float) $surtidor->lectura_final < $surtidor->lecturaMinimaFinal()) {
+                $errores[] = 'La lectura final de '.$surtidor->manguera.' es menor que la del contador nuevo instalado.';
+            } elseif ((float) $surtidor->lectura_final < $surtidor->lecturaMinimaFinal()) {
+                $errores[] = 'La lectura final de '.$surtidor->manguera.' es menor que la inicial. Si se cambió el contador, '
+                    .'el administrador debe registrar el CAMBIO DE CONTADOR.';
             }
         }
 

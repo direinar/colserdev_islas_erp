@@ -34,6 +34,8 @@ class TurnoSurtidor extends Model
         'combustible',
         'lectura_inicial',
         'lectura_final',
+        'contador_retiro',
+        'contador_instalacion',
         'galones',
         'total',
     ];
@@ -41,6 +43,8 @@ class TurnoSurtidor extends Model
     protected $casts = [
         'lectura_inicial' => 'decimal:3',
         'lectura_final' => 'decimal:3',
+        'contador_retiro' => 'decimal:3',
+        'contador_instalacion' => 'decimal:3',
         'galones' => 'decimal:3',
         'total' => 'decimal:2',
     ];
@@ -48,5 +52,44 @@ class TurnoSurtidor extends Model
     public function turno()
     {
         return $this->belongsTo(Turno::class);
+    }
+
+    /**
+     * Galones vendidos por la manguera. Con cambio de contador en el turno se suma lo que
+     * marcó el contador viejo hasta retirarlo y lo que marcó el nuevo desde que se instaló.
+     * Sin lectura final (turno abierto) aún no hay venta.
+     */
+    public static function calcularGalones(float $inicial, ?float $final, ?float $retiro = null, ?float $instalacion = null): float
+    {
+        if ($final === null) {
+            return 0.0;
+        }
+
+        if ($retiro !== null && $instalacion !== null) {
+            return max(0, $retiro - $inicial) + max(0, $final - $instalacion);
+        }
+
+        return max(0, $final - $inicial);
+    }
+
+    public function tieneCambioContador(): bool
+    {
+        return $this->contador_retiro !== null && $this->contador_instalacion !== null;
+    }
+
+    /**
+     * Lo que se suma a (final - inicial) por el cambio de contador; lo usa la pantalla para los GLS.
+     */
+    public function ajusteContador(): float
+    {
+        return $this->tieneCambioContador() ? (float) $this->contador_retiro - (float) $this->contador_instalacion : 0.0;
+    }
+
+    /**
+     * Lectura mínima que puede tener la final: la inicial o, con cambio de contador, la del contador nuevo.
+     */
+    public function lecturaMinimaFinal(): float
+    {
+        return $this->tieneCambioContador() ? (float) $this->contador_instalacion : (float) $this->lectura_inicial;
     }
 }

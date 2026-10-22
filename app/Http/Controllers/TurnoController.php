@@ -5,12 +5,14 @@ namespace App\Http\Controllers;
 use App\Concerns\ValidaPlanillaTurno;
 use App\Models\Banco;
 use App\Models\Customer;
+use App\Models\LecturaCorreccion;
 use App\Models\Lubricant;
 use App\Models\Turno;
 use App\Models\TurnoSurtidor;
 use App\Services\BorradorPlanillaTurnoService;
 use App\Services\GuardarPlanillaTurnoService;
 use App\Services\ManguerasTurnoService;
+use App\Support\NumberParser;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -101,7 +103,16 @@ class TurnoController extends Controller
             'turnoDiaManana' => $mangueras->turnoDelDiaSugerido(now()->addDay()->toDateString()),
         ];
 
-        return view('planillas.turnos.create', compact('lubricants', 'customers', 'bancos', 'nextNumber', 'turno', 'apertura', 'turnosDeFecha', 'buscarFecha', 'searchFecha', 'searchNumero'));
+        // Correcciones de lecturas y cambios de contador que tocaron esta planilla.
+        $correcciones = $turno?->exists
+            ? LecturaCorreccion::query()
+                ->with(['user', 'turno', 'turnoSiguiente'])
+                ->where(fn ($query) => $query->where('turno_id', $turno->id)->orWhere('turno_siguiente_id', $turno->id))
+                ->latest()
+                ->get()
+            : collect();
+
+        return view('planillas.turnos.create', compact('lubricants', 'customers', 'bancos', 'nextNumber', 'turno', 'apertura', 'correcciones', 'turnosDeFecha', 'buscarFecha', 'searchFecha', 'searchNumero'));
     }
 
     /**
@@ -218,6 +229,42 @@ class TurnoController extends Controller
         ]);
 
         return back()->with('success', 'Turno #'.$turno->numero_turno.' del '.$turno->fecha->format('Y-m-d').' marcado como revisado.');
+    }
+
+    /**
+     * Cambio de contador de una manguera del turno, autorizado por el administrador o el
+     * gerente: lectura del contador viejo al retirarlo y del nuevo al instalarlo.
+     */
+    public function cambioContador(Request $request, Turno $turno, GuardarPlanillaTurnoService $planilla): RedirectResponse
+    {
+        if ($turno->revisado) {
+            return back()->withErrors(['contador' => 'La planilla está REVISADA: primero vuélvala a Pendiente de revisión.']);
+        }
+
+        $validated = $request->validate([
+            'manguera' => ['required', Rule::in($turno->surtidores()->pluck('manguera')->all())],
+            'contador_retiro' => ['nullable', 'required_with:contador_instalacion', 'string', 'max:30'],
+            'contador_instalacion' => ['nullable', 'required_with:contador_retiro', 'string', 'max:30'],
+            'observacion' => ['required', 'string', 'max:500'],
+        ], [
+            'contador_retiro.required_with' => 'Digite la lectura del contador retirado y la del contador nuevo.',
+            'contador_instalacion.required_with' => 'Digite la lectura del contador retirado y la del contador nuevo.',
+            'observacion.required' => 'Explique el cambio de contador en la observación.',
+        ]);
+
+        $lectura = fn (?string $valor): ?float => $valor === null || trim($valor) === '' ? null : NumberParser::quantity($valor);
+
+        $planilla->registrarCambioContador(
+            $turno,
+            $validated['manguera'],
+            $lectura($validated['contador_retiro'] ?? null),
+            $lectura($validated['contador_instalacion'] ?? null),
+            $validated['observacion'],
+            $request->user(),
+        );
+
+        return redirect()->route('turnos.create', ['turno_busqueda' => $turno->numero_turno])
+            ->with('success', 'Cambio de contador de '.$validated['manguera'].' registrado en el turno #'.$turno->numero_turno.'.');
     }
 
     /**

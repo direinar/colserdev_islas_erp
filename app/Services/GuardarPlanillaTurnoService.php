@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\FuelPrice;
+use App\Models\LecturaCorreccion;
 use App\Models\Turno;
 use App\Models\TurnoSurtidor;
 use App\Models\User;
@@ -72,7 +73,13 @@ class GuardarPlanillaTurnoService
             $this->saveVentas($turno, $this->seccion($datos, 'ventas'));
             $lecturasGuardadas->isEmpty()
                 ? $this->saveLecturas($turno, $this->seccion($datos, 'lecturas'))
-                : $this->saveLecturasDelTurno($turno, $this->seccion($datos, 'lecturas'), $lecturasGuardadas);
+                : $this->saveLecturasDelTurno(
+                    $turno,
+                    $this->seccion($datos, 'lecturas'),
+                    $lecturasGuardadas,
+                    $usuario,
+                    filter_var($datos['confirmar_correccion'] ?? false, FILTER_VALIDATE_BOOLEAN),
+                );
             $this->saveUreaLubricantes($turno, $this->seccion($datos, 'urea_lubricantes'));
             $this->saveConsignaciones($turno, $this->seccion($datos, 'consignaciones'));
             $this->saveDescuentos($turno, $this->seccion($datos, 'descuentos'));
@@ -259,18 +266,24 @@ class GuardarPlanillaTurnoService
     /**
      * Lecturas de una planilla que ya tiene sus mangueras (las tomadas al abrir el turno):
      * solo se guardan esas mangueras y la lectura inicial no se recibe del navegador, salvo
-     * que la manguera no tenga una lectura cerrada anterior (primer registro). Una lectura
-     * final que un turno posterior ya tomó como inicial no se cambia aquí.
+     * que la manguera no tenga una lectura cerrada anterior (primer registro). El cambio de
+     * contador lo registra el administrador aparte y aquí se conserva.
+     *
+     * Si se corrige una lectura final que el turno siguiente ya tomó como inicial, primero se
+     * pide confirmar (se listan los turnos que cambian) y al confirmar se actualiza también la
+     * inicial de ese turno con sus galones, valor y sobrante/faltante. Un turno siguiente ya
+     * revisado solo lo corrige el administrador, y vuelve a PENDIENTE DE REVISIÓN.
      *
      * @param  list<array<string, mixed>>  $rows
      * @param  Collection<string, TurnoSurtidor>  $guardadas
      */
-    private function saveLecturasDelTurno(Turno $turno, array $rows, Collection $guardadas): void
+    private function saveLecturasDelTurno(Turno $turno, array $rows, Collection $guardadas, User $usuario, bool $confirmado): void
     {
         $enviadas = collect($rows)->keyBy(fn (array $row): string => trim((string) ($row['manguera'] ?? '')));
         $anteriores = $this->mangueras->ultimasLecturas($turno->numero_turno);
         $tomadasDespues = $this->mangueras->tomadasDespues($turno);
         $errores = [];
+        $correcciones = [];
         $filas = [];
 
         foreach ($guardadas as $manguera => $guardada) {
@@ -279,12 +292,19 @@ class GuardarPlanillaTurnoService
             $inicial = array_key_exists($manguera, $anteriores) || ! $enviada
                 ? (float) $guardada->lectura_inicial
                 : NumberParser::quantity($enviada['lectura_inicial'] ?? null);
-            $final = $enviada ? $this->lecturaFinal($enviada) : ($guardada->lectura_final === null ? null : (float) $guardada->lectura_final);
-            $finalGuardada = $guardada->lectura_final === null ? null : round((float) $guardada->lectura_final, 3);
+            $final = $enviada ? $this->lecturaFinal($enviada) : $this->decimalONulo($guardada->lectura_final);
+            $finalGuardada = $this->decimalONulo($guardada->lectura_final);
+            $retiro = $this->decimalONulo($guardada->contador_retiro);
+            $instalacion = $this->decimalONulo($guardada->contador_instalacion);
 
-            if (isset($tomadasDespues[$manguera]) && ($final === null ? null : round($final, 3)) !== $finalGuardada) {
-                $errores[] = 'La lectura final de '.$manguera.' ya es la inicial del turno #'.$tomadasDespues[$manguera]
-                    .': no se puede cambiar desde esta planilla.';
+            if (isset($tomadasDespues[$manguera]) && ($final === null ? null : round($final, 3)) !== ($finalGuardada === null ? null : round($finalGuardada, 3))) {
+                $correccion = $this->correccionDelSiguiente($manguera, $tomadasDespues[$manguera], $finalGuardada, $final, $usuario);
+
+                if (is_string($correccion)) {
+                    $errores[] = $correccion;
+                } else {
+                    $correcciones[] = $correccion;
+                }
             }
 
             $filas[] = [
@@ -292,7 +312,9 @@ class GuardarPlanillaTurnoService
                 'combustible' => $guardada->combustible,
                 'lectura_inicial' => $inicial,
                 'lectura_final' => $final,
-                'galones' => $final === null ? 0 : max(0, $final - $inicial),
+                'contador_retiro' => $retiro,
+                'contador_instalacion' => $instalacion,
+                'galones' => TurnoSurtidor::calcularGalones($inicial, $final, $retiro, $instalacion),
             ];
         }
 
@@ -300,11 +322,118 @@ class GuardarPlanillaTurnoService
             throw ValidationException::withMessages(['lecturas' => $errores]);
         }
 
+        if ($correcciones && ! $confirmado) {
+            throw ValidationException::withMessages(['correccion' => array_column($correcciones, 'aviso')]);
+        }
+
         $total = array_sum(array_column($filas, 'galones'));
 
         foreach ($filas as $fila) {
             $turno->surtidores()->create($fila + ['total' => $total]);
         }
+
+        foreach ($correcciones as $correccion) {
+            $this->aplicarCorreccion($turno, $correccion, $usuario);
+        }
+    }
+
+    /**
+     * Qué pasa en el turno siguiente si cambia la lectura final que tomó como inicial, o el
+     * motivo por el que no se puede corregir.
+     *
+     * @return array{manguera: string, siguiente: Turno, surtidor: TurnoSurtidor, anterior: float|null, nuevo: float, aviso: string}|string
+     */
+    private function correccionDelSiguiente(string $manguera, int $numeroSiguiente, ?float $anterior, ?float $nuevo, User $usuario): array|string
+    {
+        $siguiente = Turno::query()->where('numero_turno', $numeroSiguiente)->lockForUpdate()->firstOrFail();
+        $surtidor = $siguiente->surtidores()->where('manguera', $manguera)->firstOrFail();
+        $formato = fn (?float $valor): string => $valor === null ? 'en blanco' : number_format($valor, 3, ',', '.');
+
+        if ($nuevo === null) {
+            return 'La lectura final de '.$manguera.' ya es la inicial del turno #'.$numeroSiguiente.': no se puede dejar en blanco.';
+        }
+
+        if ($siguiente->revisado && ! $usuario->isAdministrador()) {
+            return 'La lectura final de '.$manguera.' ya es la inicial del turno #'.$numeroSiguiente
+                .', que está REVISADO: la corrección la hace el administrador.';
+        }
+
+        $finalSiguiente = $this->decimalONulo($surtidor->lectura_final);
+
+        if ($finalSiguiente !== null && ! $surtidor->tieneCambioContador() && $finalSiguiente < $nuevo) {
+            return 'Con '.$formato($nuevo).' como inicial, la lectura final de '.$manguera.' en el turno #'.$numeroSiguiente
+                .' ('.$formato($finalSiguiente).') quedaría menor que la inicial.';
+        }
+
+        $galonesDespues = TurnoSurtidor::calcularGalones(
+            $nuevo,
+            $finalSiguiente,
+            $this->decimalONulo($surtidor->contador_retiro),
+            $this->decimalONulo($surtidor->contador_instalacion),
+        );
+
+        return [
+            'manguera' => $manguera,
+            'siguiente' => $siguiente,
+            'surtidor' => $surtidor,
+            'anterior' => $anterior,
+            'nuevo' => $nuevo,
+            'aviso' => $manguera.': lectura final '.$formato($anterior).' → '.$formato($nuevo).'. El turno #'.$numeroSiguiente
+                .' ('.($siguiente->nombre_vendedor ?: 'sin vendedor').') toma '.$formato($nuevo).' como lectura inicial y sus galones pasan de '
+                .$formato((float) $surtidor->galones).' a '.$formato($galonesDespues).'; se recalculan su valor y su sobrante/faltante'
+                .($siguiente->revisado ? ' y vuelve a PENDIENTE DE REVISIÓN.' : '.'),
+        ];
+    }
+
+    /**
+     * @param  array{manguera: string, siguiente: Turno, surtidor: TurnoSurtidor, anterior: float|null, nuevo: float, aviso: string}  $correccion
+     */
+    private function aplicarCorreccion(Turno $turno, array $correccion, User $usuario): void
+    {
+        $siguiente = $correccion['siguiente'];
+        $surtidor = $correccion['surtidor'];
+
+        $surtidor->update([
+            'lectura_inicial' => $correccion['nuevo'],
+            'galones' => TurnoSurtidor::calcularGalones(
+                $correccion['nuevo'],
+                $this->decimalONulo($surtidor->lectura_final),
+                $this->decimalONulo($surtidor->contador_retiro),
+                $this->decimalONulo($surtidor->contador_instalacion),
+            ),
+        ]);
+
+        $this->recalcularLecturas($siguiente);
+
+        if ($siguiente->revisado) {
+            $siguiente->update(['revisado' => false, 'revisado_por' => null, 'revisado_at' => null]);
+        }
+
+        LecturaCorreccion::create([
+            'tipo' => LecturaCorreccion::TIPO_CORRECCION,
+            'turno_id' => $turno->id,
+            'turno_siguiente_id' => $siguiente->id,
+            'manguera' => $correccion['manguera'],
+            'valor_anterior' => $correccion['anterior'],
+            'valor_nuevo' => $correccion['nuevo'],
+            'user_id' => $usuario->id,
+        ]);
+    }
+
+    /**
+     * Total de galones de las filas, venta según lecturas y sobrante/faltante de un turno
+     * cuyas lecturas cambiaron fuera del guardado de su planilla.
+     */
+    private function recalcularLecturas(Turno $turno): void
+    {
+        $turno->surtidores()->update(['total' => (float) $turno->surtidores()->sum('galones')]);
+        $this->saveVentaLecturasTotales($turno);
+        $turno->update(['sobrante_pendiente' => $this->cuadre->pendiente($turno->fresh())]);
+    }
+
+    private function decimalONulo(mixed $valor): ?float
+    {
+        return $valor === null ? null : (float) $valor;
     }
 
     /**
@@ -321,13 +450,58 @@ class GuardarPlanillaTurnoService
 
                 $surtidor->update([
                     'lectura_final' => $final,
-                    'galones' => $final === null ? 0 : max(0, $final - (float) $surtidor->lectura_inicial),
+                    'galones' => TurnoSurtidor::calcularGalones(
+                        (float) $surtidor->lectura_inicial,
+                        $final,
+                        $this->decimalONulo($surtidor->contador_retiro),
+                        $this->decimalONulo($surtidor->contador_instalacion),
+                    ),
                 ]);
             }
 
-            $turno->surtidores()->update(['total' => (float) $turno->surtidores()->sum('galones')]);
-            $this->saveVentaLecturasTotales($turno);
-            $turno->update(['sobrante_pendiente' => $this->cuadre->pendiente($turno->fresh())]);
+            $this->recalcularLecturas($turno);
+        });
+    }
+
+    /**
+     * Cambio de contador autorizado por el administrador: lectura del contador viejo al
+     * retirarlo y del nuevo al instalarlo. Con las dos en blanco se quita el cambio. La
+     * lectura final sigue siendo la del contador nuevo, así que el turno siguiente la toma.
+     */
+    public function registrarCambioContador(Turno $turno, string $manguera, ?float $retiro, ?float $instalacion, string $observacion, User $usuario): void
+    {
+        DB::transaction(function () use ($turno, $manguera, $retiro, $instalacion, $observacion, $usuario): void {
+            $surtidor = $turno->surtidores()->where('manguera', $manguera)->firstOrFail();
+
+            if ($retiro !== null && $retiro < (float) $surtidor->lectura_inicial) {
+                throw ValidationException::withMessages([
+                    'contador_retiro' => 'La lectura del contador retirado no puede ser menor que la inicial ('
+                        .number_format((float) $surtidor->lectura_inicial, 3, ',', '.').').',
+                ]);
+            }
+
+            $surtidor->update([
+                'contador_retiro' => $retiro,
+                'contador_instalacion' => $instalacion,
+                'galones' => TurnoSurtidor::calcularGalones(
+                    (float) $surtidor->lectura_inicial,
+                    $this->decimalONulo($surtidor->lectura_final),
+                    $retiro,
+                    $instalacion,
+                ),
+            ]);
+
+            $this->recalcularLecturas($turno);
+
+            LecturaCorreccion::create([
+                'tipo' => LecturaCorreccion::TIPO_CAMBIO_CONTADOR,
+                'turno_id' => $turno->id,
+                'manguera' => $manguera,
+                'contador_retiro' => $retiro,
+                'contador_instalacion' => $instalacion,
+                'observacion' => $observacion,
+                'user_id' => $usuario->id,
+            ]);
         });
     }
 

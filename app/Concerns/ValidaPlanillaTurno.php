@@ -40,6 +40,8 @@ trait ValidaPlanillaTurno
             'traslado_sobrante' => ['nullable'],
             'traslado_faltante' => ['nullable'],
             'observaciones' => ['nullable', 'string', 'max:2000'],
+            // Confirma la corrección de una lectura final que el turno siguiente ya tomó como inicial.
+            'confirmar_correccion' => ['nullable', 'boolean'],
             'qr_pagos.*.concepto' => ['nullable', Rule::in(TurnoQrPago::CONCEPTOS)],
 
             // Cada fila se valida campo por campo: un dato fuera de rango no llega a la base de datos.

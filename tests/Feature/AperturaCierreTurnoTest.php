@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\LecturaCorreccion;
 use App\Models\Turno;
 use App\Models\User;
 use App\Services\ManguerasTurnoService;
@@ -116,7 +117,7 @@ test('CERRAR TURNO exige la lectura final de cada manguera, no menor que la inic
     // Una lectura final en cero queda por debajo de una inicial mayor (la de un turno anterior).
     $turno->surtidores()->where('manguera', 'PLUS 10')->update(['lectura_inicial' => 50]);
     guardarLecturas($ana, $turno, ['PLUS 09' => '120', 'PLUS 10' => '0'], cerrar: true)
-        ->assertSessionHasErrors(['cerrar' => 'La lectura final de PLUS 10 es menor que la inicial.']);
+        ->assertSessionHasErrors(['cerrar' => 'La lectura final de PLUS 10 es menor que la inicial. Si se cambió el contador, el administrador debe registrar el CAMBIO DE CONTADOR.']);
 
     guardarLecturas($ana, $turno, ['PLUS 09' => '120', 'PLUS 10' => '80'], cerrar: true)->assertSessionHasNoErrors();
 
@@ -153,20 +154,129 @@ test('el jefe de patios cierra la planilla de un islero que no la cerró; otro i
         ->and($turno->sobrante_pendiente)->not->toBeNull();
 });
 
-test('una lectura final que ya tomó el turno siguiente no se cambia desde la planilla cerrada', function () {
-    $ana = User::factory()->create(['role' => User::ROLE_ISLERO]);
+/**
+ * Turno 1 de Ana cerrado en 1.500 y turno 2 de Luis que tomó esa lectura y cerró en 1.700.
+ *
+ * @return array{0: Turno, 1: Turno}
+ */
+function dosTurnosEncadenados(User $ana, User $luis): array
+{
     abrir($ana, ['PLUS 09']);
     $primero = Turno::query()->sole();
     guardarLecturas($ana, $primero, ['PLUS 09' => '1500'], cerrar: true);
 
-    // Antes de que otro turno la tome, la planilla cerrada aún se corrige.
-    guardarLecturas($ana, $primero, ['PLUS 09' => '1550'])->assertSessionHasNoErrors();
-    abrir($ana, ['PLUS 09']);
+    abrir($luis, ['PLUS 09']);
+    $segundo = Turno::query()->where('numero_turno', 2)->sole();
+    guardarLecturas($luis, $segundo, ['PLUS 09' => '1700'], cerrar: true);
 
-    guardarLecturas($ana, $primero, ['PLUS 09' => '1600'])
-        ->assertSessionHasErrors(['lecturas' => 'La lectura final de PLUS 09 ya es la inicial del turno #2: no se puede cambiar desde esta planilla.']);
+    return [$primero, $segundo];
+}
 
-    expect((float) $primero->surtidores()->sole()->lectura_final)->toBe(1550.0);
+test('corregir una lectura final ya tomada por el turno siguiente pide confirmar y actualiza ese turno', function () {
+    $ana = User::factory()->create(['role' => User::ROLE_ISLERO, 'name' => 'Ana']);
+    $luis = User::factory()->create(['role' => User::ROLE_ISLERO, 'name' => 'Luis']);
+    [$primero, $segundo] = dosTurnosEncadenados($ana, $luis);
+
+    // Antes de confirmar no cambia nada y se muestra qué turno cambia.
+    guardarLecturas($ana, $primero, ['PLUS 09' => '1550'])->assertSessionHasErrors(['correccion' => 'PLUS 09: lectura final 1.500,000 → 1.550,000. El turno #2 (Luis) toma 1.550,000 como lectura inicial y sus galones pasan de 200,000 a 150,000; se recalculan su valor y su sobrante/faltante.']);
+
+    expect((float) $primero->surtidores()->sole()->lectura_final)->toBe(1500.0)
+        ->and((float) $segundo->surtidores()->sole()->lectura_inicial)->toBe(1500.0);
+
+    // Al volver a la planilla se ve el aviso con el botón para confirmar.
+    $this->actingAs($ana)->from(route('turnos.create', ['turno_busqueda' => 1]))->followingRedirects()
+        ->post(route('turnos.store'), [
+            'fecha' => $primero->fecha->toDateString(),
+            'numero_turno' => 1,
+            'lecturas' => lecturas($primero, ['PLUS 09' => '1550']),
+        ])
+        ->assertSee('CONFIRMAR CORRECCIÓN Y GUARDAR')
+        ->assertSee('El turno #2 (Luis) toma 1.550,000 como lectura inicial');
+
+    // Si el turno siguiente quedaría con la final menor que la nueva inicial, no se puede.
+    guardarLecturas($ana, $primero, ['PLUS 09' => '1800'])
+        ->assertSessionHasErrors(['lecturas' => 'Con 1.800,000 como inicial, la lectura final de PLUS 09 en el turno #2 (1.700,000) quedaría menor que la inicial.']);
+
+    $this->actingAs($ana)->post(route('turnos.store'), [
+        'fecha' => $primero->fecha->toDateString(),
+        'numero_turno' => 1,
+        'lecturas' => lecturas($primero, ['PLUS 09' => '1550']),
+        'confirmar_correccion' => '1',
+    ])->assertSessionHasNoErrors();
+
+    $segundo->refresh();
+    expect((float) $primero->surtidores()->sole()->lectura_final)->toBe(1550.0)
+        ->and((float) $segundo->surtidores()->sole()->lectura_inicial)->toBe(1550.0)
+        ->and((float) $segundo->surtidores()->sole()->galones)->toBe(150.0)
+        ->and((float) $segundo->lecturas_galones_corriente)->toBe(150.0)
+        ->and(LecturaCorreccion::query()->sole()->only(['tipo', 'manguera', 'user_id']))
+        ->toBe(['tipo' => 'correccion', 'manguera' => 'PLUS 09', 'user_id' => $ana->id]);
+
+    // La corrección queda a la vista en las dos planillas.
+    $this->actingAs($luis)->get(route('turnos.create', ['turno_busqueda' => 2]))
+        ->assertSee('CORRECCIONES DE LECTURAS Y CAMBIOS DE CONTADOR')
+        ->assertSee('también cambió la inicial del turno');
+});
+
+test('si el turno siguiente está revisado solo el administrador corrige, y ese turno vuelve a pendiente', function () {
+    $ana = User::factory()->create(['role' => User::ROLE_ISLERO]);
+    $luis = User::factory()->create(['role' => User::ROLE_ISLERO]);
+    $admin = User::factory()->create(['role' => User::ROLE_ADMINISTRADOR]);
+    [$primero, $segundo] = dosTurnosEncadenados($ana, $luis);
+    $segundo->update(['revisado' => true, 'revisado_por' => 'Admin', 'revisado_at' => now()]);
+
+    $confirmada = fn (User $user) => $this->actingAs($user)->post(route('turnos.store'), [
+        'fecha' => $primero->fecha->toDateString(),
+        'numero_turno' => 1,
+        'lecturas' => lecturas($primero, ['PLUS 09' => '1550']),
+        'confirmar_correccion' => '1',
+    ]);
+
+    $confirmada($ana)->assertSessionHasErrors(['lecturas' => 'La lectura final de PLUS 09 ya es la inicial del turno #2, que está REVISADO: la corrección la hace el administrador.']);
+    $confirmada($admin)->assertSessionHasNoErrors();
+
+    $segundo->refresh();
+    expect($segundo->revisado)->toBeFalse()
+        ->and((float) $segundo->surtidores()->sole()->lectura_inicial)->toBe(1550.0);
+});
+
+test('el administrador registra un cambio de contador y los galones suman el contador viejo y el nuevo', function () {
+    $admin = User::factory()->create(['role' => User::ROLE_ADMINISTRADOR]);
+    $islero = User::factory()->create(['role' => User::ROLE_ISLERO]);
+    abrir($admin, ['PLUS 01']);
+    $turno = Turno::query()->sole();
+    $turno->surtidores()->update(['lectura_inicial' => 900]);
+
+    // El contador nuevo arranca en 0: la final queda menor que la inicial y no se puede cerrar.
+    guardarLecturas($admin, $turno, ['PLUS 01' => '50'], cerrar: true)
+        ->assertSessionHasErrors(['cerrar' => 'La lectura final de PLUS 01 es menor que la inicial. Si se cambió el contador, el administrador debe registrar el CAMBIO DE CONTADOR.']);
+
+    $cambio = ['manguera' => 'PLUS 01', 'contador_retiro' => '1000', 'contador_instalacion' => '0', 'observacion' => 'Daño del contador'];
+
+    $this->actingAs($islero)->post(route('turnos.cambio-contador', $turno), $cambio)->assertForbidden();
+    $this->actingAs($admin)->post(route('turnos.cambio-contador', $turno), ['contador_retiro' => '800'] + $cambio)
+        ->assertSessionHasErrors('contador_retiro');
+    $this->actingAs($admin)->post(route('turnos.cambio-contador', $turno), $cambio)->assertSessionHasNoErrors();
+
+    // (1.000 - 900) + (50 - 0) = 150 galones.
+    expect((float) $turno->surtidores()->sole()->galones)->toBe(150.0);
+
+    $this->actingAs($admin)->get(route('turnos.create', ['turno_busqueda' => 1]))
+        ->assertSee('Cambio de contador: retiro')
+        ->assertSee('data-ajuste-contador="1000"', false);
+
+    // Guardar la planilla conserva el cambio y ya se puede cerrar.
+    guardarLecturas($admin, $turno, ['PLUS 01' => '50'], cerrar: true)->assertSessionHasNoErrors();
+
+    $turno->refresh();
+    expect($turno->estaAbierta())->toBeFalse()
+        ->and((float) $turno->surtidores()->sole()->galones)->toBe(150.0)
+        ->and((float) $turno->lecturas_galones_corriente)->toBe(150.0)
+        ->and(LecturaCorreccion::query()->sole()->tipo)->toBe('cambio_contador');
+
+    // El turno siguiente arranca con la lectura del contador nuevo.
+    abrir($admin, ['PLUS 01']);
+    expect((float) Turno::query()->where('numero_turno', 2)->sole()->surtidores()->sole()->lectura_inicial)->toBe(50.0);
 });
 
 test('el islero abre para hoy o para mañana (turno de la noche) y el turno del día no se repite', function () {
