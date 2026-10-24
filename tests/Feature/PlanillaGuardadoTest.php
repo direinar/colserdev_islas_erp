@@ -262,3 +262,46 @@ test('la cantidad de canastilla admite decimales porque la urea se vende por lit
         ->assertSee('value="2.5"', false)
         ->assertSee('step="0.001" class="form-control form-control-sm cantidad-input"', false);
 });
+
+test('cada surtidor admite varios cierres con su No. de cierre y las filas vacias no se guardan', function () {
+    $admin = User::factory()->create(['role' => User::ROLE_ADMINISTRADOR]);
+    FuelPrice::create(['name' => 'Gasolina', 'price' => 16000, 'turno_desde' => 1, 'active' => true]);
+    FuelPrice::create(['name' => 'ACPM', 'price' => 10000, 'turno_desde' => 1, 'active' => true]);
+
+    guardarPlanilla($admin, 5, ['ventas' => [
+        ['surtidor' => 'SURTIDOR 1 CTE', 'combustible' => 'CTE', 'no_cierre' => '1201', 'galones' => '40.5'],
+        ['surtidor' => 'SURTIDOR 1 CTE', 'combustible' => 'CTE', 'no_cierre' => '1202', 'galones' => '9.5'],
+        ['surtidor' => 'SURTIDOR 1 ACPM', 'combustible' => 'ACPM', 'no_cierre' => '', 'galones' => ''],
+        ['surtidor' => 'SURTIDOR 3 ACPM', 'combustible' => 'ACPM', 'no_cierre' => '880', 'galones' => '20'],
+    ]])->assertSessionHasNoErrors();
+
+    $turno = Turno::query()->with('ventas')->sole();
+
+    expect($turno->ventas->map(fn ($v) => [$v->surtidor, $v->no_cierre, (float) $v->galones])->all())->toBe([
+        ['SURTIDOR 1 CTE', '1201', 40.5],
+        ['SURTIDOR 1 CTE', '1202', 9.5],
+        ['SURTIDOR 3 ACPM', '880', 20.0],
+    ])
+        ->and((float) $turno->tirillas_galones_corriente)->toBe(50.0)
+        ->and((float) $turno->total_ventas)->toBe(1000000.0);
+
+    // Los 6 surtidores en su orden, cada uno con + AGREGAR FILA y la columna NO. CIERRE;
+    // los cierres guardados vuelven a su bloque.
+    $pantalla = $this->actingAs($admin)->get(route('turnos.create', ['turno_busqueda' => 5]))
+        ->assertSeeInOrder(['SURTIDOR 1 - CTE', 'value="1201"', 'value="1202"', 'SURTIDOR 1 - ACPM', 'SURTIDOR 2 - CTE',
+            'SURTIDOR 2 - ACPM', 'SURTIDOR 3 - CTE', 'SURTIDOR 3 - ACPM', 'value="880"', 'TOTAL VENTAS SEGÚN CORTE'], false);
+
+    expect(substr_count($pantalla->getContent(), '+ AGREGAR FILA</button>'))->toBeGreaterThanOrEqual(6)
+        ->and(substr_count($pantalla->getContent(), '<th class="text-center">NO. CIERRE</th>'))->toBe(6);
+});
+
+test('guardar la planilla conserva las lecturas que tenian los turnos anteriores', function () {
+    $admin = User::factory()->create(['role' => User::ROLE_ADMINISTRADOR]);
+    $turno = Turno::create(['fecha' => '2026-09-25', 'numero_turno' => 7]);
+    $turno->surtidores()->create(['manguera' => 'PLUS 01', 'combustible' => 'corriente', 'lectura_inicial' => 0, 'lectura_final' => 1500, 'galones' => 1500]);
+
+    guardarPlanilla($admin, 7, ['observaciones' => 'Corrección'])->assertSessionHasNoErrors();
+
+    expect($turno->surtidores()->count())->toBe(1)
+        ->and($turno->fresh()->observaciones)->toBe('Corrección');
+});

@@ -4,6 +4,8 @@ use App\Models\CarteraMovimiento;
 use App\Models\Customer;
 use App\Models\Turno;
 use App\Models\User;
+use App\Services\CarteraSaldoInicialService;
+use App\Services\CarteraSaldoService;
 use Illuminate\Support\Facades\DB;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 
@@ -354,4 +356,28 @@ test('la migracion de origen elimina los movimientos manuales y carga los recaud
         ->and($movimientos[0]->placas)->toBe('ABC123')
         ->and($movimientos->where('concepto', 'Manual de prueba'))->toBeEmpty()
         ->and((float) $movimientos->last()->saldo)->toBe(50000.0);
+});
+
+test('el estado de cuenta se descarga en PDF y se comparte por WhatsApp', function () {
+    $admin = User::factory()->create(['role' => User::ROLE_ADMINISTRADOR]);
+    $cliente = Customer::create(['name' => 'Transportes Boyacá', 'document' => '900306424', 'dv' => '9']);
+    app(CarteraSaldoInicialService::class)->registrar($cliente->id, '2026-10-01', 250000);
+    $rango = ['customer_id' => $cliente->id, 'fecha_inicial' => '2026-10-01', 'fecha_final' => '2026-10-31'];
+
+    $this->actingAs($admin)->get(route('cartera.index', $rango))
+        ->assertSee(route('cartera.pdf', $rango))
+        ->assertSee('id="compartir-pdf"', false)
+        ->assertSee('data-archivo="estado-de-cuenta-transportes-boyaca-2026-10-01-a-2026-10-31.pdf"', false);
+
+    $pdf = $this->actingAs($admin)->get(route('cartera.pdf', $rango))
+        ->assertOk()
+        ->assertDownload('estado-de-cuenta-transportes-boyaca-2026-10-01-a-2026-10-31.pdf');
+
+    expect(substr((string) $pdf->getContent(), 0, 5))->toBe('%PDF-');
+
+    $html = view('cartera.pdf', ['customer' => $cliente, 'fechaInicial' => '2026-10-01', 'fechaFinal' => '2026-10-31']
+        + app(CarteraSaldoService::class)->estadoDeCuenta($cliente->id, '2026-10-01', '2026-10-31'))->render();
+
+    expect($html)->toContain('Transportes Boyacá — NIT/C.C. 900306424-9')
+        ->toContain('250.000');
 });

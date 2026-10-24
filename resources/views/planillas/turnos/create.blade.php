@@ -388,7 +388,7 @@
 
                 @include('planillas.turnos.partials.ventas')
 
-                @include('planillas.turnos.partials.surtidores')
+                @include('planillas.turnos.partials.precios')
 
                 @include('planillas.turnos.partials.lubricantes')
 

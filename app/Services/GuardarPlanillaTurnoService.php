@@ -63,7 +63,6 @@ class GuardarPlanillaTurnoService
             }
 
             $this->saveVentas($turno, $this->seccion($datos, 'ventas'));
-            $this->saveLecturas($turno, $this->seccion($datos, 'lecturas'));
             $this->saveUreaLubricantes($turno, $this->seccion($datos, 'urea_lubricantes'));
             $this->saveConsignaciones($turno, $this->seccion($datos, 'consignaciones'));
             $this->saveDescuentos($turno, $this->seccion($datos, 'descuentos'));
@@ -125,8 +124,9 @@ class GuardarPlanillaTurnoService
 
     private function borrarFilas(Turno $turno, User $usuario): void
     {
+        // La lectura electrónica ya no va en la planilla (se registra por fecha): las lecturas
+        // que tengan los turnos anteriores se conservan.
         $turno->ventas()->delete();
-        $turno->surtidores()->delete();
         $turno->lubricantes()->delete();
         $turno->consignaciones()->delete();
         $turno->descuentos()->delete();
@@ -175,7 +175,8 @@ class GuardarPlanillaTurnoService
             $surtidor = trim($row['surtidor'] ?? '');
             $combustible = $row['combustible'] ?? null;
 
-            if (! $surtidor && ! $combustible) {
+            // Cada surtidor muestra una fila para digitar: sin No. de cierre ni galones no se guarda.
+            if ((! $surtidor && ! $combustible) || FilaPlanilla::vacia($row, ['no_cierre', 'galones'])) {
                 continue;
             }
 
@@ -185,6 +186,7 @@ class GuardarPlanillaTurnoService
 
             $turno->ventas()->create([
                 'surtidor' => $surtidor,
+                'no_cierre' => trim((string) ($row['no_cierre'] ?? '')) ?: null,
                 'combustible' => $combustible,
                 'galones' => $galones,
                 'valor' => $galones * $precio,
@@ -212,40 +214,6 @@ class GuardarPlanillaTurnoService
             'tirillas_valor_acpm' => $galonesAcpm * $turno->precio_acpm,
             'total_ventas' => (float) $ventas->sum('valor'),
         ]);
-    }
-
-    /**
-     * @param  list<array<string, mixed>>  $rows
-     */
-    private function saveLecturas(Turno $turno, array $rows): void
-    {
-        $total = collect($rows)->sum(function (array $row): float {
-            $inicial = NumberParser::quantity($row['lectura_inicial'] ?? null);
-            $final = NumberParser::quantity($row['lectura_final'] ?? null);
-
-            return max(0, $final - $inicial);
-        });
-
-        foreach ($rows as $row) {
-            $inicial = NumberParser::quantity($row['lectura_inicial'] ?? null);
-            $final = NumberParser::quantity($row['lectura_final'] ?? null);
-            $galones = max(0, $final - $inicial);
-            $manguera = trim($row['manguera'] ?? '');
-            $combustible = $row['combustible'] ?? null;
-
-            if (! $manguera) {
-                continue;
-            }
-
-            $turno->surtidores()->create([
-                'manguera' => $manguera,
-                'combustible' => $combustible,
-                'lectura_inicial' => $inicial,
-                'lectura_final' => $final,
-                'galones' => $galones,
-                'total' => $total,
-            ]);
-        }
     }
 
     /**

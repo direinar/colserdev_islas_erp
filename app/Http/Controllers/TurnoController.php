@@ -25,7 +25,7 @@ class TurnoController extends Controller
     /**
      * Relaciones que muestra la planilla.
      */
-    private const SECCIONES = ['ventas', 'surtidores', 'lubricantes', 'consignaciones', 'descuentos', 'cartera', 'qrPagos', 'recaudos', 'transferencias', 'gasolinaEds', 'varios', 'recaudosAdmin'];
+    private const SECCIONES = ['ventas', 'lubricantes', 'consignaciones', 'descuentos', 'cartera', 'qrPagos', 'recaudos', 'transferencias', 'gasolinaEds', 'varios', 'recaudosAdmin'];
 
     public function create(Request $request, BorradorPlanillaTurnoService $borrador): View
     {
@@ -35,7 +35,6 @@ class TurnoController extends Controller
 
         // Si vienen parámetros de búsqueda, cargar el turno
         $turno = null;
-        $previousTurno = null;
         $searchFecha = $request->query('fecha');
         $searchNumero = $request->query('numero_turno');
         // Búsqueda independiente de la fecha: se ingresa solo el número de turno
@@ -82,22 +81,13 @@ class TurnoController extends Controller
             abort(403, 'Esta planilla la registró otro usuario y no tiene permiso para verla.');
         }
 
-        if (! $turno && ! $searchNumero) {
-            // Si es un nuevo turno, cargar el último turno registrado (consecutivo
-            // global, sin importar la fecha) para precargar las lecturas iniciales
-            // con sus finales.
-            $previousTurno = Turno::with('surtidores')
-                ->orderByDesc('numero_turno')
-                ->first();
-        }
-
         // Si el guardado falló (validación), se vuelve a mostrar lo que se había digitado
         // en lugar de la planilla vacía o de la última versión guardada.
         if ($request->session()->hasOldInput('numero_turno')) {
             $turno = $borrador->desdeEnvio((array) $request->old(), $turno, $request->user());
         }
 
-        return view('planillas.turnos.create', compact('lubricants', 'customers', 'bancos', 'nextNumber', 'turno', 'previousTurno', 'turnosDeFecha', 'buscarFecha', 'searchFecha', 'searchNumero'));
+        return view('planillas.turnos.create', compact('lubricants', 'customers', 'bancos', 'nextNumber', 'turno', 'turnosDeFecha', 'buscarFecha', 'searchFecha', 'searchNumero'));
     }
 
     public function store(Request $request, GuardarPlanillaTurnoService $planilla): RedirectResponse

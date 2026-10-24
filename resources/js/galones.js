@@ -358,7 +358,16 @@ function initGalones() {
     updateGrandTotal();
     updateTirillasTotals();
     updateVentasSegunLecturas();
+
+    // Al quitar una fila de ventas (+ AGREGAR FILA por surtidor) se recalculan los totales.
+    window.recalcularVentasTurno = () => {
+        updateGrandTotal();
+        updateTirillasTotals();
+    };
 }
+
+// Las filas que se agregan después de cargar la página la vuelven a llamar.
+window.initGalones = initGalones;
 
 document.addEventListener('DOMContentLoaded', initGalones);
 document.addEventListener('livewire:load', initGalones);

@@ -10,78 +10,20 @@ use Illuminate\Support\Facades\Artisan;
 
 uses(RefreshDatabase::class);
 
-test('traditional form preloads previous final readings as initial values', function () {
-    $today = now()->toDateString();
-
-    $previousTurno = Turno::create([
-        'fecha' => $today,
-        'numero_turno' => 1,
-        'nombre_vendedor' => 'Ana',
-        'precio_corriente' => 16.5,
-        'precio_acpm' => 9.85,
-    ]);
-
-    $previousTurno->surtidores()->createMany([
-        ['manguera' => 'PLUS 01', 'combustible' => 'corriente', 'lectura_inicial' => 0, 'lectura_final' => 1500, 'galones' => 1500],
-        ['manguera' => 'PLUS 02', 'combustible' => 'corriente', 'lectura_inicial' => 0, 'lectura_final' => 1250, 'galones' => 1250],
-        ['manguera' => 'ACPM 03', 'combustible' => 'acpm', 'lectura_inicial' => 0, 'lectura_final' => 980, 'galones' => 980],
-        ['manguera' => 'ACPM 04', 'combustible' => 'acpm', 'lectura_inicial' => 0, 'lectura_final' => 1015, 'galones' => 1015],
-        ['manguera' => 'PLUS 05', 'combustible' => 'corriente', 'lectura_inicial' => 0, 'lectura_final' => 1100, 'galones' => 1100],
-        ['manguera' => 'PLUS 06', 'combustible' => 'corriente', 'lectura_inicial' => 0, 'lectura_final' => 1205, 'galones' => 1205],
-        ['manguera' => 'ACPM 07', 'combustible' => 'acpm', 'lectura_inicial' => 0, 'lectura_final' => 805, 'galones' => 805],
-        ['manguera' => 'ACPM 08', 'combustible' => 'acpm', 'lectura_inicial' => 0, 'lectura_final' => 910, 'galones' => 910],
-        ['manguera' => 'PLUS 09', 'combustible' => 'corriente', 'lectura_inicial' => 0, 'lectura_final' => 1300, 'galones' => 1300],
-        ['manguera' => 'PLUS 10', 'combustible' => 'corriente', 'lectura_inicial' => 0, 'lectura_final' => 1410, 'galones' => 1410],
-        ['manguera' => 'ACPM 11', 'combustible' => 'acpm', 'lectura_inicial' => 0, 'lectura_final' => 875, 'galones' => 875],
-        ['manguera' => 'ACPM 12', 'combustible' => 'acpm', 'lectura_inicial' => 0, 'lectura_final' => 930, 'galones' => 930],
-    ]);
+test('la planilla ya no tiene la lectura electronica: se registra por fecha en su propio informe', function () {
+    $previousTurno = Turno::create(['fecha' => now()->toDateString(), 'numero_turno' => 1, 'precio_corriente' => 16500, 'precio_acpm' => 9850]);
+    $previousTurno->surtidores()->create(['manguera' => 'PLUS 01', 'combustible' => 'corriente', 'lectura_inicial' => 0, 'lectura_final' => 1500, 'galones' => 1500]);
 
     $user = User::factory()->create();
 
-    $response = $this->actingAs($user)->get(route('turnos.create', ['fecha' => $today]));
-
-    $response->assertOk();
-    // Values should appear in the HTML, formatted with the file's convention: decimal '.', thousands ','
-    $response->assertSee('value="1,500.000"', false);
-    $response->assertSee('value="1,250.000"', false);
-    $response->assertSee('value="980.000"', false);
-    $response->assertSee('value="1,015.000"', false);
-    $response->assertSee('value="1,100.000"', false);
-    $response->assertSee('value="1,205.000"', false);
-    $response->assertSee('value="805.000"', false);
-    $response->assertSee('value="910.000"', false);
-    $response->assertSee('value="1,300.000"', false);
-    $response->assertSee('value="1,410.000"', false);
-    $response->assertSee('value="875.000"', false);
-    $response->assertSee('value="930.000"', false);
-});
-
-test('lectura inicial is locked from turno 2 onward', function () {
-    $today = now()->toDateString();
-
-    $previousTurno = Turno::create([
-        'fecha' => $today,
-        'numero_turno' => 1,
-        'nombre_vendedor' => 'Ana',
-        'precio_corriente' => 16.5,
-        'precio_acpm' => 9.85,
-    ]);
-
-    $previousTurno->surtidores()->create([
-        'manguera' => 'PLUS 01',
-        'combustible' => 'corriente',
-        'lectura_inicial' => 0,
-        'lectura_final' => 1500,
-        'galones' => 1500,
-    ]);
-
-    $user = User::factory()->create();
-
-    $response = $this->actingAs($user)->get(route('turnos.create', ['fecha' => $today]));
-
-    $response->assertOk();
-    $response->assertSee('lectura-inicial', false);
-    $response->assertSee('readonly', false);
+    $this->actingAs($user)->get(route('turnos.create'))
+        ->assertOk()
+        ->assertDontSee('LECTURA ELECTRÓNICA')
+        ->assertDontSee('lectura-inicial', false)
+        ->assertDontSee('VENTAS/SURTIDORES')
+        ->assertDontSee('SOBRANTE o FALTANTE x LECTURA SURTIDORES')
+        ->assertSee('SOBRANTE o FALTANTE SEGUN CIERRES DE IAPROPIADA')
+        ->assertSee('PRECIOS ACTUALES');
 });
 
 test('save button form is not broken by a nested form and stays enabled while not revisado', function () {

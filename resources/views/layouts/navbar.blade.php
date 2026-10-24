@@ -58,7 +58,7 @@
                     {{-- OPERACIÓN --}}
                     @if ($user->canAccessTurnos())
                         <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle {{ request()->is('turnos*') ? 'active' : '' }}"
+                            <a class="nav-link dropdown-toggle {{ request()->is('turnos*') || request()->is('lectura-electronica*') ? 'active' : '' }}"
                                 href="#" data-bs-toggle="dropdown">
                                 Operación
                             </a>
@@ -68,6 +68,13 @@
                                         Planilla de turnos
                                     </a>
                                 </li>
+                                @if ($user->canAccessControlTanques())
+                                    <li>
+                                        <a class="dropdown-item" href="{{ route('lectura-electronica.index') }}">
+                                            Lectura electrónica
+                                        </a>
+                                    </li>
+                                @endif
                                 @if ($user->isAdministrador())
                                     <li>
                                         <a class="dropdown-item" href="{{ route('turnos.pendientes') }}">

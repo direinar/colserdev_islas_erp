@@ -7,10 +7,6 @@
                     <td><strong>SOBRANTE o FALTANTE SEGUN CIERRES DE IAPROPIADA</strong></td>
                     <td class="text-end fw-bold text-danger" id="sobrante-cierre-iapropiada">0</td>
                 </tr>
-                <tr>
-                    <td><strong>SOBRANTE o FALTANTE x LECTURA SURTIDORES</strong></td>
-                    <td class="text-end fw-bold text-danger" id="sobrante-lectura-surtidores">0</td>
-                </tr>
             </tbody>
         </table>
     </div>
@@ -79,10 +75,8 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const sobranteCell = document.getElementById('sobrante-cierre-iapropiada');
-            const sobranteSurtidoresCell = document.getElementById('sobrante-lectura-surtidores');
             const totalRecibidoCell = document.getElementById('resumen-total');
             const totalVentasIapropiadaCell = document.getElementById('resumen-total-iapropiada');
-            const totalSurtidoresCell = document.getElementById('resumen-total-surtidores');
             const trasladarButton = document.getElementById('trasladar-sobrante-btn');
             const trasladoSobranteInput = document.getElementById('traslado-sobrante-input');
             const trasladoFaltanteInput = document.getElementById('traslado-faltante-input');
@@ -119,21 +113,14 @@
                     totalRecibidoCell.textContent) : 0);
                 const totalVentasIapropiada = totalVentasIapropiadaCell ? parseNumber(totalVentasIapropiadaCell
                     .textContent) : 0;
-                const totalSurtidores = totalSurtidoresCell ? parseNumber(totalSurtidoresCell.textContent) : 0;
 
                 // El total recibido ya incluye el traslado aplicado: si después se modifica la
                 // planilla, la nueva diferencia vuelve a aparecer en vez de quedar congelada en 0.
                 const sobranteIapropiada = totalRecibido - totalVentasIapropiada;
-                const sobranteSurtidores = trasladoAplicado ? 0 : totalRecibido - totalSurtidores;
 
                 if (sobranteCell) {
                     sobranteCell.textContent = formatNumber(sobranteIapropiada);
                     sobranteCell.classList.toggle('text-danger', sobranteIapropiada < 0);
-                }
-
-                if (sobranteSurtidoresCell) {
-                    sobranteSurtidoresCell.textContent = formatNumber(sobranteSurtidores);
-                    sobranteSurtidoresCell.classList.toggle('text-danger', sobranteSurtidores < 0);
                 }
 
                 if (sobrantePendienteInput) {
@@ -227,7 +214,7 @@
 
             const observer = new MutationObserver(updateSobrante);
 
-            [totalRecibidoCell, totalVentasIapropiadaCell, totalSurtidoresCell].forEach(element => {
+            [totalRecibidoCell, totalVentasIapropiadaCell].forEach(element => {
                 if (element) {
                     observer.observe(element, {
                         characterData: true,

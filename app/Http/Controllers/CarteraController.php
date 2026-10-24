@@ -9,8 +9,10 @@ use App\Services\CarteraEstadoCuentaExcelService;
 use App\Services\CarteraSaldoService;
 use App\Support\DescargaExcel;
 use App\Support\NumberParser;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -111,9 +113,37 @@ class CarteraController extends Controller
         [$fechaInicial, $fechaFinal] = $this->rango($request);
 
         $libro = $excel->generar($customer, $fechaInicial, $fechaFinal);
-        $archivo = 'estado-de-cuenta-'.Str::slug($customer->name).'-'.$fechaInicial.'-a-'.$fechaFinal.'.xlsx';
+        $archivo = $this->nombreArchivo($customer, $fechaInicial, $fechaFinal).'.xlsx';
 
         return DescargaExcel::respuesta($libro, $archivo);
+    }
+
+    /**
+     * Estado de cuenta en PDF (horizontal), para descargarlo o enviarlo al cliente por WhatsApp.
+     */
+    public function pdf(Request $request, CarteraSaldoService $saldos): Response
+    {
+        $request->validate([
+            'customer_id' => ['required', 'exists:customers,id'],
+            'fecha_inicial' => ['nullable', 'date'],
+            'fecha_final' => ['nullable', 'date'],
+        ]);
+
+        $customer = Customer::findOrFail((int) $request->query('customer_id'));
+        [$fechaInicial, $fechaFinal] = $this->rango($request);
+
+        return Pdf::loadView('cartera.pdf', [
+            'customer' => $customer,
+            'fechaInicial' => $fechaInicial,
+            'fechaFinal' => $fechaFinal,
+        ] + $saldos->estadoDeCuenta($customer->id, $fechaInicial, $fechaFinal))
+            ->setPaper('letter', 'landscape')
+            ->download($this->nombreArchivo($customer, $fechaInicial, $fechaFinal).'.pdf');
+    }
+
+    private function nombreArchivo(Customer $customer, string $fechaInicial, string $fechaFinal): string
+    {
+        return 'estado-de-cuenta-'.Str::slug($customer->name).'-'.$fechaInicial.'-a-'.$fechaFinal;
     }
 
     /**

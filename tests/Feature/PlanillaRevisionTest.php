@@ -69,12 +69,12 @@ test('el credito directo no admite cliente ni valor sin numero de factura', func
     'solo cliente' => [['cartera_factura_no' => '  ', 'cartera_valor' => '']],
 ]);
 
-test('la planilla tiene el boton para copiar las lecturas iniciales a finales', function () {
+test('la planilla tiene el pendiente del cuadre y el boton de copiar lecturas paso al informe de lectura electronica', function () {
     $admin = User::factory()->create(['role' => User::ROLE_ADMINISTRADOR]);
 
     $this->actingAs($admin)->get(route('turnos.create'))
         ->assertOk()
-        ->assertSee('COPIAR SALDOS INICIALES A FINALES')
+        ->assertDontSee('COPIAR SALDOS INICIALES A FINALES')
         ->assertSee('id="sobrante-pendiente-input"', false);
 });
 

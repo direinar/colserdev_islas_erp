@@ -12,7 +12,6 @@ use App\Models\TurnoLubricante;
 use App\Models\TurnoQrPago;
 use App\Models\TurnoRecaudo;
 use App\Models\TurnoRecaudoAdmin;
-use App\Models\TurnoSurtidor;
 use App\Models\TurnoTransferencia;
 use App\Models\TurnoVarios;
 use App\Models\TurnoVenta;
@@ -55,15 +54,9 @@ class BorradorPlanillaTurnoService
         $filas = fn (string $clase, array $filas): Collection => collect($filas)->map(fn (array $atributos) => new $clase($atributos));
 
         $borrador->setRelation('ventas', $filas(TurnoVenta::class, array_map(fn (array $r): array => [
-            'surtidor' => $r['surtidor'] ?? '', 'combustible' => $r['combustible'] ?? null,
+            'surtidor' => $r['surtidor'] ?? '', 'no_cierre' => $r['no_cierre'] ?? null, 'combustible' => $r['combustible'] ?? null,
             'galones' => NumberParser::quantity($r['galones'] ?? null), 'valor' => 0,
         ], $seccion('ventas'))));
-        $borrador->setRelation('surtidores', $filas(TurnoSurtidor::class, array_map(fn (array $r): array => [
-            'manguera' => $r['manguera'] ?? '', 'combustible' => $r['combustible'] ?? null,
-            'lectura_inicial' => NumberParser::quantity($r['lectura_inicial'] ?? null),
-            'lectura_final' => NumberParser::quantity($r['lectura_final'] ?? null),
-            'galones' => max(0, NumberParser::quantity($r['lectura_final'] ?? null) - NumberParser::quantity($r['lectura_inicial'] ?? null)),
-        ], $seccion('lecturas'))));
         $borrador->setRelation('lubricantes', $filas(TurnoLubricante::class, array_map(fn (array $r): array => [
             'cantidad' => (float) ($r['cantidad'] ?? 0), 'producto' => $r['producto'] ?? null,
             'valor_sin_iva' => NumberParser::money($r['valor_sin_iva'] ?? null), 'iva' => NumberParser::money($r['iva'] ?? null),

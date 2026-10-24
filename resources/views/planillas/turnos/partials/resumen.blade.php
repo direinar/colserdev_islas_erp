@@ -6,7 +6,6 @@
                 <tr style="background-color: #b5fdd2;">
                     <th></th>
                     <th class="text-end">VENTAS/IAPROPIADA</th>
-                    <th class="text-end">VENTAS/SURTIDORES</th>
                 </tr>
             </thead>
             <tbody>
@@ -15,16 +14,10 @@
                     <td class="text-end" id="resumen-combustible-iapropiada">
                         0
                     </td>
-                    <td class="text-end" id="resumen-combustible-surtidores">
-                        0
-                    </td>
                 </tr>
                 <tr>
                     <td><strong>CANASTILLA</strong></td>
                     <td class="text-end" id="resumen-lubricantes-iapropiada">
-                        0
-                    </td>
-                    <td class="text-end" id="resumen-lubricantes-surtidores">
                         0
                     </td>
                 </tr>
@@ -32,8 +25,6 @@
                     <td><strong>TOTALES</strong></td>
                     <td class="text-end">
                         <strong id="resumen-total-iapropiada" class="text-primary">0</strong>
-                    </td>
-                    <td class="text-end"><strong id="resumen-total-surtidores">0</strong>
                     </td>
                 </tr>
             </tbody>
@@ -60,11 +51,6 @@
                 const combustibleIapropiada = ventasTotalElement ?
                     parseNumber(ventasTotalElement.textContent) : 0;
 
-                // Obtener total de combustible SURTIDORES (surtidores.blade.php)
-                const surtidoresTotalElement = document.querySelector('.ventas-total-lectura');
-                const combustibleSurtidores = surtidoresTotalElement ?
-                    parseNumber(surtidoresTotalElement.textContent) : 0;
-
                 // Obtener total de lubricantes (lubricantes.blade.php)
                 const lubricantesTotalElement = document.getElementById('total-total');
                 const lubricantesTotal = lubricantesTotalElement ?
@@ -72,29 +58,19 @@
 
                 // Actualizar campos en la tabla de resumen
                 const combustibleIapropiataCell = document.getElementById('resumen-combustible-iapropiada');
-                const combustibleSurtidoresCell = document.getElementById('resumen-combustible-surtidores');
                 const lubricantesIapropiataCell = document.getElementById('resumen-lubricantes-iapropiada');
-                const lubricanteSurtidoresCell = document.getElementById('resumen-lubricantes-surtidores');
                 const totalIapropiataCell = document.getElementById('resumen-total-iapropiada');
-                const totalSurtidoresCell = document.getElementById('resumen-total-surtidores');
 
                 if (combustibleIapropiataCell)
                     combustibleIapropiataCell.textContent = formatNumber(combustibleIapropiada);
-                if (combustibleSurtidoresCell)
-                    combustibleSurtidoresCell.textContent = formatNumber(combustibleSurtidores);
                 if (lubricantesIapropiataCell)
                     lubricantesIapropiataCell.textContent = formatNumber(lubricantesTotal);
-                if (lubricanteSurtidoresCell)
-                    lubricanteSurtidoresCell.textContent = formatNumber(lubricantesTotal);
 
                 // Calcular y actualizar totales
                 const totalIapropiada = combustibleIapropiada + lubricantesTotal;
-                const totalSurtidores = combustibleSurtidores + lubricantesTotal;
 
                 if (totalIapropiataCell)
                     totalIapropiataCell.textContent = formatNumber(totalIapropiada);
-                if (totalSurtidoresCell)
-                    totalSurtidoresCell.textContent = formatNumber(totalSurtidores);
             }
 
             // Ejecutar al cargar
@@ -106,14 +82,6 @@
             // Observar cambios en ventas
             const ventasTotal = document.querySelector('.ventas-total-turno');
             if (ventasTotal) observer.observe(ventasTotal, {
-                characterData: true,
-                subtree: true,
-                childList: true
-            });
-
-            // Observar cambios en surtidores
-            const surtidoresTotal = document.querySelector('.ventas-total-lectura');
-            if (surtidoresTotal) observer.observe(surtidoresTotal, {
                 characterData: true,
                 subtree: true,
                 childList: true

@@ -111,6 +111,14 @@
                 class="btn btn-outline-light btn-sm">
                 <i class="bi bi-file-earmark-excel" aria-hidden="true"></i> Excel
             </a>
+            <a href="{{ route('cartera.pdf', ['customer_id' => $customer->id, 'fecha_inicial' => $fechaInicial, 'fecha_final' => $fechaFinal]) }}"
+                class="btn btn-outline-light btn-sm">
+                <i class="bi bi-file-earmark-pdf" aria-hidden="true"></i> PDF
+            </a>
+            <x-compartir-pdf
+                :url="route('cartera.pdf', ['customer_id' => $customer->id, 'fecha_inicial' => $fechaInicial, 'fecha_final' => $fechaFinal])"
+                :archivo="'estado-de-cuenta-'.\Illuminate\Support\Str::slug($customer->name).'-'.$fechaInicial.'-a-'.$fechaFinal.'.pdf'"
+                :titulo="'Estado de cuenta '.$customer->name" />
         @endif
     </x-page-header>
 

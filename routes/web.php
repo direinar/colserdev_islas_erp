@@ -24,6 +24,7 @@ use App\Http\Controllers\InventarioAcpmController;
 use App\Http\Controllers\InventarioGasolinaController;
 use App\Http\Controllers\InventarioLubricanteController;
 use App\Http\Controllers\InventarioSaldoInicialController;
+use App\Http\Controllers\LecturaElectronicaController;
 use App\Http\Controllers\LubricantController;
 use App\Http\Controllers\ProveedorController;
 use App\Http\Controllers\TurnoController;
@@ -68,6 +69,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/cartera/exportar', [CarteraController::class, 'exportar'])
             ->name('cartera.exportar');
 
+        Route::get('/cartera/pdf', [CarteraController::class, 'pdf'])
+            ->name('cartera.pdf');
+
         Route::get('/control-tanques', [ControlTanqueController::class, 'index'])
             ->name('control-tanques.index');
 
@@ -79,6 +83,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         Route::get('/control-tanques/pdf', [ControlTanqueController::class, 'pdf'])
             ->name('control-tanques.pdf');
+
+        Route::get('/lectura-electronica', [LecturaElectronicaController::class, 'index'])
+            ->name('lectura-electronica.index');
+
+        Route::post('/lectura-electronica', [LecturaElectronicaController::class, 'guardar'])
+            ->name('lectura-electronica.guardar');
     });
 
     Route::middleware($administracion)->group(function () {

@@ -26,7 +26,6 @@ trait ValidaPlanillaTurno
             'nombre_vendedor' => ['nullable', 'string', 'max:120'],
 
             'ventas' => ['nullable', 'array'],
-            'lecturas' => ['nullable', 'array'],
             'urea_lubricantes' => ['nullable', 'array'],
             'consignaciones' => ['nullable', 'array'],
             'descuentos' => ['nullable', 'array'],
@@ -44,12 +43,9 @@ trait ValidaPlanillaTurno
 
             // Cada fila se valida campo por campo: un dato fuera de rango no llega a la base de datos.
             'ventas.*.surtidor' => ['nullable', 'string', 'max:60'],
+            'ventas.*.no_cierre' => ['nullable', 'string', 'max:30'],
             'ventas.*.combustible' => ['nullable', Rule::in(['CTE', 'ACPM'])],
             'ventas.*.galones' => ['nullable', 'string', 'max:30'],
-            'lecturas.*.manguera' => ['nullable', 'string', 'max:60'],
-            'lecturas.*.combustible' => ['nullable', Rule::in(['corriente', 'acpm'])],
-            'lecturas.*.lectura_inicial' => ['nullable', 'string', 'max:30'],
-            'lecturas.*.lectura_final' => ['nullable', 'string', 'max:30'],
             'urea_lubricantes.*.producto' => ['nullable', 'string', 'max:150'],
             'urea_lubricantes.*.cantidad' => ['nullable', 'numeric', 'min:0', 'max:100000'],
             'urea_lubricantes.*.valor_sin_iva' => ['nullable', 'string', 'max:30'],

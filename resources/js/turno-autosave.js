@@ -92,6 +92,14 @@ function initTurnoAutosave() {
             if (maxIndex >= 0) ensureRowCount(table, maxIndex + 1);
         });
 
+        // Ventas por surtidor: cada fila del borrador se recrea en el bloque de su surtidor.
+        draft.entries.forEach(([name, value]) => {
+            const match = name.match(/^ventas\[(\d+)\]\[surtidor\]$/);
+            if (match && !form.querySelector(`[name="ventas[${match[1]}][galones]"]`)) {
+                window.agregarFilaVenta?.(value, parseInt(match[1], 10));
+            }
+        });
+
         draft.entries.forEach(([name, value]) => {
             const field = form.querySelector(`[name="${name}"]`);
             if (!field) return;
