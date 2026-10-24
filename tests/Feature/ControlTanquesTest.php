@@ -85,10 +85,12 @@ test('el control de tanques arma el saldo diario con compras, los cortes de IAPR
         ->assertSee('data-vienen="corriente">4.150<', false)
         ->assertDontSee('ct-corriente">VIENEN', false)
         ->assertDontSee('ct-acpm">VIENEN', false)
-        // El sobrante (positivo) va en negro; el faltante (negativo), en rojo con la palabra FALTANTE. ACPM igual.
+        // El sobrante (positivo) va en negro y el faltante (negativo) en rojo, sin la palabra
+        // FALTANTE junto al valor: en rojo va la palabra FALTANTE del encabezado. ACPM igual.
         ->assertSee('ct-corriente ct-faltante ">54<', false)
-        ->assertSee('ct-acpm ct-faltante ct-negativo"><span class="ct-palabra-faltante">FALTANTE</span> -72<', false)
-        ->assertSee('FALTANTE/<br>SOBRANTE', false)
+        ->assertSee('ct-acpm ct-faltante ct-negativo">-72<', false)
+        ->assertDontSee('ct-palabra-faltante', false)
+        ->assertSee('<span class="ct-negativo">FALTANTE</span>/<br>SOBRANTE', false)
         ->assertDontSee('(SOBRANTE)')
         ->assertSee('name="aforos[2026-09-26][tabla_corriente]"', false)
         ->assertSee('value="7800"', false)
@@ -99,8 +101,9 @@ test('el control de tanques arma el saldo diario con compras, los cortes de IAPR
         + app(ControlTanquesService::class)->informe('2026-09-25', '2026-09-27'))->render();
 
     expect($pdf)->toContain('class="faltante " style="background: #e2efda;">54<')
-        ->toContain('class="faltante negativo"')
-        ->toContain('>FALTANTE -72<')
+        ->toContain('class="faltante negativo" style="background: #dcefd4;">-72<')
+        ->not->toContain('>FALTANTE -72<')
+        ->toContain('<span class="negativo">FALTANTE</span>/<br>SOBRANTE')
         ->toContain('FALTANTE/SOBRANTE = saldo final');
 });
 
@@ -232,9 +235,19 @@ test('el control de tanques se exporta a Excel', function () {
         ->and((float) $hoja->getCell('C7')->getValue())->toBe(60.0)
         ->and((float) $hoja->getCell('I7')->getValue())->toBe(40.0)
         ->and((float) $hoja->getCell('N7')->getValue())->toBe(100.0)
-        // FALTANTE/SOBRANTE de corriente (G) y ACPM (M): el negativo sale en rojo como FALTANTE.
-        ->and($hoja->getStyle('G7')->getNumberFormat()->getFormatCode())->toBe('#,##0.00;[Red]"FALTANTE "-#,##0.00')
-        ->and($hoja->getStyle('M7')->getNumberFormat()->getFormatCode())->toBe('#,##0.00;[Red]"FALTANTE "-#,##0.00');
+        // FALTANTE/SOBRANTE de corriente (G) y ACPM (M): el negativo en rojo, sin la palabra FALTANTE.
+        ->and($hoja->getStyle('G7')->getNumberFormat()->getFormatCode())->toBe('#,##0.00;[Red]-#,##0.00')
+        ->and($hoja->getStyle('M7')->getNumberFormat()->getFormatCode())->toBe('#,##0.00;[Red]-#,##0.00');
+
+    // En el encabezado solo la palabra FALTANTE va en rojo.
+    foreach (['G5', 'M5'] as $celda) {
+        [$faltante, $sobrante] = $hoja->getCell($celda)->getValue()->getRichTextElements();
+
+        expect($faltante->getText())->toBe('FALTANTE')
+            ->and($faltante->getFont()->getColor()->getRGB())->toBe('FF0000')
+            ->and($sobrante->getText())->toBe('/SOBRANTE')
+            ->and($sobrante->getFont()->getColor()->getRGB())->not->toBe('FF0000');
+    }
 });
 
 test('el control de tanques se descarga en PDF y se puede compartir desde el módulo', function () {

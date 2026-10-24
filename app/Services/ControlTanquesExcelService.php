@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\TanqueSaldoInicial;
 use Illuminate\Support\Carbon;
+use PhpOffice\PhpSpreadsheet\RichText\RichText;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Border;
@@ -15,10 +16,8 @@ use PhpOffice\PhpSpreadsheet\Style\Fill;
  */
 class ControlTanquesExcelService
 {
+    /** El negativo (en FALTANTE/SOBRANTE, el faltante) sale en rojo. */
     private const FORMATO_GALONES = '#,##0.00;[Red]-#,##0.00';
-
-    /** Faltante/sobrante: el negativo es FALTANTE, en rojo. */
-    private const FORMATO_FALTANTE = '#,##0.00;[Red]"FALTANTE "-#,##0.00';
 
     /**
      * @var array<string, string>
@@ -62,8 +61,13 @@ class ControlTanquesExcelService
         $encabezado->getFont()->setBold(true);
         $encabezado->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setWrapText(true);
         $hoja->getStyle('B4:O4')->getFont()->setSize(14);
-        $hoja->getStyle('G5')->getFont()->getColor()->setRGB('FF0000');
-        $hoja->getStyle('M5')->getFont()->getColor()->setRGB('FF0000');
+        // En el encabezado FALTANTE/SOBRANTE solo la palabra FALTANTE va en rojo.
+        foreach (['G5', 'M5'] as $celda) {
+            $titulo = new RichText;
+            $titulo->createTextRun('FALTANTE')->getFont()->setBold(true)->getColor()->setRGB('FF0000');
+            $titulo->createTextRun('/SOBRANTE')->getFont()->setBold(true);
+            $hoja->getCell($celda)->setValue($titulo);
+        }
 
         $hoja->fromArray([
             'VIENEN', null, null, $informe['vienen'][TanqueSaldoInicial::CORRIENTE], null, null, null,
@@ -94,9 +98,6 @@ class ControlTanquesExcelService
         $hoja->getStyle("A{$fila}:O{$fila}")->getFont()->setBold(true);
 
         $hoja->getStyle("B6:O{$fila}")->getNumberFormat()->setFormatCode(self::FORMATO_GALONES);
-        foreach (['G', 'M'] as $columna) {
-            $hoja->getStyle("{$columna}6:{$columna}{$fila}")->getNumberFormat()->setFormatCode(self::FORMATO_FALTANTE);
-        }
 
         // Mismos colores por bloque que la plantilla: movimiento, aforo y saldos.
         foreach (self::COLORES as $rango => $color) {

@@ -56,7 +56,7 @@
                     <th colspan="3" style="background: {{ $colores[$combustible]['bloque'] }};">MOVIMIENTO DE GALONES</th>
                     <th style="background: {{ $colores[$combustible]['aforo'] }};">AFORO</th>
                     <th style="background: {{ $colores[$combustible]['aforo'] }};">SALDO FINAL</th>
-                    <th rowspan="2" style="background: {{ $colores[$combustible]['bloque'] }};">FALTANTE/<br>SOBRANTE</th>
+                    <th rowspan="2" style="background: {{ $colores[$combustible]['bloque'] }};"><span class="negativo">FALTANTE</span>/<br>SOBRANTE</th>
                 @endforeach
                 <th class="saldos">VR. VENTA</th>
                 <th class="saldos">VR. VENTA</th>
@@ -97,7 +97,7 @@
                         <td class="saldo" style="background: {{ $colores[$combustible]['bloque'] }};">{{ $galones($dato['saldo']) }}</td>
                         <td style="background: {{ $colores[$combustible]['aforo'] }};">{{ $galones($dato['vara']) }}</td>
                         <td style="background: {{ $colores[$combustible]['aforo'] }};">{{ $galones($dato['tabla']) }}</td>
-                        <td class="faltante {{ ($dato['faltante_sobrante'] ?? 0) < 0 ? 'negativo' : '' }}" style="background: {{ $colores[$combustible]['bloque'] }};">@if (($dato['faltante_sobrante'] ?? 0) < 0)FALTANTE @endif{{ $galones($dato['faltante_sobrante']) }}</td>
+                        <td class="faltante {{ ($dato['faltante_sobrante'] ?? 0) < 0 ? 'negativo' : '' }}" style="background: {{ $colores[$combustible]['bloque'] }};">{{ $galones($dato['faltante_sobrante']) }}</td>
                     @endforeach
                     <td class="saldos">{{ $galones($fila['venta_diaria']) }}</td>
                     <td class="saldos">{{ $galones($fila['venta_acumulada']) }}</td>
@@ -123,7 +123,7 @@
 
     <div class="nota">
         Ingresos desde compras y ventas según cortes de IAPROPIADA de la planilla de turnos. FALTANTE/SOBRANTE = saldo final
-        según tabla de aforo − saldo del movimiento de galones: positivo es sobrante (en negro); negativo es FALTANTE (en rojo).
+        según tabla de aforo − saldo del movimiento de galones: positivo es sobrante (en negro); negativo es faltante (en rojo).
         Generado el {{ now()->format('d/m/Y H:i') }}.
     </div>
 </body>

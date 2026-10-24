@@ -87,7 +87,6 @@
         .ct-tabla .ct-saldo { font-weight: 700; }
         .ct-tabla .ct-faltante { font-weight: 700; font-size: 1rem; }
         .ct-tabla .ct-negativo { color: #ff0000; }
-        .ct-tabla .ct-palabra-faltante { font-size: .72rem; }
 
         /* El aforo se digita en la celda, como en una hoja de cálculo. */
         .ct-tabla .ct-celda-input { padding: 0; }
@@ -253,7 +252,7 @@
                                 <th colspan="3" class="ct-{{ $combustible }} ct-inicio-bloque">MOVIMIENTO DE GALONES</th>
                                 <th class="ct-{{ $combustible }}-aforo ct-inicio-aforo">AFORO</th>
                                 <th class="ct-{{ $combustible }}-aforo">SALDO FINAL</th>
-                                <th rowspan="2" class="ct-{{ $combustible }}">FALTANTE/<br>SOBRANTE</th>
+                                <th rowspan="2" class="ct-{{ $combustible }}"><span class="ct-negativo">FALTANTE</span>/<br>SOBRANTE</th>
                             @endforeach
                             <th class="ct-saldos ct-inicio-bloque">VR. VENTA</th>
                             <th class="ct-saldos">VR. VENTA</th>
@@ -305,7 +304,7 @@
                                             name="aforos[{{ $fila['fecha'] }}][tabla_{{ $combustible }}]"
                                             value="{{ $aforoInput($dato['tabla'], 3) }}" aria-label="Galones tabla de aforo {{ $nombre }} {{ $fila['fecha'] }}">
                                     </td>
-                                    <td class="ct-{{ $combustible }} ct-faltante {{ ($dato['faltante_sobrante'] ?? 0) < 0 ? 'ct-negativo' : '' }}">@if (($dato['faltante_sobrante'] ?? 0) < 0)<span class="ct-palabra-faltante">FALTANTE</span> @endif{{ $galones($dato['faltante_sobrante']) }}</td>
+                                    <td class="ct-{{ $combustible }} ct-faltante {{ ($dato['faltante_sobrante'] ?? 0) < 0 ? 'ct-negativo' : '' }}">{{ $galones($dato['faltante_sobrante']) }}</td>
                                 @endforeach
                                 <td class="ct-saldos ct-inicio-bloque">{{ $galones($fila['venta_diaria']) }}</td>
                                 <td class="ct-saldos">{{ $galones($fila['venta_acumulada']) }}</td>
@@ -335,5 +334,5 @@
 
     <div class="small text-muted mt-2">ESTE INFORME SOLO CONTIENE GALONES. Ingresos desde compras y ventas según cortes de
         IAPROPIADA de la planilla de turnos (suma de los turnos de cada fecha). FALTANTE/SOBRANTE =
-        saldo final según tabla de aforo − saldo del movimiento de galones: positivo es sobrante (en negro); negativo es FALTANTE (en rojo).</div>
+        saldo final según tabla de aforo − saldo del movimiento de galones: positivo es sobrante (en negro); negativo es faltante (en rojo).</div>
 @endsection
