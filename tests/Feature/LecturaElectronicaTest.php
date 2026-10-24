@@ -39,7 +39,8 @@ test('sin días registrados, la lectura inicial es la última que quedó en las 
         ->assertOk()
         ->assertSee('A — LECTURA ELECTRÓNICA — 22/10/2026')
         ->assertSee('COPIAR SALDOS INICIALES A FINALES')
-        ->assertSee('(C) SOBRANTE O FALTANTE x LECTURA SURTIDORES (A − B)');
+        ->assertSee('(C) SOBRANTE O FALTANTE x LECTURA SURTIDORES (A − B)')
+        ->assertSee('le-resumen le-resumen-campos', false);
 
     expect($pantalla->getContent())
         ->toMatch('/name="iniciales\[PLUS 01\]"[^>]*value="1,500.000"\s+readonly/')

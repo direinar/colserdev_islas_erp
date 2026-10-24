@@ -28,6 +28,17 @@
             text-align: right;
         }
 
+        /* GALONES y VALOR alineados con sus valores (a la derecha). */
+        .le-resumen thead th:not(:first-child) {
+            text-align: right;
+        }
+
+        /* En (A) los valores van dentro de un campo: se suma su margen interno para que coincidan. */
+        .le-resumen-campos thead th:not(:first-child),
+        .le-resumen-campos .le-total td {
+            padding-right: calc(.75rem + 1px);
+        }
+
         .le-resumen .le-total {
             font-weight: 700;
             background: #f2f2f2;
@@ -120,7 +131,7 @@
             <div class="card mb-3">
                 <div class="card-header"><strong>(A) VENTA SEGÚN LECTURAS</strong></div>
                 <div class="table-responsive">
-                    <table class="table table-bordered table-sm mb-0 le-resumen">
+                    <table class="table table-bordered table-sm mb-0 le-resumen le-resumen-campos">
                         <thead>
                             <tr>
                                 <th></th>
