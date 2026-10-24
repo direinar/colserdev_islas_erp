@@ -44,7 +44,7 @@
             text-align: right;
         }
 
-        /* En (A) los valores van dentro de un campo: se suma su margen interno para que coincidan. */
+        /* En ventas según lectura electrónica los valores van dentro de un campo: se suma su margen interno para que coincidan. */
         .le-resumen-campos thead th:not(:first-child),
         .le-resumen-campos .le-total td {
             padding-right: calc(.75rem + 1px);
@@ -94,7 +94,7 @@
 
                 <div class="card">
                     <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
-                        <strong>A — LECTURA ELECTRÓNICA — {{ Carbon::parse($fecha)->format('d/m/Y') }}</strong>
+                        <strong>LECTURA ELECTRÓNICA — {{ Carbon::parse($fecha)->format('d/m/Y') }}</strong>
                         {{-- Casi siempre solo algunas mangueras venden: se copian todas y se corrigen las que cambiaron. --}}
                         <button type="button" id="copiar-lecturas-btn" class="btn btn-sm btn-outline-primary">
                             <i class="bi bi-files"></i> COPIAR SALDOS INICIALES A FINALES
@@ -140,7 +140,7 @@
 
         <div class="col-lg-6">
             <div class="card mb-3">
-                <div class="card-header"><strong>(A) VENTAS SEGÚN LECTURA ELECTRÓNICA</strong></div>
+                <div class="card-header"><strong>VENTAS SEGÚN LECTURA ELECTRÓNICA</strong></div>
                 <div class="table-responsive">
                     <table class="table table-bordered table-sm mb-0 le-resumen le-resumen-campos">
                         <thead>
@@ -179,7 +179,7 @@
             </div>
 
             <div class="card mb-3">
-                <div class="card-header"><strong>(B) VENTAS SEGÚN CIERRES DE IAPROPIADA DEL DÍA</strong></div>
+                <div class="card-header"><strong>VENTAS SEGÚN CIERRES DE IAPROPIADA DEL DÍA</strong></div>
                 <div class="table-responsive">
                     <table class="table table-bordered table-sm mb-0 le-resumen">
                         <thead>
@@ -206,7 +206,7 @@
             </div>
 
             <div class="card">
-                <div class="card-header"><strong>(C) SOBRANTE O FALTANTE x LECTURA SURTIDORES (A − B)</strong></div>
+                <div class="card-header"><strong>SOBRANTE O FALTANTE x LECTURA SURTIDORES</strong></div>
                 <div class="table-responsive">
                     <table class="table table-bordered table-sm mb-0 le-resumen" id="le-diferencia">
                         <thead>
@@ -228,7 +228,8 @@
                     </table>
                 </div>
                 <div class="card-footer small text-muted">
-                    Positivo: sobrante. Negativo (en rojo): faltante. Se actualiza al GUARDAR.
+                    Ventas según lectura electrónica − ventas según cierres de IAPROPIADA del día. Positivo: sobrante.
+                    Negativo (en rojo): faltante. Se actualiza al GUARDAR.
                 </div>
             </div>
         </div>

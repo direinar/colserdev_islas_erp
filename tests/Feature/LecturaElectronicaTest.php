@@ -37,11 +37,13 @@ test('sin días registrados, la lectura inicial es la última que quedó en las 
 
     $pantalla = $this->actingAs($jefe)->get(route('lectura-electronica.index', ['fecha' => '2026-10-22']))
         ->assertOk()
-        ->assertSee('A — LECTURA ELECTRÓNICA — 22/10/2026')
+        ->assertSee('LECTURA ELECTRÓNICA — 22/10/2026')
         ->assertSee('COPIAR SALDOS INICIALES A FINALES')
-        ->assertSee('(C) SOBRANTE O FALTANTE x LECTURA SURTIDORES (A − B)')
+        ->assertSee('SOBRANTE O FALTANTE x LECTURA SURTIDORES')
         ->assertSee('le-resumen le-resumen-campos', false)
-        ->assertSee('(A) VENTAS SEGÚN LECTURA ELECTRÓNICA');
+        ->assertSee('VENTAS SEGÚN LECTURA ELECTRÓNICA')
+        // Las letras A, B y C solo servían para identificar las tablas en la solicitud.
+        ->assertDontSee('(A)')->assertDontSee('(B)')->assertDontSee('(C)');
 
     expect($pantalla->getContent())
         ->toMatch('/name="iniciales\[PLUS 01\]"[^>]*value="1,500.000"\s+readonly/')
@@ -62,15 +64,15 @@ test('el informe del día compara la venta según lecturas con los cierres de IA
 
     $informe = $this->actingAs($admin)->get(route('lectura-electronica.index', ['fecha' => '2026-10-22']));
 
-    // (A) 100 galones de corriente y 15,5 de ACPM al precio del último turno del día.
+    // Ventas según lectura electrónica: 100 galones de corriente y 15,5 de ACPM al precio del último turno del día.
     expect($informe->viewData('lecturas'))->toBe([
         'corriente' => ['galones' => 100.0, 'valor' => 1600000.0],
         'acpm' => ['galones' => 15.5, 'valor' => 155000.0],
         'total' => ['galones' => 115.5, 'valor' => 1755000.0],
     ])
-        // (B) suma de los turnos de la fecha, sin los de otro día.
+        // Ventas según cierres de IAPROPIADA: suma de los turnos de la fecha, sin los de otro día.
         ->and($informe->viewData('iapropiada')['total'])->toBe(['galones' => 110.0, 'valor' => 1640000.0])
-        // (C) = A - B: sobrante en corriente, faltante en ACPM.
+        // Sobrante o faltante = lectura - IAPROPIADA: sobrante en corriente, faltante en ACPM.
         ->and($informe->viewData('diferencia'))->toBe([
             'corriente' => ['galones' => 10.0, 'valor' => 160000.0],
             'acpm' => ['galones' => -4.5, 'valor' => -45000.0],
