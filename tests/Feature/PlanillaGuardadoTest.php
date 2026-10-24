@@ -292,7 +292,13 @@ test('cada surtidor admite varios cierres con su No. de cierre y las filas vacia
             'SURTIDOR 2 - ACPM', 'SURTIDOR 3 - CTE', 'SURTIDOR 3 - ACPM', 'value="880"', 'TOTAL VENTAS SEGÚN CORTE'], false);
 
     expect(substr_count($pantalla->getContent(), '+ AGREGAR FILA</button>'))->toBeGreaterThanOrEqual(6)
-        ->and(substr_count($pantalla->getContent(), '<th class="text-center">NO. CIERRE</th>'))->toBe(6);
+        ->and(substr_count($pantalla->getContent(), '<th class="text-center">NO. CIERRE</th>'))->toBe(6)
+        // El nombre del surtidor va solo en el título del recuadro; la × queda en la columna ACCIÓN.
+        ->and(substr_count($pantalla->getContent(), '<th class="text-center">ACCIÓN</th>'))->toBeGreaterThanOrEqual(6)
+        ->and($pantalla->getContent())->not->toContain('venta-surtidor"')
+        // 3 cierres guardados + una fila vacía en cada uno de los 4 surtidores sin cierres
+        // + la plantilla de fila nueva del script.
+        ->and(substr_count($pantalla->getContent(), 'btn btn-sm btn-danger quitar-venta'))->toBe(3 + 4 + 1);
 });
 
 test('guardar la planilla conserva las lecturas que tenian los turnos anteriores', function () {

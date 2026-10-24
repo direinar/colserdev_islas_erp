@@ -1,5 +1,6 @@
-{{-- Ventas según cierres de IAPROPIADA: un bloque por surtidor y combustible. Un surtidor
-     puede tener varios cierres en el turno, por eso cada bloque tiene + AGREGAR FILA. --}}
+{{-- Ventas según cierres de IAPROPIADA: un recuadro por surtidor y combustible, con el mismo
+     patrón de INFORMACION DE MEDIOS DE PAGO (título con + AGREGAR FILA y ACCIÓN a la derecha)
+     pero en verde. Un surtidor puede tener varios cierres en el turno. --}}
 @php
     use App\Models\TurnoVenta;
 
@@ -14,91 +15,133 @@
 <x-erp-card title="INFORMACION DE VENTAS DEL TURNO" title-class="turno-card-title">
 
     <style>
-        .tabla-ventas-turno .ventas-grupo-titulo th {
-            background-color: #b5fdd2;
-            vertical-align: middle;
+        .ventas-turno-stack {
+            display: grid;
+            gap: .75rem;
         }
 
-        .tabla-ventas-turno .agregar-venta {
-            font-size: .7rem;
-            padding: .1rem .35rem;
-            white-space: nowrap;
+        .ventas-surtidor {
+            border: 1px solid #dfe1ea;
+            background: #f5f5f6;
+            overflow: hidden;
         }
 
-        .tabla-ventas-turno .quitar-venta {
-            line-height: 1;
-            text-decoration: none;
+        /* Mismo patrón de medios de pago, en el verde de la tabla de ventas. */
+        .ventas-surtidor .ventas-surtidor-toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: .5rem;
+            padding: 8px 10px;
+            background: #b5fdd2;
+            border-bottom: 1px solid #d0d0d0;
+        }
+
+        .ventas-surtidor .ventas-surtidor-titulo {
+            font-size: 14px;
             font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.02em;
+            color: #1d1d1d;
+        }
+
+        .ventas-surtidor .agregar-venta {
+            background: #f3f3f3 !important;
+            color: #d93a2f !important;
+            border-color: #d9d9d9 !important;
+            font-weight: 700 !important;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            padding: 5px 10px !important;
+        }
+
+        .ventas-surtidor .agregar-venta:hover {
+            background: #fff !important;
+            border-color: #cfcfcf !important;
+        }
+
+        .ventas-surtidor-tabla thead th {
+            background: #b5fdd2 !important;
+            color: #1d1d1d !important;
+            font-weight: 700 !important;
+            text-transform: uppercase;
+            border-color: #d0d0d0 !important;
+        }
+
+        .ventas-surtidor-tabla tbody td {
+            background: #fff;
+            border-color: #d9d9d9 !important;
         }
     </style>
 
-    <div class="table-responsive">
-        <table class="table table-bordered table-sm tabla-ventas-turno" id="tabla-ventas-turno">
+    <div class="text-center fw-bold mb-2">VENTAS SEGÚN CIERRES DE IAPPROPIADA</div>
 
-            <thead class="ventas-header">
-                <tr class="ventas-title-row" style="background-color: #b5fdd2;">
-                    <th colspan="4" class="text-center font-bold">
-                        VENTAS SEGÚN CIERRES DE IAPPROPIADA
-                    </th>
-                </tr>
-            </thead>
+    <div class="ventas-turno-stack" id="tabla-ventas-turno">
+        @foreach ($surtidoresVentas as $surtidor => $combustible)
+            @php
+                $filasSurtidor = $ventasGuardadas->where('surtidor', $surtidor)->values();
+                $precioSurtidor = $combustible === 'ACPM' ? $precioAcpm : $precioCorriente;
+                $claseGalones = $combustible === 'ACPM' ? 'galones-acpm' : 'galones-cte';
+            @endphp
+            <div class="ventas-surtidor ventas-grupo" data-surtidor="{{ $surtidor }}" data-combustible="{{ $combustible }}"
+                data-precio="{{ $precioSurtidor }}" data-clase-galones="{{ $claseGalones }}">
+                <div class="ventas-surtidor-toolbar">
+                    <div class="ventas-surtidor-titulo">{{ $etiquetaSurtidor($surtidor) }}</div>
+                    <button type="button" class="btn btn-sm btn-outline-primary agregar-venta">+ AGREGAR FILA</button>
+                </div>
 
-            @foreach ($surtidoresVentas as $surtidor => $combustible)
-                @php
-                    $filasSurtidor = $ventasGuardadas->where('surtidor', $surtidor)->values();
-                    $precioSurtidor = $combustible === 'ACPM' ? $precioAcpm : $precioCorriente;
-                    $claseGalones = $combustible === 'ACPM' ? 'galones-acpm' : 'galones-cte';
-                @endphp
-                <tbody class="ventas-grupo" data-surtidor="{{ $surtidor }}" data-combustible="{{ $combustible }}"
-                    data-etiqueta="{{ $etiquetaSurtidor($surtidor) }}" data-precio="{{ $precioSurtidor }}" data-clase-galones="{{ $claseGalones }}">
-                    <tr class="ventas-grupo-titulo">
-                        <th>
-                            <div class="d-flex flex-wrap justify-content-between align-items-center gap-1">
-                                <span>{{ $etiquetaSurtidor($surtidor) }}</span>
-                                <button type="button" class="btn btn-sm btn-outline-primary agregar-venta">+ AGREGAR FILA</button>
-                            </div>
-                        </th>
-                        <th class="text-center">NO. CIERRE</th>
-                        <th class="text-end">GALONES</th>
-                        <th class="text-end">VALOR</th>
-                    </tr>
+                <div class="table-responsive">
+                    <table class="table table-bordered table-sm mb-0 ventas-surtidor-tabla">
+                        <thead>
+                            <tr>
+                                <th class="text-center">NO. CIERRE</th>
+                                <th class="text-end">GALONES</th>
+                                <th class="text-end">VALOR</th>
+                                <th class="text-center">ACCIÓN</th>
+                            </tr>
+                        </thead>
+                        <tbody class="ventas-filas">
+                            {{-- Un surtidor sin cierres guardados muestra una fila vacía para digitar. --}}
+                            @foreach ($filasSurtidor->isEmpty() ? [null] : $filasSurtidor as $venta)
+                                <tr class="venta-fila" data-index="{{ $indiceVenta }}">
+                                    <td>
+                                        <input type="hidden" name="ventas[{{ $indiceVenta }}][surtidor]" value="{{ $surtidor }}">
+                                        <input type="hidden" name="ventas[{{ $indiceVenta }}][combustible]" value="{{ $combustible }}">
+                                        <input type="text" name="ventas[{{ $indiceVenta }}][no_cierre]" maxlength="30"
+                                            class="form-control form-control-sm erp-input text-center venta-no-cierre"
+                                            value="{{ $venta?->no_cierre }}">
+                                    </td>
+                                    <td class="text-end">
+                                        <input type="text" name="ventas[{{ $indiceVenta }}][galones]"
+                                            class="form-control form-control-sm erp-input galones-input {{ $claseGalones }}"
+                                            data-precio="{{ $precioSurtidor }}"
+                                            value="{{ $venta ? number_format($venta->galones, 3, '.', ',') : '' }}">
+                                    </td>
+                                    <td class="text-end">
+                                        <input type="text" name="ventas[{{ $indiceVenta }}][valor]"
+                                            class="form-control form-control-sm erp-input valor-total" readonly
+                                            value="{{ $venta ? number_format($venta->valor, 0, ',', '.') : '' }}">
+                                    </td>
+                                    <td class="text-center">
+                                        <button type="button" class="btn btn-sm btn-danger quitar-venta" aria-label="Quitar fila">×</button>
+                                    </td>
+                                </tr>
+                                @php($indiceVenta++)
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        @endforeach
+    </div>
 
-                    {{-- Un surtidor sin cierres guardados muestra una fila vacía para digitar. --}}
-                    @foreach ($filasSurtidor->isEmpty() ? [null] : $filasSurtidor as $venta)
-                        <tr class="venta-fila" data-index="{{ $indiceVenta }}">
-                            <td class="text-nowrap">
-                                <input type="hidden" name="ventas[{{ $indiceVenta }}][surtidor]" value="{{ $surtidor }}">
-                                <input type="hidden" name="ventas[{{ $indiceVenta }}][combustible]" value="{{ $combustible }}">
-                                <span class="venta-surtidor">{{ $etiquetaSurtidor($surtidor) }}</span>
-                                <button type="button" class="btn btn-link btn-sm text-danger p-0 ms-1 quitar-venta"
-                                    title="Quitar fila" aria-label="Quitar fila">×</button>
-                            </td>
-                            <td>
-                                <input type="text" name="ventas[{{ $indiceVenta }}][no_cierre]" maxlength="30"
-                                    class="form-control form-control-sm erp-input text-center venta-no-cierre"
-                                    value="{{ $venta?->no_cierre }}">
-                            </td>
-                            <td class="text-end">
-                                <input type="text" name="ventas[{{ $indiceVenta }}][galones]"
-                                    class="form-control form-control-sm erp-input galones-input {{ $claseGalones }}"
-                                    data-precio="{{ $precioSurtidor }}"
-                                    value="{{ $venta ? number_format($venta->galones, 3, '.', ',') : '' }}">
-                            </td>
-                            <td class="text-end">
-                                <input type="text" name="ventas[{{ $indiceVenta }}][valor]"
-                                    class="form-control form-control-sm erp-input valor-total" readonly
-                                    value="{{ $venta ? number_format($venta->valor, 0, ',', '.') : '' }}">
-                            </td>
-                        </tr>
-                        @php($indiceVenta++)
-                    @endforeach
-                </tbody>
-            @endforeach
-
+    <div class="table-responsive mt-3">
+        <table class="table table-bordered table-sm mb-0">
             <!-- Sección: Total ventas según corte -->
             <thead class="bg-light">
                 <tr>
-                    <th colspan="2" class="text-left whitespace-nowrap">
+                    <th class="text-left whitespace-nowrap">
                         TOTAL VENTAS SEGÚN CORTE
                     </th>
 
@@ -114,7 +157,7 @@
 
             <tbody>
                 <tr>
-                    <th scope="row" colspan="2" class="text-left">
+                    <th scope="row" class="text-left">
                         CORRIENTE
                     </th>
 
@@ -133,7 +176,7 @@
                 </tr>
 
                 <tr>
-                    <th scope="row" colspan="2" class="text-left">
+                    <th scope="row" class="text-left">
                         ACPM
                     </th>
 
@@ -154,7 +197,7 @@
 
             <tfoot>
                 <tr class="table-secondary fw-bold">
-                    <td colspan="2" class="text-start">TOTAL</td>
+                    <td class="text-start">TOTAL</td>
                     <td class="text-end ventas-total-galones">
                         {{ isset($turno) ? number_format($turno->tirillas_galones_corriente + $turno->tirillas_galones_acpm, 3, '.', ',') : '' }}
                     </td>
@@ -162,21 +205,20 @@
                         {{ isset($turno) ? number_format($turno->total_ventas, 0, ',', '.') : '0' }}</td>
                 </tr>
             </tfoot>
-
         </table>
     </div>
 
     <script>
         (function() {
-            const tabla = document.getElementById('tabla-ventas-turno');
-            if (!tabla) return;
+            const contenedor = document.getElementById('tabla-ventas-turno');
+            if (!contenedor) return;
 
-            // Índice siguiente para los nombres ventas[i][...]: único en toda la tabla.
+            // Índice siguiente para los nombres ventas[i][...]: único en todos los surtidores.
             let siguienteIndice = {{ $indiceVenta }};
 
             // También la usa el autoguardado para recrear las filas de un borrador.
             window.agregarFilaVenta = function(surtidor, indice = null) {
-                const grupo = Array.from(tabla.querySelectorAll('.ventas-grupo'))
+                const grupo = Array.from(contenedor.querySelectorAll('.ventas-grupo'))
                     .find(g => g.dataset.surtidor === surtidor);
                 if (!grupo) return null;
 
@@ -187,14 +229,9 @@
                 fila.className = 'venta-fila';
                 fila.dataset.index = i;
                 fila.innerHTML = `
-                    <td class="text-nowrap">
+                    <td>
                         <input type="hidden" name="ventas[${i}][surtidor]">
                         <input type="hidden" name="ventas[${i}][combustible]">
-                        <span class="venta-surtidor"></span>
-                        <button type="button" class="btn btn-link btn-sm text-danger p-0 ms-1 quitar-venta"
-                            title="Quitar fila" aria-label="Quitar fila">×</button>
-                    </td>
-                    <td>
                         <input type="text" name="ventas[${i}][no_cierre]" maxlength="30" class="form-control form-control-sm erp-input text-center venta-no-cierre">
                     </td>
                     <td class="text-end">
@@ -203,19 +240,21 @@
                     </td>
                     <td class="text-end">
                         <input type="text" name="ventas[${i}][valor]" class="form-control form-control-sm erp-input valor-total" readonly>
+                    </td>
+                    <td class="text-center">
+                        <button type="button" class="btn btn-sm btn-danger quitar-venta" aria-label="Quitar fila">×</button>
                     </td>`;
                 fila.querySelector(`[name="ventas[${i}][surtidor]"]`).value = grupo.dataset.surtidor;
                 fila.querySelector(`[name="ventas[${i}][combustible]"]`).value = grupo.dataset.combustible;
-                fila.querySelector('.venta-surtidor').textContent = grupo.dataset.etiqueta;
                 fila.querySelector('.galones-input').dataset.precio = grupo.dataset.precio;
 
-                grupo.appendChild(fila);
+                grupo.querySelector('.ventas-filas').appendChild(fila);
                 window.initGalones?.();
 
                 return fila;
             };
 
-            tabla.addEventListener('click', function(event) {
+            contenedor.addEventListener('click', function(event) {
                 const agregar = event.target.closest('.agregar-venta');
                 if (agregar) {
                     const fila = window.agregarFilaVenta(agregar.closest('.ventas-grupo').dataset.surtidor);
@@ -227,7 +266,7 @@
                 if (quitar) {
                     quitar.closest('tr').remove();
                     window.recalcularVentasTurno?.();
-                    tabla.dispatchEvent(new Event('change', { bubbles: true }));
+                    contenedor.dispatchEvent(new Event('change', { bubbles: true }));
                 }
             });
         })();
