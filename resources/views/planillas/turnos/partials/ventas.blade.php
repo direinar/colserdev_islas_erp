@@ -69,6 +69,11 @@
             border-color: #d0d0d0 !important;
         }
 
+        .ventas-total-encabezado th {
+            font-size: 1.1rem;
+            font-weight: 800 !important;
+        }
+
         .ventas-surtidor-tabla tbody td {
             background: #fff;
             border-color: #d9d9d9 !important;
@@ -140,7 +145,8 @@
         <table class="table table-bordered table-sm mb-0">
             <!-- Sección: Total ventas según corte -->
             <thead class="bg-light">
-                <tr>
+                {{-- Más grande y en negrilla para diferenciarlo de los recuadros de cada surtidor. --}}
+                <tr class="ventas-total-encabezado">
                     <th class="text-left whitespace-nowrap">
                         TOTAL VENTAS SEGÚN CORTE
                     </th>

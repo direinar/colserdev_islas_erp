@@ -288,6 +288,7 @@ test('cada surtidor admite varios cierres con su No. de cierre y las filas vacia
     // Los 6 surtidores en su orden, cada uno con + AGREGAR FILA y la columna NO. CIERRE;
     // los cierres guardados vuelven a su bloque.
     $pantalla = $this->actingAs($admin)->get(route('turnos.create', ['turno_busqueda' => 5]))
+        ->assertSee('<tr class="ventas-total-encabezado">', false)
         ->assertSeeInOrder(['SURTIDOR 1 - CTE', 'value="1201"', 'value="1202"', 'SURTIDOR 1 - ACPM', 'SURTIDOR 2 - CTE',
             'SURTIDOR 2 - ACPM', 'SURTIDOR 3 - CTE', 'SURTIDOR 3 - ACPM', 'value="880"', 'TOTAL VENTAS SEGÚN CORTE'], false);
 
