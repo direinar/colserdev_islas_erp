@@ -28,6 +28,17 @@
             text-align: right;
         }
 
+        /* Tabla A: MANGUERA a la izquierda como sus nombres; INICIAL, FINAL y GLS a la derecha
+           como las lecturas, sumando el margen interno del campo. */
+        .le-tabla thead th:first-child {
+            text-align: left;
+        }
+
+        .le-tabla thead th:not(:first-child) {
+            text-align: right;
+            padding-right: calc(.75rem + 1px);
+        }
+
         /* GALONES y VALOR alineados con sus valores (a la derecha). */
         .le-resumen thead th:not(:first-child) {
             text-align: right;
