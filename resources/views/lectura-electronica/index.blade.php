@@ -140,7 +140,7 @@
 
         <div class="col-lg-6">
             <div class="card mb-3">
-                <div class="card-header"><strong>(A) VENTA SEGÚN LECTURAS</strong></div>
+                <div class="card-header"><strong>(A) VENTAS SEGÚN LECTURA ELECTRÓNICA</strong></div>
                 <div class="table-responsive">
                     <table class="table table-bordered table-sm mb-0 le-resumen le-resumen-campos">
                         <thead>
