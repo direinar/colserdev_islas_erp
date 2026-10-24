@@ -6,8 +6,6 @@ use App\Models\User;
 
 function guardarTurno(User $user, int $numero, array $extra = [])
 {
-    turnoAbierto($user, $numero, '2026-09-25');
-
     return test()->actingAs($user)->post(route('turnos.store'), array_merge([
         'fecha' => '2026-09-25',
         'numero_turno' => $numero,
@@ -23,7 +21,6 @@ test('no se marca como revisada una planilla con sobrante o faltante sin traslad
     guardarTurno($admin, 3, $venta + ['sobrante_pendiente' => '0']);
     $turno = Turno::firstOrFail();
 
-    cerrarTurnos();
     $this->actingAs($admin)->from(route('turnos.pendientes'))->post(route('turnos.revisar', $turno))
         ->assertRedirect(route('turnos.pendientes'))
         ->assertSessionHasErrors(['revisar' => 'Turno #3: tiene un FALTANTE de $20.600 sin trasladar. Use TRASLADAR y guarde la planilla antes de marcarla como revisada.']);
@@ -32,7 +29,6 @@ test('no se marca como revisada una planilla con sobrante o faltante sin traslad
 
     // Después de trasladar y guardar, el pendiente queda en cero y ya se puede revisar.
     guardarTurno($admin, 3, $venta + ['traslado_faltante' => '20600']);
-    cerrarTurnos();
     $this->actingAs($admin)->post(route('turnos.revisar', $turno))->assertSessionHasNoErrors();
 
     expect($turno->fresh()->revisado)->toBeTrue();
@@ -53,8 +49,7 @@ test('no se guardan valores de cartera o recaudos sin cliente', function (string
 
     guardarTurno($admin, 3, [$seccion => [$fila]])->assertSessionHasErrors($seccion);
 
-    // La planilla abierta quedó sin guardar.
-    expect(Turno::query()->whereNotNull('sobrante_pendiente')->count())->toBe(0);
+    expect(Turno::count())->toBe(0);
 })->with([
     'cartera' => ['cartera', ['cartera_factura_no' => 'F-1', 'cliente_id' => '', 'cartera_valor' => '50.000']],
     'recaudos por islas' => ['recaudos', ['cliente_id' => '', 'valor' => '30.000']],
@@ -68,8 +63,7 @@ test('el credito directo no admite cliente ni valor sin numero de factura', func
     guardarTurno($admin, 3, ['cartera' => [array_merge(['cliente_id' => $cliente->id], $fila)]])
         ->assertSessionHasErrors(['cartera' => 'En CARTERA - CRÉDITO DIRECTO hay filas sin No. de FACTURA. Digite la factura antes del cliente y el valor.']);
 
-    // La planilla abierta quedó sin guardar.
-    expect(Turno::query()->whereNotNull('sobrante_pendiente')->count())->toBe(0);
+    expect(Turno::count())->toBe(0);
 })->with([
     'cliente y valor' => [['cartera_factura_no' => '', 'cartera_valor' => '50.000']],
     'solo cliente' => [['cartera_factura_no' => '  ', 'cartera_valor' => '']],
@@ -77,9 +71,8 @@ test('el credito directo no admite cliente ni valor sin numero de factura', func
 
 test('la planilla tiene el boton para copiar las lecturas iniciales a finales', function () {
     $admin = User::factory()->create(['role' => User::ROLE_ADMINISTRADOR]);
-    turnoAbierto($admin, 1);
 
-    $this->actingAs($admin)->get(route('turnos.create', ['turno_busqueda' => 1]))
+    $this->actingAs($admin)->get(route('turnos.create'))
         ->assertOk()
         ->assertSee('COPIAR SALDOS INICIALES A FINALES')
         ->assertSee('id="sobrante-pendiente-input"', false);
@@ -89,7 +82,6 @@ test('una planilla revisada no se puede modificar ni por el administrador', func
     $admin = User::factory()->create(['role' => User::ROLE_ADMINISTRADOR]);
     guardarTurno($admin, 3);
     $turno = Turno::firstOrFail();
-    cerrarTurnos();
     $this->actingAs($admin)->post(route('turnos.revisar', $turno));
 
     guardarTurno($admin, 3)->assertForbidden();
@@ -107,7 +99,6 @@ test('el administrador vuelve una planilla revisada a pendiente de revision', fu
     $islero = User::factory()->create(['role' => User::ROLE_ISLERO]);
     guardarTurno($islero, 3);
     $turno = Turno::firstOrFail();
-    cerrarTurnos();
     $this->actingAs($admin)->post(route('turnos.revisar', $turno));
 
     $this->actingAs($islero)->post(route('turnos.reabrir', $turno))->assertForbidden();
@@ -151,9 +142,7 @@ test('buscar por fecha lista las planillas de ese dia', function () {
     $admin = User::factory()->create(['role' => User::ROLE_ADMINISTRADOR]);
     guardarTurno($admin, 3);
     guardarTurno($admin, 4);
-    turnoAbierto($admin, 5, '2026-09-26');
     test()->actingAs($admin)->post(route('turnos.store'), ['fecha' => '2026-09-26', 'numero_turno' => 5]);
-    cerrarTurnos();
 
     $this->actingAs($admin)->get(route('turnos.create', ['buscar_fecha' => '2026-09-25']))
         ->assertOk()

@@ -7,8 +7,6 @@ use App\Models\User;
 
 function guardarPlanilla(User $user, int $numero, array $datos = [], string $fecha = '2026-09-25')
 {
-    turnoAbierto($user, $numero, $fecha);
-
     return test()->actingAs($user)->post(route('turnos.store'), array_merge([
         'fecha' => $fecha,
         'numero_turno' => $numero,
@@ -63,8 +61,7 @@ test('un pago electrónico con valor y sin concepto no se guarda', function () {
     guardarPlanilla($admin, 3, ['qr_pagos' => [['concepto' => 'Concepto', 'valor' => '50.000']]])
         ->assertSessionHasErrors('qr_pagos.0.concepto');
 
-    // La planilla abierta quedó sin guardar.
-    expect(Turno::query()->whereNotNull('sobrante_pendiente')->count())->toBe(0);
+    expect(Turno::count())->toBe(0);
 });
 
 test('un recaudo por administración con cliente o valor y sin banco no se guarda', function () {
@@ -76,14 +73,13 @@ test('un recaudo por administración con cliente o valor y sin banco no se guard
     guardarPlanilla($admin, 3, ['recaudos_admin' => [['banco' => '', 'responsable_id' => '', 'valor' => '50.000']]])
         ->assertSessionHasErrors('recaudos_admin');
 
-    // La planilla abierta quedó sin guardar.
-    expect(Turno::query()->whereNotNull('sobrante_pendiente')->count())->toBe(0);
+    expect(Turno::count())->toBe(0);
 
     guardarPlanilla($admin, 3, ['recaudos_admin' => [['banco' => 'CAJA', 'responsable_id' => $cliente->id, 'valor' => '50.000']]])
         ->assertSessionHasNoErrors();
 
     // En pantalla: el cliente y el valor exigen primero el banco.
-    $this->actingAs($admin)->get(route('turnos.create', ['turno_busqueda' => 3]))
+    $this->actingAs($admin)->get(route('turnos.create'))
         ->assertSeeInOrder(["campos: '.recaudos-admin-responsable, .recaudo-admin-valor'", "requisito: '.recaudos-admin-banco'"], false)
         ->assertSee('recaudos-admin-banco"', false);
 });
@@ -91,7 +87,6 @@ test('un recaudo por administración con cliente o valor y sin banco no se guard
 test('si el guardado falla, la planilla vuelve con lo que se había digitado', function () {
     $admin = User::factory()->create(['role' => User::ROLE_ADMINISTRADOR]);
 
-    turnoAbierto($admin, 3, '2026-09-25');
     $this->actingAs($admin)->from(route('turnos.create'))->post(route('turnos.store'), [
         'fecha' => '2026-09-25',
         'numero_turno' => 3,
@@ -102,8 +97,7 @@ test('si el guardado falla, la planilla vuelve con lo que se había digitado', f
         'recaudos' => [['cliente_id' => '', 'valor' => '30.000']],
     ])->assertRedirect(route('turnos.create'))->assertSessionHasErrors('recaudos');
 
-    // La planilla abierta quedó sin guardar.
-    expect(Turno::query()->whereNotNull('sobrante_pendiente')->count())->toBe(0);
+    expect(Turno::count())->toBe(0);
 
     $this->actingAs($admin)->get(route('turnos.create'))
         ->assertOk()
@@ -236,14 +230,10 @@ test('el precio del combustible rige desde un número de turno, aunque cambie en
     // El precio de la gasolina cambia a partir del turno 2, el mismo día.
     FuelPrice::create(['name' => 'Gasolina', 'price' => 17000, 'turno_desde' => 2, 'active' => true]);
 
-    // La planilla que se abre después (turno 2) ya muestra el precio nuevo.
-    cerrarTurnos();
-    $this->actingAs($admin)->post(route('turnos.abrir'), [
-        'fecha' => '2026-09-25', 'turno_dia' => 2, 'hora_inicio' => '14:00', 'mangueras' => ['PLUS 01'],
-    ])->assertSessionHasNoErrors();
-    $this->actingAs($admin)->get(route('turnos.create', ['turno_busqueda' => 2]))
+    // La planilla nueva (turno 2) ya muestra el precio nuevo.
+    $this->actingAs($admin)->get(route('turnos.create'))
         ->assertOk()
-        ->assertSee('data-precio="17000.00"', false);
+        ->assertSee('data-precio="17000"', false);
 
     guardarPlanilla($admin, 2);
     // Volver a guardar el turno 1 no le cambia el precio.

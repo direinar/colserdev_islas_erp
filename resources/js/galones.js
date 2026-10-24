@@ -310,8 +310,7 @@ function initGalones() {
         const final = finalInput ? parseGalones(finalInput.value) : NaN;
 
         if (!isNaN(inicial) && !isNaN(final)) {
-            // Cambio de contador en el turno: se suma lo vendido con el contador retirado.
-            const diff = final - inicial + (Number(row.dataset.ajusteContador) || 0);
+            const diff = final - inicial;
             if (glsInput) glsInput.value = formatGalones(diff);
         } else {
             if (glsInput) glsInput.value = '';

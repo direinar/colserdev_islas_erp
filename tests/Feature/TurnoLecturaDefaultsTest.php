@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Artisan;
 
 uses(RefreshDatabase::class);
 
-test('abrir turno toma como inicial la ultima lectura cerrada de cada manguera', function () {
+test('traditional form preloads previous final readings as initial values', function () {
     $today = now()->toDateString();
 
     $previousTurno = Turno::create([
@@ -38,28 +38,22 @@ test('abrir turno toma como inicial la ultima lectura cerrada de cada manguera',
 
     $user = User::factory()->create();
 
-    // ABRIR TURNO muestra la última lectura cerrada de cada manguera ('.' decimal, ',' miles).
-    $this->actingAs($user)->get(route('turnos.create'))
-        ->assertOk()
-        ->assertSee('ABRIR TURNO')
-        ->assertSeeInOrder(['PLUS 01', 'Inicial: 1,500.000', 'PLUS 02', 'Inicial: 1,250.000', 'ACPM 12', 'Inicial: 930.000']);
+    $response = $this->actingAs($user)->get(route('turnos.create', ['fecha' => $today]));
 
-    $this->actingAs($user)->post(route('turnos.abrir'), [
-        'fecha' => $today, 'turno_dia' => 2, 'hora_inicio' => '06:00', 'mangueras' => ['PLUS 01', 'ACPM 12'],
-    ])->assertSessionHasNoErrors();
-
-    // La planilla abierta solo tiene las mangueras tomadas, con su lectura inicial y la final pendiente.
-    $abierto = Turno::query()->where('numero_turno', 2)->sole();
-
-    expect($abierto->estaAbierta())->toBeTrue()
-        ->and($abierto->surtidores->pluck('lectura_inicial', 'manguera')->map(fn ($v) => (float) $v)->all())
-        ->toBe(['PLUS 01' => 1500.0, 'ACPM 12' => 930.0])
-        ->and($abierto->surtidores->pluck('lectura_final')->all())->toBe([null, null]);
-
-    $this->actingAs($user)->get(route('turnos.create', ['turno_busqueda' => 2]))
-        ->assertSee('value="1,500.000"', false)
-        ->assertSee('value="930.000"', false)
-        ->assertDontSee('value="1,250.000"', false);
+    $response->assertOk();
+    // Values should appear in the HTML, formatted with the file's convention: decimal '.', thousands ','
+    $response->assertSee('value="1,500.000"', false);
+    $response->assertSee('value="1,250.000"', false);
+    $response->assertSee('value="980.000"', false);
+    $response->assertSee('value="1,015.000"', false);
+    $response->assertSee('value="1,100.000"', false);
+    $response->assertSee('value="1,205.000"', false);
+    $response->assertSee('value="805.000"', false);
+    $response->assertSee('value="910.000"', false);
+    $response->assertSee('value="1,300.000"', false);
+    $response->assertSee('value="1,410.000"', false);
+    $response->assertSee('value="875.000"', false);
+    $response->assertSee('value="930.000"', false);
 });
 
 test('lectura inicial is locked from turno 2 onward', function () {
@@ -82,9 +76,8 @@ test('lectura inicial is locked from turno 2 onward', function () {
     ]);
 
     $user = User::factory()->create();
-    turnoAbierto($user, 2, $today);
 
-    $response = $this->actingAs($user)->get(route('turnos.create', ['turno_busqueda' => 2]));
+    $response = $this->actingAs($user)->get(route('turnos.create', ['fecha' => $today]));
 
     $response->assertOk();
     $response->assertSee('lectura-inicial', false);
@@ -134,7 +127,6 @@ test('saving an already existing turno updates it instead of creating a duplicat
 
     $admin = User::factory()->create(['role' => User::ROLE_ADMINISTRADOR]);
 
-    turnoAbierto($admin, 1, $today);
     $response = $this->actingAs($admin)->post(route('turnos.store'), [
         'fecha' => $today,
         'numero_turno' => 1,
@@ -235,7 +227,6 @@ test('urea_lubricantes sent with dot-thousands money format are not truncated on
 
     $admin = User::factory()->create(['role' => User::ROLE_ADMINISTRADOR]);
 
-    turnoAbierto($admin, 1, $today);
     $response = $this->actingAs($admin)->post(route('turnos.store'), [
         'fecha' => $today,
         'numero_turno' => 1,
@@ -265,9 +256,8 @@ test('medios de pago renders as three independent tables with add row actions', 
     $today = now()->toDateString();
 
     $user = User::factory()->create();
-    turnoAbierto($user, 1, $today);
 
-    $response = $this->actingAs($user)->get(route('turnos.create', ['turno_busqueda' => 1]));
+    $response = $this->actingAs($user)->get(route('turnos.create', ['fecha' => $today]));
 
     $response->assertOk();
     $response->assertSee('INFORMACION DE MEDIOS DE PAGO', false);
@@ -289,7 +279,6 @@ test('independent payment tables persist rows and their totals', function () {
     $admin = User::factory()->create(['role' => User::ROLE_ADMINISTRADOR]);
     $cliente = Customer::create(['name' => 'Cliente A', 'document' => '1']);
 
-    turnoAbierto($admin, 1, $today);
     $response = $this->actingAs($admin)->post(route('turnos.store'), [
         'fecha' => $today,
         'numero_turno' => 1,
@@ -323,7 +312,6 @@ test('ventas galones sent with a dot decimal (blade default format) are not infl
 
     $admin = User::factory()->create(['role' => User::ROLE_ADMINISTRADOR]);
 
-    turnoAbierto($admin, 1, $today);
     $response = $this->actingAs($admin)->post(route('turnos.store'), [
         'fecha' => $today,
         'numero_turno' => 1,

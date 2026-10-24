@@ -9,7 +9,6 @@
         // El islero y el jefe de patios solo modifican las planillas que ellos registraron.
         $turnoDeOtro = isset($turno) && $turno && ! $turnoRevisado && ! $turno->editablePor(auth()->user());
         $puedeGuardar = ! $turnoRevisado && ! $turnoDeOtro;
-        $turnoAbierto = isset($turno) && $turno && $turno->exists && $turno->estaAbierta();
     @endphp
 
     <x-page-header title="Planilla de turnos" icon="journal-check"
@@ -17,19 +16,13 @@
         <a href="{{ route('turnos.create') }}" class="btn btn-outline-light btn-sm">
             <i class="bi bi-file-earmark-plus" aria-hidden="true"></i> Nuevo
         </a>
-        @if ($turno && $puedeGuardar)
+        @if ($puedeGuardar)
             <button type="button" class="btn btn-outline-light btn-sm" onclick="limpiarPlanilla()">
                 <i class="bi bi-eraser" aria-hidden="true"></i> Limpiar
             </button>
             <button type="submit" form="turno-form" class="btn btn-light btn-sm">
                 <i class="bi bi-save" aria-hidden="true"></i> Guardar
             </button>
-            @if ($turnoAbierto)
-                <button type="submit" form="turno-form" name="cerrar" value="1" class="btn btn-warning btn-sm"
-                    onclick="return confirm('¿Cerrar el turno? Se guarda la planilla y se exigen las lecturas finales de todas sus mangueras. Las mangueras quedarán libres para el siguiente turno.');">
-                    <i class="bi bi-lock" aria-hidden="true"></i> CERRAR TURNO
-                </button>
-            @endif
         @endif
     </x-page-header>
 
@@ -63,12 +56,9 @@
                     {{ \Illuminate\Support\Carbon::parse($buscarFecha)->format('d/m/Y') }}:</small>
                 @forelse ($turnosDeFecha as $turnoFecha)
                     <a href="{{ route('turnos.create', ['turno_busqueda' => $turnoFecha->numero_turno]) }}"
-                        class="btn btn-sm {{ $turnoFecha->revisado ? 'btn-outline-success' : ($turnoFecha->estaAbierta() ? 'btn-outline-warning text-dark' : 'btn-outline-danger') }} me-1 mb-1">
+                        class="btn btn-sm {{ $turnoFecha->revisado ? 'btn-outline-success' : 'btn-outline-danger' }} me-1 mb-1">
                         Turno {{ str_pad($turnoFecha->numero_turno, 3, '0', STR_PAD_LEFT) }}
-                        @if ($turnoFecha->turno_dia)
-                            ({{ $turnoFecha->turno_dia }}° del día)
-                        @endif
-                        · {{ $turnoFecha->revisado ? 'Revisado' : ($turnoFecha->estaAbierta() ? 'Abierto' : 'Pendiente') }}
+                        · {{ $turnoFecha->revisado ? 'Revisado' : 'Pendiente' }}
                         @if ($turnoFecha->nombre_vendedor)
                             · {{ $turnoFecha->nombre_vendedor }}
                         @endif
@@ -306,37 +296,6 @@
         }
     </script>
 
-    @if (! $turno)
-        @if (session('success'))
-            <div class="alert alert-success">{{ session('success') }}</div>
-        @endif
-        @include('planillas.turnos.partials.apertura')
-    @else
-
-    {{-- El jefe de patios cierra la planilla de un islero que no la cerró: solo las lecturas finales. --}}
-    @if ($turnoAbierto && $turnoDeOtro && $turno->cerrablePor(auth()->user()))
-        <form method="POST" action="{{ route('turnos.cerrar', $turno) }}" class="pastel-section mb-3"
-            onsubmit="return confirm('¿Cerrar el turno #{{ $turno->numero_turno }} con estas lecturas finales?');">
-            @csrf
-            <h2 class="h6 fw-bold">CERRAR TURNO DE {{ mb_strtoupper($turno->user?->name ?? $turno->nombre_vendedor) }}</h2>
-            <p class="small text-muted mb-2">El islero no cerró la planilla. Digite las lecturas finales de sus mangueras para liberarlas.</p>
-            <div class="row g-2">
-                @foreach ($turno->surtidores as $surtidor)
-                    <div class="col-6 col-md-3">
-                        <label class="form-label small mb-0" for="final-{{ $loop->index }}">{{ $surtidor->manguera }}
-                            (inicial {{ number_format($surtidor->lectura_inicial, 3, '.', ',') }})</label>
-                        <input type="text" name="finales[{{ $surtidor->manguera }}]" id="final-{{ $loop->index }}"
-                            class="form-control form-control-sm" inputmode="decimal" required
-                            value="{{ old('finales.'.$surtidor->manguera, $surtidor->lectura_final === null ? '' : number_format($surtidor->lectura_final, 3, '.', ',')) }}">
-                    </div>
-                @endforeach
-            </div>
-            <div class="text-end mt-2">
-                <button type="submit" class="btn btn-warning btn-sm"><i class="bi bi-lock" aria-hidden="true"></i> CERRAR TURNO</button>
-            </div>
-        </form>
-    @endif
-
     <form method="POST" action="{{ route('turnos.store') }}" id="turno-form">
         @csrf
         {{-- Planilla revisada: todos los campos y botones de la planilla quedan deshabilitados. --}}
@@ -377,26 +336,6 @@
 
             </div>
 
-            @if ($turno->exists)
-                <div class="d-flex flex-wrap gap-3 mt-2 small">
-                    <span>
-                        <span class="badge {{ $turnoAbierto ? 'bg-warning text-dark' : 'bg-secondary' }} fs-6">
-                            {{ $turnoAbierto ? 'TURNO ABIERTO' : 'TURNO CERRADO' }}
-                        </span>
-                    </span>
-                    @if ($turno->turno_dia)
-                        <span><strong>TURNO DEL DÍA:</strong> {{ $turno->turno_dia }}</span>
-                    @endif
-                    @if ($turno->hora_inicio)
-                        <span><strong>INICIO:</strong> {{ substr($turno->hora_inicio, 0, 5) }}</span>
-                    @endif
-                    @if ($turno->cerrado_at)
-                        <span><strong>CERRADO:</strong> {{ $turno->cerrado_at->format('d/m/Y H:i') }} por {{ $turno->cerrado_por }}</span>
-                    @endif
-                    <span><strong>MANGUERAS:</strong> {{ $turno->surtidores->pluck('manguera')->implode(', ') }}</span>
-                </div>
-            @endif
-
         </div>
 
         <style>
@@ -415,22 +354,7 @@
             </div>
         @endif
 
-        @if ($errors->has('correccion'))
-            {{-- La lectura final corregida ya es la inicial del turno siguiente: se confirma antes de guardar. --}}
-            <div class="alert alert-warning">
-                <strong>CORRECCIÓN DE LECTURAS.</strong> Esta corrección también cambia otro turno:
-                <ul class="mb-2">
-                    @foreach ($errors->get('correccion') as $aviso)
-                        <li>{{ $aviso }}</li>
-                    @endforeach
-                </ul>
-                <button type="submit" name="confirmar_correccion" value="1" class="btn btn-sm btn-danger">
-                    CONFIRMAR CORRECCIÓN Y GUARDAR
-                </button>
-            </div>
-        @endif
-
-        @if ($errors->any() && ! $errors->has('correccion'))
+        @if ($errors->any())
             <div class="alert alert-danger">
                 <ul class="mb-0">
                     @foreach ($errors->all() as $error)
@@ -533,82 +457,10 @@
 
     </form>
 
-    @if ($turno->exists && ! $turno->revisado && auth()->user()->isAdministrador() && $turno->surtidores->isNotEmpty())
-        {{-- Cambio o reinicio del contador de una manguera: solo lo autoriza el administrador o el gerente. --}}
-        <details class="pastel-section mt-3 d-print-none" @if ($errors->hasAny(['manguera', 'contador_retiro', 'contador_instalacion', 'observacion', 'contador'])) open @endif>
-            <summary class="fw-bold">CAMBIO DE CONTADOR (solo administrador)</summary>
-            <form method="POST" action="{{ route('turnos.cambio-contador', $turno) }}" class="mt-2"
-                onsubmit="return confirm('¿Registrar el cambio de contador?');">
-                @csrf
-                <p class="small text-muted mb-2">Si se cambió o reinició el contador durante el turno: lectura del contador
-                    viejo al retirarlo y del nuevo al instalarlo. La lectura final es la del contador nuevo. Galones =
-                    (retiro − inicial) + (final − instalación). Con las dos lecturas en blanco se quita el cambio.</p>
-                <div class="row g-2 align-items-end">
-                    <div class="col-md-2">
-                        <label class="form-label small mb-0" for="contador-manguera">Manguera</label>
-                        <select name="manguera" id="contador-manguera" class="form-select form-select-sm" required>
-                            @foreach ($turno->surtidores as $surtidor)
-                                <option value="{{ $surtidor->manguera }}" @selected(old('manguera') === $surtidor->manguera)>{{ $surtidor->manguera }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="col-md-2">
-                        <label class="form-label small mb-0" for="contador-retiro">Lectura al retirar</label>
-                        <input type="text" name="contador_retiro" id="contador-retiro" class="form-control form-control-sm"
-                            inputmode="decimal" placeholder="1,250.000" value="{{ old('contador_retiro') }}">
-                    </div>
-                    <div class="col-md-2">
-                        <label class="form-label small mb-0" for="contador-instalacion">Lectura al instalar</label>
-                        <input type="text" name="contador_instalacion" id="contador-instalacion" class="form-control form-control-sm"
-                            inputmode="decimal" placeholder="0.000" value="{{ old('contador_instalacion') }}">
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label small mb-0" for="contador-observacion">Observación</label>
-                        <input type="text" name="observacion" id="contador-observacion" class="form-control form-control-sm"
-                            maxlength="500" required value="{{ old('observacion') }}">
-                    </div>
-                    <div class="col-md-2">
-                        <button type="submit" class="btn btn-sm btn-danger w-100">Registrar cambio</button>
-                    </div>
-                </div>
-            </form>
-        </details>
-    @endif
-
-    @if ($correcciones->isNotEmpty())
-        <div class="pastel-section mt-3">
-            <h2 class="h6 fw-bold">CORRECCIONES DE LECTURAS Y CAMBIOS DE CONTADOR</h2>
-            <ul class="small mb-0">
-                @foreach ($correcciones as $correccion)
-                    <li>
-                        {{ $correccion->created_at->format('d/m/Y H:i') }} — {{ $correccion->user?->name }}:
-                        @if ($correccion->tipo === \App\Models\LecturaCorreccion::TIPO_CAMBIO_CONTADOR)
-                            cambio de contador de {{ $correccion->manguera }} en el turno #{{ $correccion->turno?->numero_turno }}
-                            @if ($correccion->contador_retiro !== null)
-                                (retiro {{ number_format($correccion->contador_retiro, 3, '.', ',') }}, instalación
-                                {{ number_format($correccion->contador_instalacion, 3, '.', ',') }})
-                            @else
-                                (se quitó)
-                            @endif
-                            — {{ $correccion->observacion }}
-                        @else
-                            lectura final de {{ $correccion->manguera }} del turno #{{ $correccion->turno?->numero_turno }}
-                            {{ $correccion->valor_anterior === null ? 'en blanco' : number_format($correccion->valor_anterior, 3, '.', ',') }}
-                            → {{ number_format($correccion->valor_nuevo, 3, '.', ',') }}; también cambió la inicial del turno
-                            #{{ $correccion->turnoSiguiente?->numero_turno }}.
-                        @endif
-                    </li>
-                @endforeach
-            </ul>
-        </div>
-    @endif
-
     {{-- Formulario independiente (no anidado) para marcar el turno como revisado --}}
     @if (isset($turno) && $turno && $turno->exists && !$turno->revisado && auth()->user()->isAdministrador())
         <form method="POST" action="{{ route('turnos.revisar', $turno) }}" id="form-marcar-revisado" class="d-none">
             @csrf
         </form>
-    @endif
-
     @endif
 @endsection

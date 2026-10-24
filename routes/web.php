@@ -44,12 +44,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         Route::post('/turnos', [TurnoController::class, 'store'])
             ->name('turnos.store');
-
-        Route::post('/turnos/abrir', [TurnoController::class, 'abrir'])
-            ->name('turnos.abrir');
-
-        Route::post('/turnos/{turno}/cerrar', [TurnoController::class, 'cerrar'])
-            ->name('turnos.cerrar');
     });
 
     Route::middleware($administracion)->group(function () {
@@ -61,9 +55,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         Route::post('/turnos/{turno}/reabrir', [TurnoController::class, 'reabrir'])
             ->name('turnos.reabrir');
-
-        Route::post('/turnos/{turno}/cambio-contador', [TurnoController::class, 'cambioContador'])
-            ->name('turnos.cambio-contador');
     });
 
     // El jefe de patios, además de la planilla de turnos, solo accede a Cartera - Estado de cuenta y a Control de tanques.

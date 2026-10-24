@@ -58,18 +58,11 @@ class BorradorPlanillaTurnoService
             'surtidor' => $r['surtidor'] ?? '', 'combustible' => $r['combustible'] ?? null,
             'galones' => NumberParser::quantity($r['galones'] ?? null), 'valor' => 0,
         ], $seccion('ventas'))));
-        // El cambio de contador no viene en el formulario: se conserva el guardado.
-        $contadores = $borrador->exists ? $borrador->surtidores()->get()->keyBy('manguera') : collect();
         $borrador->setRelation('surtidores', $filas(TurnoSurtidor::class, array_map(fn (array $r): array => [
-            'contador_retiro' => $contadores->get($r['manguera'] ?? '')?->contador_retiro,
-            'contador_instalacion' => $contadores->get($r['manguera'] ?? '')?->contador_instalacion,
             'manguera' => $r['manguera'] ?? '', 'combustible' => $r['combustible'] ?? null,
             'lectura_inicial' => NumberParser::quantity($r['lectura_inicial'] ?? null),
-            // En blanco = lectura final pendiente (turno abierto), no cero.
-            'lectura_final' => trim((string) ($r['lectura_final'] ?? '')) === '' ? null : NumberParser::quantity($r['lectura_final']),
-            'galones' => trim((string) ($r['lectura_final'] ?? '')) === ''
-                ? 0
-                : max(0, NumberParser::quantity($r['lectura_final']) - NumberParser::quantity($r['lectura_inicial'] ?? null)),
+            'lectura_final' => NumberParser::quantity($r['lectura_final'] ?? null),
+            'galones' => max(0, NumberParser::quantity($r['lectura_final'] ?? null) - NumberParser::quantity($r['lectura_inicial'] ?? null)),
         ], $seccion('lecturas'))));
         $borrador->setRelation('lubricantes', $filas(TurnoLubricante::class, array_map(fn (array $r): array => [
             'cantidad' => (float) ($r['cantidad'] ?? 0), 'producto' => $r['producto'] ?? null,
