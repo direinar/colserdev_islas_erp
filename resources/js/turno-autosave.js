@@ -1,7 +1,9 @@
 // Autoguardado local de la Planilla de Turnos: protege el trabajo en curso
 // ante un apagón, cierre accidental o falla del equipo. Guarda un borrador en
 // localStorage mientras se escribe y lo ofrece recuperar al volver a abrir el
-// mismo turno; se descarta automáticamente al enviar el formulario con éxito.
+// mismo turno. Se descarta solo cuando el servidor confirma que guardó la planilla:
+// si el guardado se rechaza (p. ej. otro usuario la revisó mientras estaba abierta),
+// lo digitado sigue disponible para recuperarlo cuando se pueda volver a editar.
 function initTurnoAutosave() {
     const form = document.getElementById('turno-form');
     if (!form) return;
@@ -26,6 +28,15 @@ function initTurnoAutosave() {
         const numero = form.querySelector('input[name="numero_turno"]')?.value || 'sin-numero';
         return `turno-draft:${fecha}:${numero}`;
     };
+
+    // La planilla se acaba de guardar con éxito: el borrador ya está en el servidor.
+    if (form.dataset.guardadoOk) {
+        localStorage.removeItem(storageKey());
+    }
+
+    // Planilla bloqueada (revisada o de otro usuario): los campos deshabilitados no se
+    // envían, así que no se guarda ni se ofrece el borrador; queda intacto hasta poder editar.
+    if (form.dataset.bloqueada) return;
 
     const serializeForm = () => {
         const entries = [];
@@ -55,10 +66,6 @@ function initTurnoAutosave() {
     form.addEventListener('change', scheduleSave);
     // Respaldo periódico por si algún cambio no dispara 'input'/'change'.
     setInterval(scheduleSave, 20000);
-
-    form.addEventListener('submit', () => {
-        localStorage.removeItem(storageKey());
-    });
 
     const ensureRowCount = (table, neededCount) => {
         const tbody = document.querySelector(table.tbody);
@@ -111,7 +118,9 @@ function initTurnoAutosave() {
     };
 
     const raw = localStorage.getItem(storageKey());
-    if (raw) {
+    // Tras un guardado rechazado por validación la planilla ya vuelve con lo digitado:
+    // no se pregunta por el borrador (se conserva por si se necesita después).
+    if (raw && !form.dataset.borradorServidor) {
         const savedAt = JSON.parse(raw)?.savedAt;
         const minutesAgo = savedAt ? Math.round((Date.now() - savedAt) / 60000) : null;
         const when = minutesAgo !== null ? ` (hace ${minutesAgo} min)` : '';

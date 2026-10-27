@@ -45,6 +45,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         Route::post('/turnos', [TurnoController::class, 'store'])
             ->name('turnos.store');
+
+        Route::get('/turnos/{turno}/estado', [TurnoController::class, 'estado'])
+            ->name('turnos.estado');
     });
 
     Route::middleware($administracion)->group(function () {

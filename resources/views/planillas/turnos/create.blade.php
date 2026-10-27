@@ -296,7 +296,14 @@
         }
     </script>
 
-    <form method="POST" action="{{ route('turnos.store') }}" id="turno-form">
+    {{-- data-*: el borrador del navegador se borra solo cuando el guardado fue exitoso y no se
+         ofrece recuperar en una planilla bloqueada; data-estado-url consulta, antes de guardar,
+         si otro usuario la marcó como revisada mientras estaba abierta. --}}
+    <form method="POST" action="{{ route('turnos.store') }}" id="turno-form"
+        @if (session('planilla_guardada')) data-guardado-ok="1" @endif
+        @if (session()->hasOldInput('numero_turno')) data-borrador-servidor="1" @endif
+        @if (! $puedeGuardar) data-bloqueada="1" @endif
+        @if (isset($turno) && $turno && $turno->exists && $puedeGuardar) data-estado-url="{{ route('turnos.estado', $turno) }}" @endif>
         @csrf
         {{-- Planilla revisada: todos los campos y botones de la planilla quedan deshabilitados. --}}
         <fieldset @disabled(! $puedeGuardar) style="min-width: 0;">
@@ -456,6 +463,58 @@
         @endif
 
     </form>
+
+    <script>
+        // Si otro usuario marca la planilla como REVISADA mientras está abierta, se avisa antes de
+        // guardar (y cada minuto) para no perder el trabajo: lo digitado queda en el borrador.
+        (function() {
+            const form = document.getElementById('turno-form');
+            const url = form?.dataset.estadoUrl;
+            if (!url) return;
+
+            let verificada = false;
+
+            const consultar = () => fetch(url, { headers: { Accept: 'application/json' }, credentials: 'same-origin' })
+                .then(respuesta => respuesta.ok ? respuesta.json() : null)
+                .catch(() => null);
+
+            const mensaje = estado => estado.revisado_por + ' marcó esta planilla como REVISADA' +
+                (estado.revisado_at ? ' el ' + estado.revisado_at : '') +
+                ' mientras usted la tenía abierta. Sus cambios no se pueden guardar, pero quedan en el borrador de este ' +
+                'navegador: pida al administrador que la vuelva a Pendiente de revisión y al abrirla podrá recuperarlos.';
+
+            const mostrarAviso = estado => {
+                if (document.getElementById('aviso-revisada-mientras')) return;
+                const aviso = document.createElement('div');
+                aviso.id = 'aviso-revisada-mientras';
+                aviso.className = 'alert alert-danger fw-bold';
+                aviso.textContent = mensaje(estado);
+                form.prepend(aviso);
+            };
+
+            form.addEventListener('submit', async function(event) {
+                // Las validaciones de la pantalla ya bloquearon el envío, o ya se verificó.
+                if (verificada || event.defaultPrevented) return;
+                event.preventDefault();
+
+                const estado = await consultar();
+                if (estado?.revisado) {
+                    mostrarAviso(estado);
+                    Swal.fire({ title: 'Planilla REVISADA', text: mensaje(estado), icon: 'warning', confirmButtonText: 'Entendido' });
+                    return;
+                }
+
+                // Sin conexión con el servidor se envía igual: el servidor también lo verifica.
+                verificada = true;
+                form.submit();
+            });
+
+            setInterval(async function() {
+                const estado = await consultar();
+                if (estado?.revisado) mostrarAviso(estado);
+            }, 60000);
+        })();
+    </script>
 
     {{-- Formulario independiente (no anidado) para marcar el turno como revisado --}}
     @if (isset($turno) && $turno && $turno->exists && !$turno->revisado && auth()->user()->isAdministrador())

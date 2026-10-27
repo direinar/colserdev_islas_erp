@@ -85,14 +85,50 @@ test('una planilla revisada no se puede modificar ni por el administrador', func
     $turno = Turno::firstOrFail();
     $this->actingAs($admin)->post(route('turnos.revisar', $turno));
 
-    guardarTurno($admin, 3)->assertForbidden();
+    // Ya no es una página 403: vuelve a la planilla con el aviso y no se reemplaza lo guardado.
+    guardarTurno($admin, 3, ['observaciones' => 'cambio después de revisada'])
+        ->assertRedirect(route('turnos.create', ['turno_busqueda' => 3]))
+        ->assertSessionHasErrors('planilla')
+        ->assertSessionMissing('_old_input');
+
+    expect($turno->fresh()->observaciones)->toBeNull();
 
     $this->actingAs($admin)->get(route('turnos.create', ['turno_busqueda' => 3]))
         ->assertOk()
         ->assertSee('PLANILLA REVISADA.')
         ->assertSee('Planilla REVISADA: el registro está bloqueado')
         ->assertSee('Volver a pendiente de revisión')
-        ->assertDontSee('onclick="limpiarPlanilla()"', false);
+        ->assertDontSee('onclick="limpiarPlanilla()"', false)
+        // Bloqueada: el navegador no guarda ni ofrece el borrador, y no consulta el estado.
+        ->assertSee('data-bloqueada="1"', false)
+        ->assertDontSee('data-estado-url', false);
+});
+
+test('si otro usuario revisa la planilla mientras esta abierta, el aviso dice quien y cuando, y lo digitado no se pierde', function () {
+    $carlos = User::factory()->create(['role' => User::ROLE_GERENTE, 'name' => 'Carlos Beltrán']);
+    $elkin = User::factory()->create(['role' => User::ROLE_ADMINISTRADOR, 'name' => 'ELKIN LEON BARBOSA']);
+    guardarTurno($carlos, 104)->assertSessionHas('planilla_guardada', true);
+    $turno = Turno::query()->sole();
+
+    // Antes de guardar, la pantalla consulta el estado de la planilla.
+    $this->actingAs($carlos)->get(route('turnos.create', ['turno_busqueda' => 104]))
+        ->assertSee('data-estado-url="'.route('turnos.estado', $turno).'"', false);
+    $this->actingAs($carlos)->getJson(route('turnos.estado', $turno))->assertExactJson(['revisado' => false, 'revisado_por' => null, 'revisado_at' => null]);
+
+    $this->travelTo(now()->setTime(17, 27));
+    $this->actingAs($elkin)->post(route('turnos.revisar', $turno))->assertSessionHasNoErrors();
+
+    $this->actingAs($carlos)->getJson(route('turnos.estado', $turno))
+        ->assertJson(['revisado' => true, 'revisado_por' => 'ELKIN LEON BARBOSA', 'revisado_at' => now()->format('d/m/Y').' 17:27']);
+
+    guardarTurno($carlos, 104, ['observaciones' => 'cambio'])
+        ->assertSessionHasErrors(['planilla' => 'Sus cambios NO se guardaron: esta planilla la marcó como REVISADA ELKIN LEON BARBOSA el '
+            .now()->format('d/m/Y').' a las 17:27. Para corregirla, el administrador debe volverla a Pendiente de revisión; lo digitado se puede recuperar al abrirla de nuevo.'])
+        // Sin el indicador de guardado exitoso, el navegador conserva el borrador.
+        ->assertSessionMissing('planilla_guardada');
+
+    // Volver a pendiente no borra el borrador: así se recupera lo digitado.
+    $this->actingAs($elkin)->post(route('turnos.reabrir', $turno))->assertSessionMissing('planilla_guardada');
 });
 
 test('el administrador vuelve una planilla revisada a pendiente de revision', function () {

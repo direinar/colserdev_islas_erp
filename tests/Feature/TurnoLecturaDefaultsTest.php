@@ -50,7 +50,7 @@ test('save button form is not broken by a nested form and stays enabled while no
     expect($response->viewData('turno')?->id)->toBe($turno->id); // confirma que el turno SÍ fue encontrado (whereDate)
     $response->assertDontSee('<form method="POST" action="'.route('turnos.revisar', $turno).'" class="mt-2">', false);
 
-    $mainFormOpen = strpos($response->getContent(), '<form method="POST" action="'.route('turnos.store').'" id="turno-form">');
+    $mainFormOpen = strpos($response->getContent(), '<form method="POST" action="'.route('turnos.store').'" id="turno-form"');
     $mainFormClose = strpos($response->getContent(), '</form>', $mainFormOpen ?: 0);
     expect($mainFormOpen)->not->toBeFalse();
     expect($mainFormClose)->toBeGreaterThan($mainFormOpen);

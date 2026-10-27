@@ -116,8 +116,11 @@ test('el islero y el jefe de patios solo modifican sus planillas; el administrad
 
     guardarPlanilla($ana, 3, ['observaciones' => 'original']);
 
-    guardarPlanilla($beto, 3, ['observaciones' => 'cambiado por Beto'])->assertForbidden();
-    guardarPlanilla($jefe, 3, ['observaciones' => 'cambiado por el jefe'])->assertForbidden();
+    // Ya no es una página 403: vuelve con el aviso y la planilla no cambia.
+    guardarPlanilla($beto, 3, ['observaciones' => 'cambiado por Beto'])->assertRedirect(route('turnos.create'))
+        ->assertSessionHasErrors(['planilla' => 'Sus cambios NO se guardaron: esta planilla la registró otro usuario; solo él o el administrador la pueden modificar.']);
+    guardarPlanilla($jefe, 3, ['observaciones' => 'cambiado por el jefe'])->assertRedirect(route('turnos.create', ['turno_busqueda' => 3]))
+        ->assertSessionHasErrors('planilla');
 
     // El jefe de patios ve la planilla del islero, pero sin poder guardarla.
     $this->actingAs($jefe)->get(route('turnos.create', ['turno_busqueda' => 3]))
@@ -175,7 +178,7 @@ test('después de revisada, el islero sigue viendo su planilla pero ya no la mod
         ->assertSee('PLANILLA REVISADA.')
         ->assertDontSee('<button type="submit" form="turno-form"', false);
 
-    guardarPlanilla($ana, 1, ['observaciones' => 'cambio'])->assertForbidden();
+    guardarPlanilla($ana, 1, ['observaciones' => 'cambio'])->assertSessionHasErrors('planilla');
 });
 
 test('solo el administrador cambia la fecha de una planilla ya guardada', function () {

@@ -9,6 +9,8 @@ use App\Models\Lubricant;
 use App\Models\Turno;
 use App\Services\BorradorPlanillaTurnoService;
 use App\Services\GuardarPlanillaTurnoService;
+use Illuminate\Http\Exceptions\HttpResponseException;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
@@ -102,7 +104,9 @@ class TurnoController extends Controller
             'fecha' => $request->input('fecha'),
             'numero_turno' => $request->input('numero_turno'),
         ])
-            ->with('success', 'Turno guardado correctamente.');
+            ->with('success', 'Turno guardado correctamente.')
+            // Solo con un guardado exitoso se borra el borrador que guarda el navegador.
+            ->with('planilla_guardada', true);
     }
 
     public function pendientes(Request $request): View
@@ -155,6 +159,33 @@ class TurnoController extends Controller
     }
 
     /**
+     * Estado de la planilla para la pantalla: antes de guardar se consulta si otro usuario
+     * la marcó como revisada mientras estaba abierta.
+     */
+    public function estado(Request $request, Turno $turno): JsonResponse
+    {
+        abort_unless($turno->visiblePara($request->user()), 403);
+
+        return response()->json([
+            'revisado' => (bool) $turno->revisado,
+            'revisado_por' => $turno->revisado_por,
+            'revisado_at' => $turno->revisado_at?->format('d/m/Y H:i'),
+        ]);
+    }
+
+    /**
+     * Devuelve a la planilla guardada con el motivo, sin reemplazarla por lo enviado.
+     */
+    private function rechazarGuardado(Request $request, Turno $turno, string $mensaje): never
+    {
+        $destino = $turno->visiblePara($request->user())
+            ? route('turnos.create', ['turno_busqueda' => $turno->numero_turno])
+            : route('turnos.create');
+
+        throw new HttpResponseException(redirect($destino)->withErrors(['planilla' => $mensaje]));
+    }
+
+    /**
      * Quién puede guardar sobre una planilla que ya existe.
      */
     private function autorizarGuardado(Request $request): void
@@ -168,13 +199,19 @@ class TurnoController extends Controller
         }
 
         // Una planilla revisada no se modifica ni se alimenta (ni siquiera el
-        // administrador): primero debe volverla a PENDIENTE DE REVISIÓN.
+        // administrador): primero debe volverla a PENDIENTE DE REVISIÓN. Pasa cuando otro
+        // usuario la revisó mientras esta persona la tenía abierta: se vuelve a la planilla
+        // con el aviso (en vez de una página 403) y lo digitado queda en el borrador del navegador.
         if ($existente->revisado) {
-            abort(403, 'Esta planilla está REVISADA y no se puede modificar. El administrador debe volverla a Pendiente de revisión.');
+            $this->rechazarGuardado($request, $existente,
+                'Sus cambios NO se guardaron: esta planilla la marcó como REVISADA '.$existente->revisado_por
+                .($existente->revisado_at ? ' el '.$existente->revisado_at->format('d/m/Y').' a las '.$existente->revisado_at->format('H:i') : '')
+                .'. Para corregirla, el administrador debe volverla a Pendiente de revisión; lo digitado se puede recuperar al abrirla de nuevo.');
         }
 
         if (! $existente->editablePor($request->user())) {
-            abort(403, 'Esta planilla la registró otro usuario; solo él o el administrador la pueden modificar.');
+            $this->rechazarGuardado($request, $existente,
+                'Sus cambios NO se guardaron: esta planilla la registró otro usuario; solo él o el administrador la pueden modificar.');
         }
 
         // Cambiar la fecha de una planilla ya guardada la movería de día en todos los informes.
