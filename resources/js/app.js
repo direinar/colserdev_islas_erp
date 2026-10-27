@@ -4,6 +4,7 @@ import Swal from 'sweetalert2';
 import './money-format';
 import './galones';
 import './lubricantes';
+import './turno-autosave';
 import './pwa';
 
 window.Swal = Swal;

@@ -62,10 +62,20 @@ function initTurnoAutosave() {
         }, 800);
     };
 
-    form.addEventListener('input', scheduleSave);
-    form.addEventListener('change', scheduleSave);
+    // Solo hay borrador si se digitó algo: abrir una planilla para consultarla no deja borrador
+    // (si no, cada vez que se abriera preguntaría por recuperar uno).
+    let conCambios = false;
+    const marcarCambio = () => {
+        conCambios = true;
+        scheduleSave();
+    };
+
+    form.addEventListener('input', marcarCambio);
+    form.addEventListener('change', marcarCambio);
     // Respaldo periódico por si algún cambio no dispara 'input'/'change'.
-    setInterval(scheduleSave, 20000);
+    setInterval(() => {
+        if (conCambios) scheduleSave();
+    }, 20000);
 
     const ensureRowCount = (table, neededCount) => {
         const tbody = document.querySelector(table.tbody);
