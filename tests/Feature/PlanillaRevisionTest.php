@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Customer;
+use App\Models\FuelPrice;
 use App\Models\Turno;
 use App\Models\User;
 
@@ -150,4 +151,26 @@ test('buscar por fecha lista las planillas de ese dia', function () {
         ->assertSee('Turno 004')
         ->assertDontSee('Turno 005')
         ->assertDontSee('>Buscar</button>', false);
+});
+
+test('los centavos de las ventas no dejan un sobrante de $1 que la pantalla muestra en cero', function () {
+    $admin = User::factory()->create(['role' => User::ROLE_ADMINISTRADOR]);
+    FuelPrice::create(['name' => 'ACPM', 'price' => 11725, 'turno_desde' => 1, 'active' => true]);
+
+    // Caso del turno #15: 44,47 gal × $11.725 = $521.410,75 y 127,94 gal × $11.725 = $1.500.096,50.
+    // En pantalla cada fila se redondea a pesos: $521.411 + $1.500.097 = $2.021.508 recibidos.
+    guardarTurno($admin, 15, [
+        'ventas' => [
+            ['surtidor' => 'SURTIDOR 2 ACPM', 'combustible' => 'ACPM', 'galones' => '44.47'],
+            ['surtidor' => 'SURTIDOR 3 ACPM', 'combustible' => 'ACPM', 'galones' => '127.94'],
+        ],
+        'consignaciones' => [['consignacion_no' => 'C-1', 'consignacion_valor' => '2.021.508']],
+    ])->assertSessionHasNoErrors();
+
+    $turno = Turno::query()->sole();
+    expect((float) $turno->sobrante_pendiente)->toBe(0.0);
+
+    $this->actingAs($admin)->post(route('turnos.revisar', $turno))->assertSessionHasNoErrors();
+
+    expect($turno->fresh()->revisado)->toBeTrue();
 });

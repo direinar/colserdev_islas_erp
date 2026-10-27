@@ -41,7 +41,11 @@ class CuadreTurnoService
     {
         $turno->loadMissing(self::RELACIONES_VENTAS);
 
-        return (float) $turno->ventas->sum('valor') + (float) $turno->lubricantes->sum('total');
+        // Cada venta (galones × precio) se redondea a pesos antes de sumar, como en la pantalla.
+        // Sumar los centavos dejaba un sobrante/faltante de $1 que la planilla mostraba en 0 y
+        // no se podía trasladar, pero impedía marcarla como revisada.
+        return (float) $turno->ventas->sum(fn ($venta): float => round((float) $venta->valor))
+            + (float) $turno->lubricantes->sum('total');
     }
 
     public function pendiente(Turno $turno): float
