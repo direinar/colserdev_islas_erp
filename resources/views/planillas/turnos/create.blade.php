@@ -166,6 +166,13 @@
                 titulo: 'Seleccione el banco',
                 texto: 'En RECAUDOS POR ADMINISTRACIÓN primero debe SELECCIONAR el BANCO/CAJA y luego el cliente y el valor.',
             },
+            {
+                // El conteo toma el valor de cada consignación por su No.: es obligatorio.
+                campos: '.consignacion-valor-input',
+                requisito: '.consignacion-no-input',
+                titulo: 'Digite el No. de consignación',
+                texto: 'En CONSIGNACIONES primero debe digitar el No. de la consignación y luego el valor. El conteo toma el valor de cada consignación por su número.',
+            },
         ];
         const CAMPOS_CON_REQUISITO = REQUISITOS_PREVIOS.map(regla => regla.campos).join(', ');
 

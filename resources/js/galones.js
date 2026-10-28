@@ -404,6 +404,9 @@ function initDecimalFormatters() {
     });
 }
 
+// Las filas que se agregan después de cargar la página (p. ej. en el conteo) la vuelven a llamar.
+window.initDecimalFormatters = initDecimalFormatters;
+
 document.addEventListener('DOMContentLoaded', initDecimalFormatters);
 document.addEventListener('livewire:load', initDecimalFormatters);
 document.addEventListener('livewire:updated', initDecimalFormatters);

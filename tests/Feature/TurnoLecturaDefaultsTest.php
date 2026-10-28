@@ -225,8 +225,8 @@ test('independent payment tables persist rows and their totals', function () {
         'fecha' => $today,
         'numero_turno' => 1,
         'consignaciones' => [
-            ['consignacion_no' => 'C-1', 'consignacion_valor' => '100.000'],
-            ['consignacion_no' => 'C-2', 'consignacion_valor' => '50.000'],
+            ['consignacion_no' => '4561', 'consignacion_valor' => '100.000'],
+            ['consignacion_no' => '4562', 'consignacion_valor' => '50.000'],
         ],
         'descuentos' => [
             ['descuento_no' => '1', 'descuento' => '20.000'],

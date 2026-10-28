@@ -216,6 +216,40 @@
                         </li>
                     @endif
 
+                    {{-- CONTEO: cuadre del efectivo; cada tabla es un submódulo del último conteo. --}}
+                    @if ($user->isAdministrador())
+                        @php($ultimoConteo = \App\Models\Conteo::query()->orderByDesc('numero')->first(['id', 'numero']))
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle {{ request()->is('conteos*') ? 'active' : '' }}"
+                                href="#" data-bs-toggle="dropdown">
+                                Conteo
+                            </a>
+                            <ul class="dropdown-menu">
+                                <li>
+                                    <a class="dropdown-item" href="{{ route('conteos.index') }}">
+                                        Conteos (nuevo y consulta)
+                                    </a>
+                                </li>
+                                @if ($ultimoConteo)
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><h6 class="dropdown-header">Conteo No. {{ $ultimoConteo->numero }}</h6></li>
+                                    @foreach (\App\Models\Conteo::SECCIONES as $clave => $nombre)
+                                        <li>
+                                            <a class="dropdown-item" href="{{ route('conteos.seccion', [$ultimoConteo, $clave]) }}">
+                                                {{ $nombre }}
+                                            </a>
+                                        </li>
+                                    @endforeach
+                                @endif
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <a class="dropdown-item" href="{{ route('conteos.catalogos') }}">
+                                        Destinos, bancos y terceros
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
+                    @endif
 
                     {{-- INFORMES: solo consulta; los registros manuales están en Compras. --}}
                     @if ($user->canAccessAnticipoBimestral() || $user->canAccessControlTanques())

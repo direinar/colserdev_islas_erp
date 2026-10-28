@@ -92,7 +92,7 @@ test('si el guardado falla, la planilla vuelve con lo que se había digitado', f
         'numero_turno' => 3,
         'observaciones' => 'Turno de la tarde',
         'varios' => [['concepto' => 'CAFETERIA', 'valor' => '12.500']],
-        'consignaciones' => [['consignacion_no' => 'C-77', 'consignacion_valor' => '300.000']],
+        'consignaciones' => [['consignacion_no' => '4577', 'consignacion_valor' => '300.000']],
         // Recaudo sin cliente: el servidor rechaza el guardado.
         'recaudos' => [['cliente_id' => '', 'valor' => '30.000']],
     ])->assertRedirect(route('turnos.create'))->assertSessionHasErrors('recaudos');
@@ -103,7 +103,7 @@ test('si el guardado falla, la planilla vuelve con lo que se había digitado', f
         ->assertOk()
         ->assertSee('value="CAFETERIA"', false)
         ->assertSee('value="12.500"', false)
-        ->assertSee('value="C-77"', false)
+        ->assertSee('value="4577"', false)
         ->assertSee('value="300.000"', false)
         ->assertSee('Turno de la tarde');
 });
@@ -200,14 +200,14 @@ test('el sobrante o faltante pendiente se recalcula al guardar, también despué
 
     // Se vendió 100.000 y se consignó 98.000: faltan 2.000, diga lo que diga el navegador.
     guardarPlanilla($admin, 3, $venta + [
-        'consignaciones' => [['consignacion_no' => 'C-1', 'consignacion_valor' => '98.000']],
+        'consignaciones' => [['consignacion_no' => '4561', 'consignacion_valor' => '98.000']],
         'sobrante_pendiente' => '0',
     ]);
     expect((float) Turno::query()->sole()->sobrante_pendiente)->toBe(-2000.0);
 
     // Se traslada el faltante: queda en cero.
     guardarPlanilla($admin, 3, $venta + [
-        'consignaciones' => [['consignacion_no' => 'C-1', 'consignacion_valor' => '98.000']],
+        'consignaciones' => [['consignacion_no' => '4561', 'consignacion_valor' => '98.000']],
         'traslado_faltante' => '2000',
     ]);
     expect((float) Turno::query()->sole()->sobrante_pendiente)->toBe(0.0);
@@ -215,8 +215,8 @@ test('el sobrante o faltante pendiente se recalcula al guardar, también despué
     // Luego se agrega otra consignación de 50.000: aparece un sobrante nuevo en lugar de quedar en 0.
     guardarPlanilla($admin, 3, $venta + [
         'consignaciones' => [
-            ['consignacion_no' => 'C-1', 'consignacion_valor' => '98.000'],
-            ['consignacion_no' => 'C-2', 'consignacion_valor' => '50.000'],
+            ['consignacion_no' => '4561', 'consignacion_valor' => '98.000'],
+            ['consignacion_no' => '4562', 'consignacion_valor' => '50.000'],
         ],
         'traslado_faltante' => '2000',
     ]);

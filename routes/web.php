@@ -7,6 +7,8 @@ use App\Http\Controllers\CarteraSaldoInicialController;
 use App\Http\Controllers\CompraController;
 use App\Http\Controllers\CompraLubricanteController;
 use App\Http\Controllers\ComprobanteContableCompraController;
+use App\Http\Controllers\ConteoCatalogoController;
+use App\Http\Controllers\ConteoController;
 use App\Http\Controllers\ControlTanqueController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
@@ -51,6 +53,22 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 
     Route::middleware($administracion)->group(function () {
+        // CONTEO: lo registran el administrador o el gerente; cada tabla es un submódulo.
+        Route::get('/conteos', [ConteoController::class, 'index'])->name('conteos.index');
+        Route::post('/conteos', [ConteoController::class, 'store'])->name('conteos.store');
+        Route::get('/conteos/catalogos', [ConteoCatalogoController::class, 'index'])->name('conteos.catalogos');
+        Route::post('/conteos/catalogos/destinos', [ConteoCatalogoController::class, 'guardarDestino'])->name('conteos.destinos.store');
+        Route::put('/conteos/catalogos/destinos/{destino}', [ConteoCatalogoController::class, 'guardarDestino'])->name('conteos.destinos.update');
+        Route::delete('/conteos/catalogos/destinos/{destino}', [ConteoCatalogoController::class, 'eliminarDestino'])->name('conteos.destinos.destroy');
+        Route::post('/conteos/catalogos/terceros', [ConteoCatalogoController::class, 'guardarTercero'])->name('conteos.terceros.store');
+        Route::put('/conteos/catalogos/terceros/{tercero}', [ConteoCatalogoController::class, 'guardarTercero'])->name('conteos.terceros.update');
+        Route::delete('/conteos/catalogos/terceros/{tercero}', [ConteoCatalogoController::class, 'eliminarTercero'])->name('conteos.terceros.destroy');
+        Route::get('/conteos/{conteo}/reporte', [ConteoController::class, 'reporte'])->name('conteos.reporte');
+        Route::get('/conteos/{conteo}/pdf', [ConteoController::class, 'pdf'])->name('conteos.pdf');
+        Route::get('/conteos/{conteo}/exportar', [ConteoController::class, 'exportar'])->name('conteos.exportar');
+        Route::get('/conteos/{conteo}/{seccion}', [ConteoController::class, 'seccion'])->name('conteos.seccion');
+        Route::post('/conteos/{conteo}/{seccion}', [ConteoController::class, 'guardar'])->name('conteos.guardar');
+
         Route::get('/turnos/pendientes', [TurnoController::class, 'pendientes'])
             ->name('turnos.pendientes');
 

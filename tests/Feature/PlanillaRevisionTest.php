@@ -200,7 +200,7 @@ test('los centavos de las ventas no dejan un sobrante de $1 que la pantalla mues
             ['surtidor' => 'SURTIDOR 2 ACPM', 'combustible' => 'ACPM', 'galones' => '44.47'],
             ['surtidor' => 'SURTIDOR 3 ACPM', 'combustible' => 'ACPM', 'galones' => '127.94'],
         ],
-        'consignaciones' => [['consignacion_no' => 'C-1', 'consignacion_valor' => '2.021.508']],
+        'consignaciones' => [['consignacion_no' => '4561', 'consignacion_valor' => '2.021.508']],
     ])->assertSessionHasNoErrors();
 
     $turno = Turno::query()->sole();

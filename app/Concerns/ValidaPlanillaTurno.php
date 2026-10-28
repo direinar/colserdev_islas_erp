@@ -2,6 +2,7 @@
 
 namespace App\Concerns;
 
+use App\Models\TurnoConsignacion;
 use App\Models\TurnoQrPago;
 use App\Support\FilaPlanilla;
 use App\Support\NumberParser;
@@ -51,7 +52,8 @@ trait ValidaPlanillaTurno
             'urea_lubricantes.*.valor_sin_iva' => ['nullable', 'string', 'max:30'],
             'urea_lubricantes.*.iva' => ['nullable', 'string', 'max:30'],
             'urea_lubricantes.*.total' => ['nullable', 'string', 'max:30'],
-            'consignaciones.*.consignacion_no' => ['nullable', 'string', 'max:60'],
+            // Solo dígitos: el conteo recorre los números de consignación en orden.
+            'consignaciones.*.consignacion_no' => ['nullable', 'regex:/^\d{1,15}$/'],
             'consignaciones.*.consignacion_valor' => ['nullable', 'string', 'max:30'],
             'descuentos.*.descuento_no' => ['nullable', 'string', 'max:60'],
             'descuentos.*.descuento' => ['nullable', 'string', 'max:30'],
@@ -101,6 +103,10 @@ trait ValidaPlanillaTurno
             }
         }
 
+        if ($error = $this->errorNumerosConsignacion($request)) {
+            $errores['consignaciones'] = $error;
+        }
+
         // RECAUDOS POR ADMINISTRACIÓN: el cliente y el valor exigen el BANCO/CAJA.
         if (! $request->user()->isIslero()) {
             foreach ((array) $request->input('recaudos_admin', []) as $row) {
@@ -139,5 +145,46 @@ trait ValidaPlanillaTurno
         if ($errores) {
             throw ValidationException::withMessages($errores);
         }
+    }
+
+    /**
+     * El CONTEO toma el valor de cada consignación por su No.: una consignación con valor exige
+     * el No. y ese No. no puede repetirse en esta ni en otra planilla.
+     */
+    private function errorNumerosConsignacion(Request $request): ?string
+    {
+        $numeros = [];
+
+        foreach ((array) $request->input('consignaciones', []) as $row) {
+            if (! is_array($row)) {
+                continue;
+            }
+
+            $numero = trim((string) ($row['consignacion_no'] ?? ''));
+
+            if ($numero === '') {
+                if (NumberParser::money($row['consignacion_valor'] ?? null) != 0) {
+                    return 'En CONSIGNACIONES hay valores sin No. de consignación. El No. es obligatorio: el conteo toma el valor de cada consignación por su número.';
+                }
+
+                continue;
+            }
+
+            if (in_array($numero, $numeros, true)) {
+                return 'En CONSIGNACIONES el No. '.$numero.' está repetido.';
+            }
+
+            $numeros[] = $numero;
+        }
+
+        $enOtraPlanilla = TurnoConsignacion::query()
+            ->with('turno:id,numero_turno')
+            ->whereIn('consignacion_no', $numeros)
+            ->whereHas('turno', fn ($turno) => $turno->where('numero_turno', '!=', $request->input('numero_turno')))
+            ->first();
+
+        return $enOtraPlanilla
+            ? 'El No. de consignación '.$enOtraPlanilla->consignacion_no.' ya está en la planilla del turno #'.$enOtraPlanilla->turno->numero_turno.'.'
+            : null;
     }
 }
