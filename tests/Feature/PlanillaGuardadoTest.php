@@ -315,3 +315,29 @@ test('guardar la planilla conserva las lecturas que tenian los turnos anteriores
     expect($turno->surtidores()->count())->toBe(1)
         ->and($turno->fresh()->observaciones)->toBe('Corrección');
 });
+
+test('si el guardado se rechaza, la planilla vuelve con el VALOR de las ventas calculado y avisa que no se guardo', function () {
+    $rosa = User::factory()->create(['role' => User::ROLE_ISLERO, 'name' => 'ROSA RIVERA']);
+    FuelPrice::create(['name' => 'Gasolina', 'price' => 16395, 'turno_desde' => 1, 'active' => true]);
+    FuelPrice::create(['name' => 'ACPM', 'price' => 11725, 'turno_desde' => 1, 'active' => true]);
+
+    // Caso de la planilla #149: consignación sin No. (obligatorio para el conteo).
+    $this->actingAs($rosa)->from(route('turnos.create'))->followingRedirects()->post(route('turnos.store'), [
+        'fecha' => '2026-10-28',
+        'numero_turno' => 149,
+        'ventas' => [
+            ['surtidor' => 'SURTIDOR 3 CTE', 'combustible' => 'CTE', 'no_cierre' => '', 'galones' => '46.890'],
+            ['surtidor' => 'SURTIDOR 3 ACPM', 'combustible' => 'ACPM', 'no_cierre' => '', 'galones' => '17.930'],
+        ],
+        'consignaciones' => [['consignacion_no' => '', 'consignacion_valor' => '674.700']],
+    ])
+        ->assertSee('La planilla NO se guardó')
+        // 46,89 × 16.395 = 768.762 y 17,93 × 11.725 = 210.229: no en cero.
+        ->assertSee('value="768.762"', false)
+        ->assertSee('value="210.229"', false)
+        ->assertDontSee('name="ventas[0][valor]"
+                                            class="form-control form-control-sm erp-input valor-total" readonly
+                                            value="0"', false);
+
+    expect(Turno::count())->toBe(0);
+});

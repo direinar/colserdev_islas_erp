@@ -369,13 +369,26 @@
         @endif
 
         @if ($errors->any())
-            <div class="alert alert-danger">
+            <div class="alert alert-danger" id="errores-planilla">
                 <ul class="mb-0">
                     @foreach ($errors->all() as $error)
                         <li>{{ $error }}</li>
                     @endforeach
                 </ul>
             </div>
+
+            {{-- El aviso de arriba no se ve si se está más abajo en la planilla: se avisa también en
+                 una ventana, para que no parezca que se guardó (lo digitado vuelve sin guardar). --}}
+            <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    Swal.fire({
+                        title: 'La planilla NO se guardó',
+                        html: @json('<ul class="text-start mb-0">'.collect($errors->all())->map(fn ($error) => '<li>'.e($error).'</li>')->implode('').'</ul>'),
+                        icon: 'error',
+                        confirmButtonText: 'Corregir',
+                    });
+                });
+            </script>
         @endif
 
         {{-- CONTENIDO --}}

@@ -119,7 +119,9 @@ function initTurnoAutosave() {
 
         draft.entries.forEach(([name, value]) => {
             const field = form.querySelector(`[name="${name}"]`);
-            if (!field) return;
+            // Los campos de solo lectura (VALOR = galones × precio) se recalculan al restaurar los
+            // galones: volver a poner el valor guardado en el borrador podía dejarlos en cero.
+            if (!field || field.readOnly) return;
             field.value = value;
             field.dispatchEvent(new Event('input', { bubbles: true }));
             field.dispatchEvent(new Event('change', { bubbles: true }));

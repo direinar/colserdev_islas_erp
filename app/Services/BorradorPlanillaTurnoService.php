@@ -53,9 +53,13 @@ class BorradorPlanillaTurnoService
 
         $filas = fn (string $clase, array $filas): Collection => collect($filas)->map(fn (array $atributos) => new $clase($atributos));
 
+        // El valor de cada venta es galones × precio del turno, como al guardar: en 0 la planilla
+        // devuelta por un guardado rechazado mostraba VALOR y TOTAL en ceros.
         $borrador->setRelation('ventas', $filas(TurnoVenta::class, array_map(fn (array $r): array => [
             'surtidor' => $r['surtidor'] ?? '', 'no_cierre' => $r['no_cierre'] ?? null, 'combustible' => $r['combustible'] ?? null,
-            'galones' => NumberParser::quantity($r['galones'] ?? null), 'valor' => 0,
+            'galones' => NumberParser::quantity($r['galones'] ?? null),
+            'valor' => NumberParser::quantity($r['galones'] ?? null)
+                * (float) (($r['combustible'] ?? null) === 'ACPM' ? $borrador->precio_acpm : $borrador->precio_corriente),
         ], $seccion('ventas'))));
         $borrador->setRelation('lubricantes', $filas(TurnoLubricante::class, array_map(fn (array $r): array => [
             'cantidad' => (float) ($r['cantidad'] ?? 0), 'producto' => $r['producto'] ?? null,
