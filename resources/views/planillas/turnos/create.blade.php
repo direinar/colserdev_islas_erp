@@ -310,8 +310,14 @@
         @if (session('planilla_guardada')) data-guardado-ok="1" @endif
         @if (session()->hasOldInput('numero_turno')) data-borrador-servidor="1" @endif
         @if (! $puedeGuardar) data-bloqueada="1" @endif
-        @if (isset($turno) && $turno && $turno->exists && $puedeGuardar) data-estado-url="{{ route('turnos.estado', $turno) }}" @endif>
+        @if (isset($turno) && $turno && $turno->exists && $puedeGuardar) data-estado-url="{{ route('turnos.estado', $turno) }}" @endif
+        @if (session('borrador_descartar')) data-borrador-descartar="{{ session('borrador_descartar') }}" @endif>
         @csrf
+        {{-- Planilla abierta con "Nuevo": si al guardar otro usuario ya tomó su número, se guarda
+             con el siguiente libre en vez de sobrescribir o rechazar (TurnoController@store). --}}
+        @unless (isset($turno) && $turno && $turno->exists)
+            <input type="hidden" name="planilla_nueva" value="1">
+        @endunless
         {{-- Planilla revisada: todos los campos y botones de la planilla quedan deshabilitados. --}}
         <fieldset @disabled(! $puedeGuardar) style="min-width: 0;">
 

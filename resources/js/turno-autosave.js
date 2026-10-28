@@ -34,6 +34,12 @@ function initTurnoAutosave() {
         localStorage.removeItem(storageKey());
     }
 
+    // Se guardó con otro número porque el suyo lo tomó otro usuario: el borrador del número con
+    // que se abrió ya no sirve y no debe ofrecerse en la planilla de esa otra persona.
+    if (form.dataset.borradorDescartar) {
+        localStorage.removeItem(`turno-draft:${form.dataset.borradorDescartar}`);
+    }
+
     // Planilla bloqueada (revisada o de otro usuario): los campos deshabilitados no se
     // envían, así que no se guarda ni se ofrece el borrador; queda intacto hasta poder editar.
     if (form.dataset.bloqueada) return;

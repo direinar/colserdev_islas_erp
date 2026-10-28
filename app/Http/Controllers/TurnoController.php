@@ -9,6 +9,7 @@ use App\Models\Lubricant;
 use App\Models\Turno;
 use App\Services\BorradorPlanillaTurnoService;
 use App\Services\GuardarPlanillaTurnoService;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -95,18 +96,60 @@ class TurnoController extends Controller
     public function store(Request $request, GuardarPlanillaTurnoService $planilla): RedirectResponse
     {
         $request->validate($this->reglasPlanilla());
+
+        // El número de una planilla nueva se asigna al abrir "Nuevo": si otro usuario guardó ese
+        // número mientras esta se digitaba, se guarda con el siguiente libre. Antes el administrador
+        // sobrescribía la planilla del otro y a los demás roles se les rechazaba y perdían lo digitado.
+        $numeroAbierto = (int) $request->input('numero_turno');
+        $ocupadoPor = $request->boolean('planilla_nueva')
+            ? Turno::query()->where('numero_turno', $numeroAbierto)->value('nombre_vendedor')
+            : null;
+
+        if ($ocupadoPor !== null) {
+            $request->merge(['numero_turno' => (int) Turno::query()->max('numero_turno') + 1]);
+        }
+
         $this->autorizarGuardado($request);
         $this->validarReglasDeNegocioPlanilla($request);
 
-        $planilla->guardar($request->all(), $request->user());
+        $this->guardarSinChocar($request, $planilla);
+
+        $numero = (int) $request->input('numero_turno');
+        $mensaje = $numero !== $numeroAbierto
+            ? 'Turno guardado correctamente como turno #'.$numero.': el #'.$numeroAbierto.' lo registró '
+                .($ocupadoPor ?: 'otro usuario').' mientras usted digitaba esta planilla.'
+            : 'Turno guardado correctamente.';
 
         return redirect()->route('turnos.create', [
             'fecha' => $request->input('fecha'),
-            'numero_turno' => $request->input('numero_turno'),
+            'numero_turno' => $numero,
         ])
-            ->with('success', 'Turno guardado correctamente.')
-            // Solo con un guardado exitoso se borra el borrador que guarda el navegador.
-            ->with('planilla_guardada', true);
+            ->with('success', $mensaje)
+            // Solo con un guardado exitoso se borra el borrador que guarda el navegador; si cambió
+            // el número, también el borrador que quedó con el número con que se abrió.
+            ->with('planilla_guardada', true)
+            ->with('borrador_descartar', $numero !== $numeroAbierto ? $request->input('fecha').':'.$numeroAbierto : null);
+    }
+
+    /**
+     * Dos planillas nuevas guardadas en el mismo instante pueden tomar el mismo número: la
+     * segunda se guarda con el siguiente libre en vez de fallar.
+     */
+    private function guardarSinChocar(Request $request, GuardarPlanillaTurnoService $planilla): void
+    {
+        for ($intento = 1; ; $intento++) {
+            try {
+                $planilla->guardar($request->all(), $request->user());
+
+                return;
+            } catch (UniqueConstraintViolationException $error) {
+                if (! $request->boolean('planilla_nueva') || $intento >= 3) {
+                    throw $error;
+                }
+
+                $request->merge(['numero_turno' => (int) Turno::query()->max('numero_turno') + 1]);
+            }
+        }
     }
 
     public function pendientes(Request $request): View
