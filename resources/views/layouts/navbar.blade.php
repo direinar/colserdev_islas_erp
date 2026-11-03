@@ -68,13 +68,12 @@
                                         Planilla de turnos
                                     </a>
                                 </li>
-                                @if ($user->canAccessControlTanques())
-                                    <li>
-                                        <a class="dropdown-item" href="{{ route('lectura-electronica.index') }}">
-                                            Lectura electrónica
-                                        </a>
-                                    </li>
-                                @endif
+                                {{-- La lectura electrónica la registran los mismos roles que la planilla. --}}
+                                <li>
+                                    <a class="dropdown-item" href="{{ route('lectura-electronica.index') }}">
+                                        Lectura electrónica
+                                    </a>
+                                </li>
                                 @if ($user->isAdministrador())
                                     <li>
                                         <a class="dropdown-item" href="{{ route('turnos.pendientes') }}">

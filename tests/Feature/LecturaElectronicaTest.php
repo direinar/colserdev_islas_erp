@@ -101,9 +101,18 @@ test('el día siguiente arranca con la final del día anterior y corregir esa fi
         ->and(LecturaElectronica::query()->count())->toBe(24);
 });
 
-test('el islero no entra a la lectura electrónica', function () {
-    $islero = User::factory()->create(['role' => User::ROLE_ISLERO]);
+test('el islero y el jefe de patios registran la lectura electrónica, que ven en el menú de Operación', function (string $rol) {
+    $usuario = User::factory()->create(['role' => $rol]);
 
-    $this->actingAs($islero)->get(route('lectura-electronica.index'))->assertForbidden();
-    guardarLectura($islero, '2026-10-22', ['PLUS 01' => '1'])->assertForbidden();
-});
+    $this->actingAs($usuario)->get(route('turnos.create'))->assertSee(route('lectura-electronica.index'));
+    $this->actingAs($usuario)->get(route('lectura-electronica.index'))->assertOk();
+
+    guardarLectura($usuario, '2026-10-22', ['PLUS 01' => '1,100.000'], ['PLUS 01' => '1,000.000'])
+        ->assertSessionHasNoErrors()
+        ->assertRedirect(route('lectura-electronica.index', ['fecha' => '2026-10-22']));
+
+    expect((float) LecturaElectronica::query()->where('manguera', 'PLUS 01')->sole()->galones)->toBe(100.0);
+})->with([
+    'islero' => User::ROLE_ISLERO,
+    'jefe de patios' => User::ROLE_JEFE_PATIOS,
+]);

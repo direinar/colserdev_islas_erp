@@ -50,6 +50,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         Route::get('/turnos/{turno}/estado', [TurnoController::class, 'estado'])
             ->name('turnos.estado');
+
+        // Lectura electrónica por fecha: la registran los mismos roles que la planilla de turnos
+        // (islero, jefe de patios y administradores), como cuando iba dentro de la planilla.
+        Route::get('/lectura-electronica', [LecturaElectronicaController::class, 'index'])
+            ->name('lectura-electronica.index');
+
+        Route::post('/lectura-electronica', [LecturaElectronicaController::class, 'guardar'])
+            ->name('lectura-electronica.guardar');
     });
 
     Route::middleware($administracion)->group(function () {
@@ -104,12 +112,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         Route::get('/control-tanques/pdf', [ControlTanqueController::class, 'pdf'])
             ->name('control-tanques.pdf');
-
-        Route::get('/lectura-electronica', [LecturaElectronicaController::class, 'index'])
-            ->name('lectura-electronica.index');
-
-        Route::post('/lectura-electronica', [LecturaElectronicaController::class, 'guardar'])
-            ->name('lectura-electronica.guardar');
     });
 
     Route::middleware($administracion)->group(function () {
