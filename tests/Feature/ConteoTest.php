@@ -218,3 +218,33 @@ test('destinos, bancos y terceros se administran y no se eliminan si ya se usaro
     expect(ConteoTercero::query()->pluck('nombre')->all())->toContain('Chevron Petroleum Company')->not->toContain('BANCO DE BOGOTA')
         ->and(ConteoDestino::query()->pluck('nombre')->all())->toContain('Pago de nómina');
 });
+
+test('los isleros comparten un solo consecutivo de consignaciones y lo usan en desorden entre planillas', function () {
+    $rosa = User::factory()->create(['role' => User::ROLE_ISLERO]);
+    $andres = User::factory()->create(['role' => User::ROLE_ISLERO]);
+    $maria = User::factory()->create(['role' => User::ROLE_ISLERO]);
+
+    $guardar = fn (User $islero, int $turno, array $numeros) => $this->actingAs($islero)->post(route('turnos.store'), [
+        'fecha' => '2026-11-04',
+        'numero_turno' => $turno,
+        'consignaciones' => array_map(fn (string $no) => ['consignacion_no' => $no, 'consignacion_valor' => '100.000'], $numeros),
+    ]);
+
+    // Sin consecutivo propio por islero, intercalados y sin orden dentro de la planilla.
+    $guardar($andres, 230, ['2390', '2387'])->assertSessionHasNoErrors();
+    $guardar($rosa, 231, ['2394', '2389', '2391'])->assertSessionHasNoErrors();
+    $guardar($maria, 232, ['2388', '2395'])->assertSessionHasNoErrors();
+
+    // Lo único que se impide es repetir un número que ya usó otro islero.
+    $guardar($maria, 233, ['2389'])
+        ->assertSessionHasErrors(['consignaciones' => 'El No. de consignación 2389 ya está en la planilla del turno #231.']);
+
+    // El conteo los recorre en orden sin importar de quién o de qué planilla son.
+    $admin = User::factory()->create(['role' => User::ROLE_ADMINISTRADOR]);
+    crearConteo($admin, ['consignacion_anterior' => '2386']);
+    guardarSeccion($admin, Conteo::query()->sole(), 'consignaciones', ['ultima_consignacion' => '2395'])->assertSessionHasNoErrors();
+
+    expect(Conteo::query()->sole()->consignaciones()->get()->map(fn ($c) => [$c->numero, $c->turno?->numero_turno])->all())->toBe([
+        [2387, 230], [2388, 232], [2389, 231], [2390, 230], [2391, 231], [2392, null], [2393, null], [2394, 231], [2395, 232],
+    ]);
+});
