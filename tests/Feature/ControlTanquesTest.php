@@ -199,6 +199,9 @@ test('jefe de patios y administracion pueden alimentar ingresos y el ingreso man
     $fila = $this->actingAs($admin)
         ->get(route('control-tanques.index', ['desde' => '2026-09-25', 'hasta' => '2026-09-25']))
         ->assertOk()
+        ->assertSee('name="ingresos[2026-09-25][corriente]"', false)
+        ->assertSee('value="1250"', false)
+        ->assertDontSee('value="1.250"', false)
         ->viewData('filas')[0];
 
     expect($fila['corriente'])->toMatchArray(['ingreso' => 1250.0, 'saldo' => 2250.0])

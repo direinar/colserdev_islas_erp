@@ -12,9 +12,17 @@
     $galonesOVacio = fn(?float $valor): string => $valor ? $galones($valor) : '';
     // Campos editables sin separador de miles: NumberParser::quantity lee un punto solo como
     // decimal, así que "3.350" volvería como 3,35 al guardar. Coma = decimales.
-    $aforoInput = fn(?float $valor, int $decimales): string => $valor === null
-        ? ''
-        : rtrim(rtrim(number_format($valor, $decimales, ',', ''), '0'), ',');
+    $aforoInput = function (?float $valor, int $decimales): string {
+        if ($valor === null) {
+            return '';
+        }
+
+        if ($decimales === 0) {
+            return number_format($valor, 0, ',', '');
+        }
+
+        return rtrim(rtrim(number_format($valor, $decimales, ',', ''), '0'), ',');
+    };
     $varaInput = fn(?float $valor): string => $valor === null ? '' : number_format($valor, 0, ',', '');
     $esAdministrador = auth()->user()->isAdministrador();
     $sinSaldoInicial = collect(array_keys($combustibles))->reject(fn($c) => $saldosIniciales->has($c));
@@ -333,7 +341,7 @@
                                     <td class="ct-{{ $combustible }} ct-inicio-bloque">
                                         <input type="text" class="ct-input" inputmode="decimal"
                                             name="ingresos[{{ $fila['fecha'] }}][{{ $combustible }}]"
-                                            value="{{ $galonesOVacio($dato['ingreso']) }}"
+                                            value="{{ $aforoInput($dato['ingreso'], 0) }}"
                                             aria-label="Ingreso {{ $nombre }} {{ $fila['fecha'] }}">
                                     </td>
                                     <td class="ct-{{ $combustible }}">{{ $galonesOVacio($dato['venta']) }}</td>
