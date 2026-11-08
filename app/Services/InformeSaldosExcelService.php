@@ -107,6 +107,7 @@ class InformeSaldosExcelService
     private function encabezado(Worksheet $hoja, array $titulos): void
     {
         $hoja->fromArray($titulos, null, 'A4');
+        $hoja->freezePane('A5');
         $rango = 'A4:'.chr(ord('A') + count($titulos) - 1).'4';
         $hoja->getStyle($rango)->getFont()->setBold(true)->getColor()->setRGB('FFFFFF');
         $hoja->getStyle($rango)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('1F4E78');

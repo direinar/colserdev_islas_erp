@@ -3,8 +3,8 @@
 @section('title', 'Compras')
 
 @php
-    $pesos = fn (float $valor): string => number_format($valor, 0, ',', '.');
-    $galones = fn (float $valor): string => rtrim(rtrim(number_format($valor, 3, ',', '.'), '0'), ',');
+    $pesos = fn(float $valor): string => number_format($valor, 0, ',', '.');
+    $galones = fn(float $valor): string => rtrim(rtrim(number_format($valor, 3, ',', '.'), '0'), ',');
     $columnasValor = ['base19_', 'base5_', 'iva_', 'costo_producto_', 'sobretasa_', 'soldicom_', 'distribucion_'];
 @endphp
 
@@ -44,18 +44,32 @@
         }
 
         .compras-tabla .compra-grupo-gasolina,
-        .compras-tabla .compra-sub-gasolina { background: #fbe5d6; }
+        .compras-tabla .compra-sub-gasolina {
+            background: #fbe5d6;
+        }
+
         .compras-tabla .compra-grupo-acpm,
-        .compras-tabla .compra-sub-acpm { background: #e2efda; }
+        .compras-tabla .compra-sub-acpm {
+            background: #e2efda;
+        }
+
         .compras-tabla .compra-grupo-total,
-        .compras-tabla .compra-sub-total { background: #ddebf7; }
+        .compras-tabla .compra-sub-total {
+            background: #ddebf7;
+        }
+
         .compras-tabla .compra-grupo-gasolina,
         .compras-tabla .compra-grupo-acpm,
-        .compras-tabla .compra-grupo-total { font-size: .9rem; letter-spacing: .05rem; }
+        .compras-tabla .compra-grupo-total {
+            font-size: .9rem;
+            letter-spacing: .05rem;
+        }
 
         .compras-tabla .compra-inicio-gasolina,
         .compras-tabla .compra-inicio-acpm,
-        .compras-tabla .compra-inicio-total { border-left: 3px solid #595959; }
+        .compras-tabla .compra-inicio-total {
+            border-left: 3px solid #595959;
+        }
 
 
         /* Fórmulas: no se digitan. */
@@ -65,16 +79,66 @@
             font-variant-numeric: tabular-nums;
         }
 
-        .compras-tabla .compra-costo { font-weight: 700; }
+        .compras-tabla .compra-costo {
+            font-weight: 700;
+        }
 
-        .compras-tabla .compra-numero { min-width: 7.5rem; }
-        .compras-tabla .compra-texto { min-width: 7rem; }
-        .compras-tabla .compra-proveedor { min-width: 11rem; }
-        .compras-tabla td.compra-calc { min-width: 7rem; }
+        .compras-tabla .compra-numero {
+            min-width: 7.5rem;
+        }
 
-        #compras-registradas { font-size: .78rem; }
-        #compras-registradas td.num { text-align: right; font-variant-numeric: tabular-nums; }
-        #compras-registradas tr:target td { background-color: #fff3cd; }
+        .compras-tabla .compra-texto {
+            min-width: 7rem;
+        }
+
+        .compras-tabla .compra-proveedor {
+            min-width: 11rem;
+        }
+
+        .compras-tabla td.compra-calc {
+            min-width: 7rem;
+        }
+
+        #compras-registradas {
+            font-size: .78rem;
+        }
+
+        #compras-registradas td.num {
+            text-align: right;
+            font-variant-numeric: tabular-nums;
+        }
+
+        #compras-registradas tr:target td {
+            background-color: #fff3cd;
+        }
+
+        .compras-impresion-combustible {
+            display: none;
+        }
+
+        @media print {
+            #compras-registradas {
+                display: none;
+            }
+
+            .compras-impresion-combustible {
+                display: table;
+                width: 100%;
+                page-break-before: always;
+                font-size: 9px;
+            }
+
+            .compras-impresion-combustible.compras-impresion-primera {
+                page-break-before: auto;
+            }
+
+            .compras-impresion-combustible th,
+            .compras-impresion-combustible td {
+                padding: 2px 3px;
+                border: 1px solid #888;
+                white-space: nowrap;
+            }
+        }
     </style>
 
     {{-- Al imprimir solo sale COMPRAS REGISTRADAS. --}}
@@ -102,7 +166,8 @@
                         <tr class="table-secondary fw-bold">
                             <td colspan="3" class="text-end">TOTALES</td>
                             @foreach (['gasolina', 'acpm'] as $combustible)
-                                <td class="text-end compra-inicio-{{ $combustible }}" data-total="{{ $combustible }}">0</td>
+                                <td class="text-end compra-inicio-{{ $combustible }}" data-total="{{ $combustible }}">0
+                                </td>
                                 @foreach (['base19', 'base5', 'iva', 'costo_producto', 'sobretasa', 'soldicom', 'costo'] as $campo)
                                     <td class="text-end" data-total="{{ $campo }}_{{ $combustible }}">0</td>
                                 @endforeach
@@ -145,13 +210,15 @@
                 <button type="button" class="btn btn-sm btn-outline-secondary" onclick="window.print()">
                     <i class="bi bi-printer" aria-hidden="true"></i> IMPRIMIR
                 </button>
-                <a href="{{ route('compras.exportar', ['desde' => $desde, 'hasta' => $hasta]) }}" class="btn btn-sm btn-outline-success">
+                <a href="{{ route('compras.exportar', ['desde' => $desde, 'hasta' => $hasta]) }}"
+                    class="btn btn-sm btn-outline-success">
                     <i class="bi bi-file-earmark-excel" aria-hidden="true"></i> EXCEL
                 </a>
             </div>
         </div>
         <div class="d-none d-print-block px-3 small">
-            Compras registradas del {{ \Illuminate\Support\Carbon::parse($desde)->format('d/m/Y') }} al {{ \Illuminate\Support\Carbon::parse($hasta)->format('d/m/Y') }}
+            Compras registradas del {{ \Illuminate\Support\Carbon::parse($desde)->format('d/m/Y') }} al
+            {{ \Illuminate\Support\Carbon::parse($hasta)->format('d/m/Y') }}
         </div>
 
         <div class="table-responsive">
@@ -166,16 +233,22 @@
                             <td>{{ $compra->factura }}</td>
                             <td>{{ $compra->proveedor?->name }}</td>
                             @foreach (['gasolina', 'acpm'] as $combustible)
-                                <td class="num compra-inicio-{{ $combustible }}">{{ $galones((float) $compra->{$combustible}) }}</td>
+                                <td class="num compra-inicio-{{ $combustible }}">
+                                    {{ $galones((float) $compra->{$combustible}) }}</td>
                                 @foreach ($columnasValor as $prefijo)
-                                    <td class="num {{ in_array($prefijo, ['iva_', 'distribucion_'], true) ? 'compra-calc' : '' }} {{ $prefijo === 'distribucion_' ? 'compra-costo' : '' }}">{{ $pesos((float) $compra->{$prefijo.$combustible}) }}</td>
+                                    <td
+                                        class="num {{ in_array($prefijo, ['iva_', 'distribucion_'], true) ? 'compra-calc' : '' }} {{ $prefijo === 'distribucion_' ? 'compra-costo' : '' }}">
+                                        {{ $pesos((float) $compra->{$prefijo . $combustible}) }}</td>
                                 @endforeach
-                                <td class="num compra-calc">{{ number_format($compra->costoUnitario($combustible), 2, ',', '.') }}</td>
+                                <td class="num compra-calc">
+                                    {{ number_format($compra->costoUnitario($combustible), 2, ',', '.') }}</td>
                             @endforeach
-                            <td class="num compra-calc compra-costo compra-inicio-total">{{ $pesos((float) $compra->vr_total_fra) }}</td>
+                            <td class="num compra-calc compra-costo compra-inicio-total">
+                                {{ $pesos((float) $compra->vr_total_fra) }}</td>
                             <td class="num compra-calc">{{ $galones((float) $compra->total) }}</td>
                             <td class="text-center text-nowrap d-print-none">
-                                <a href="{{ route('compras.edit', $compra) }}" class="btn btn-sm btn-outline-primary">Editar</a>
+                                <a href="{{ route('compras.edit', $compra) }}"
+                                    class="btn btn-sm btn-outline-primary">Editar</a>
                                 <form method="POST" action="{{ route('compras.destroy', $compra) }}" class="d-inline"
                                     onsubmit="return confirm('¿Eliminar la compra {{ $compra->factura }}? El inventario se recalcula sin ella.');">
                                     @csrf
@@ -186,7 +259,8 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="24" class="text-center text-muted py-3">No hay compras en el rango seleccionado.</td>
+                            <td colspan="24" class="text-center text-muted py-3">No hay compras en el rango seleccionado.
+                            </td>
                         </tr>
                     @endforelse
                 </tbody>
@@ -194,18 +268,63 @@
                     <tr class="table-secondary fw-bold">
                         <td colspan="3" class="text-end">TOTALES</td>
                         @foreach (['gasolina', 'acpm'] as $combustible)
-                            <td class="num compra-inicio-{{ $combustible }}">{{ $galones((float) $comprasRegistradas->sum($combustible)) }}</td>
+                            <td class="num compra-inicio-{{ $combustible }}">
+                                {{ $galones((float) $comprasRegistradas->sum($combustible)) }}</td>
                             @foreach ($columnasValor as $prefijo)
-                                <td class="num">{{ $pesos((float) $comprasRegistradas->sum($prefijo.$combustible)) }}</td>
+                                <td class="num">{{ $pesos((float) $comprasRegistradas->sum($prefijo . $combustible)) }}
+                                </td>
                             @endforeach
                             <td></td>
                         @endforeach
-                        <td class="num compra-inicio-total">{{ $pesos((float) $comprasRegistradas->sum('vr_total_fra')) }}</td>
+                        <td class="num compra-inicio-total">{{ $pesos((float) $comprasRegistradas->sum('vr_total_fra')) }}
+                        </td>
                         <td class="num">{{ $galones((float) $comprasRegistradas->sum('total')) }}</td>
                         <td class="d-print-none"></td>
                     </tr>
                 </tfoot>
             </table>
+
+            @foreach (['gasolina' => 'GASOLINA', 'acpm' => 'ACPM'] as $combustible => $nombre)
+                <table class="compras-impresion-combustible {{ $loop->first ? 'compras-impresion-primera' : '' }}">
+                    <thead>
+                        <tr>
+                            <th colspan="10">COMPRAS DE {{ $nombre }}</th>
+                        </tr>
+                        <tr>
+                            <th>FECHA</th>
+                            <th>No. FC</th>
+                            <th>GALONES</th>
+                            <th>BASE 19%</th>
+                            <th>BASE 5%</th>
+                            <th>IVA</th>
+                            <th>COSTO PRODUCTO</th>
+                            <th>SOBRETASA</th>
+                            <th>SOLDICOM</th>
+                            <th>COSTO</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse ($comprasRegistradas as $compra)
+                            <tr>
+                                <td>{{ $compra->fecha->format('d/m/Y') }}</td>
+                                <td>{{ $compra->factura }}</td>
+                                <td class="text-end">{{ $galones((float) $compra->{$combustible}) }}</td>
+                                <td class="text-end">{{ $pesos((float) $compra->{'base19_' . $combustible}) }}</td>
+                                <td class="text-end">{{ $pesos((float) $compra->{'base5_' . $combustible}) }}</td>
+                                <td class="text-end">{{ $pesos((float) $compra->{'iva_' . $combustible}) }}</td>
+                                <td class="text-end">{{ $pesos((float) $compra->{'costo_producto_' . $combustible}) }}</td>
+                                <td class="text-end">{{ $pesos((float) $compra->{'sobretasa_' . $combustible}) }}</td>
+                                <td class="text-end">{{ $pesos((float) $compra->{'soldicom_' . $combustible}) }}</td>
+                                <td class="text-end">{{ $pesos((float) $compra->{'distribucion_' . $combustible}) }}</td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="10">No hay compras de {{ strtolower($nombre) }} en el rango.</td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            @endforeach
         </div>
     </x-erp-card>
 
@@ -217,13 +336,22 @@
             const IVA_REDUCIDO = {{ \App\Models\Compra::TARIFA_IVA_REDUCIDA }};
             const COMBUSTIBLES = ['gasolina', 'acpm'];
             // Índice libre para las filas nuevas (tras un error se recargan las filas con sus índices).
-            let siguiente = Math.max(-1, ...[...tbody.querySelectorAll('tr')].map(fila => Number(fila.dataset.index) || 0)) + 1;
+            let siguiente = Math.max(-1, ...[...tbody.querySelectorAll('tr')].map(fila => Number(fila.dataset
+                .index) || 0)) + 1;
 
             // Formato es-CO: el punto separa miles y la coma los decimales.
-            const leer = (valor) => Number(String(valor ?? '').trim().replace(/\s+/g, '').replace(/\./g, '').replace(/,/g, '.')) || 0;
-            const pesos = new Intl.NumberFormat('es-CO', { maximumFractionDigits: 0 });
-            const unitario = new Intl.NumberFormat('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-            const galones = new Intl.NumberFormat('es-CO', { maximumFractionDigits: 3 });
+            const leer = (valor) => Number(String(valor ?? '').trim().replace(/\s+/g, '').replace(/\./g, '')
+                .replace(/,/g, '.')) || 0;
+            const pesos = new Intl.NumberFormat('es-CO', {
+                maximumFractionDigits: 0
+            });
+            const unitario = new Intl.NumberFormat('es-CO', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+            const galones = new Intl.NumberFormat('es-CO', {
+                maximumFractionDigits: 3
+            });
 
             function valor(fila, campo) {
                 return leer(fila.querySelector(`[data-campo="${campo}"]`)?.value);
@@ -236,11 +364,15 @@
 
             // Fórmulas de la plantilla: liquidación IVA, costo y costo unitario.
             function liquidarFila(fila) {
-                const resultado = { vr_total_fra: 0, total: 0 };
+                const resultado = {
+                    vr_total_fra: 0,
+                    total: 0
+                };
 
                 for (const c of COMBUSTIBLES) {
                     const iva = valor(fila, `base19_${c}`) * IVA_GENERAL + valor(fila, `base5_${c}`) * IVA_REDUCIDO;
-                    const costo = iva + valor(fila, `costo_producto_${c}`) + valor(fila, `sobretasa_${c}`) + valor(fila, `soldicom_${c}`);
+                    const costo = iva + valor(fila, `costo_producto_${c}`) + valor(fila, `sobretasa_${c}`) + valor(
+                        fila, `soldicom_${c}`);
                     const gal = valor(fila, c);
 
                     resultado[`iva_${c}`] = iva;
@@ -268,7 +400,8 @@
 
                     for (const c of COMBUSTIBLES) {
                         sumar(c, valor(fila, c));
-                        for (const campo of ['base19', 'base5', 'costo_producto', 'sobretasa', 'soldicom']) {
+                        for (const campo of ['base19', 'base5', 'costo_producto', 'sobretasa',
+                            'soldicom']) {
                             sumar(`${campo}_${c}`, valor(fila, `${campo}_${c}`));
                         }
                         sumar(`iva_${c}`, resultado[`iva_${c}`]);
@@ -301,7 +434,8 @@
 
                 const filas = tbody.querySelectorAll('tr');
                 if (filas.length === 1) {
-                    filas[0].querySelectorAll('input:not([type="date"]), select').forEach(campo => campo.value = '');
+                    filas[0].querySelectorAll('input:not([type="date"]), select').forEach(campo => campo
+                        .value = '');
                 } else {
                     evento.target.closest('tr').remove();
                 }

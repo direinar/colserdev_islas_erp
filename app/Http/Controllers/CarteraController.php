@@ -39,6 +39,7 @@ class CarteraController extends Controller
 
         // Recaudos por administración sin CLIENTE no llegan a ninguna cartera: se avisan para corregirlos en la planilla.
         $planillasRecaudoSinCliente = Turno::query()
+            ->noAnulados()
             ->whereHas('recaudosAdmin', fn ($q) => $q->whereNull('responsable_id')->where('valor', '>', 0))
             ->orderBy('numero_turno')
             ->get(['id', 'numero_turno', 'fecha']);

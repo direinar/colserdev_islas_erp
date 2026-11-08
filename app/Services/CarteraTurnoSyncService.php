@@ -139,6 +139,16 @@ class CarteraTurnoSyncService
             ->each(fn ($customerId) => $this->saldos->recalcular((int) $customerId));
     }
 
+    public function eliminarDeCartera(Turno $turno): void
+    {
+        $movimientos = CarteraMovimiento::query()->where('turno_id', $turno->id)->get();
+        $clientes = $movimientos->pluck('customer_id')->filter()->unique();
+
+        CarteraMovimiento::query()->where('turno_id', $turno->id)->delete();
+
+        $clientes->each(fn ($customerId) => $this->saldos->recalcular((int) $customerId));
+    }
+
     /**
      * Movimiento ya registrado del mismo origen y cliente (y factura, en los
      * créditos) que todavía no se asignó a un renglón de la planilla.

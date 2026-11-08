@@ -1,13 +1,13 @@
 @extends('layouts.app')
 
-@section('title', 'Informe Margen Mayorista')
+@section('title', 'Informe de Compras y Margen Mayorista')
 
 @php
     use Illuminate\Support\Carbon;
 
-    $pesos = fn (float $valor): string => number_format($valor, 0, ',', '.');
-    $galones = fn (float $valor): string => number_format($valor, fmod(round($valor, 3), 1.0) == 0.0 ? 0 : 2, ',', '.');
-    $porcentaje = fn (float $valor): string => rtrim(rtrim(number_format($valor, 4, ',', '.'), '0'), ',');
+    $pesos = fn(float $valor): string => number_format($valor, 0, ',', '.');
+    $galones = fn(float $valor): string => number_format($valor, fmod(round($valor, 3), 1.0) == 0.0 ? 0 : 2, ',', '.');
+    $porcentaje = fn(float $valor): string => rtrim(rtrim(number_format($valor, 4, ',', '.'), '0'), ',');
     $rango = ['desde' => $desde, 'hasta' => $hasta];
 @endphp
 
@@ -41,7 +41,9 @@
             font-size: .9rem;
         }
 
-        .mm-tabla td.num { text-align: right; }
+        .mm-tabla td.num {
+            text-align: right;
+        }
 
         .mm-tabla tfoot td {
             background: #fff2cc;
@@ -60,12 +62,13 @@
         }
 
         @media print {
+
             nav,
             .navbar {
                 display: none !important;
             }
 
-            body > .container-fluid {
+            body>.container-fluid {
                 padding: 0 !important;
             }
 
@@ -84,8 +87,7 @@
         }
     </style>
 
-    <x-page-header title="Informe margen mayorista" icon="percent"
-        :subtitle="'Desde '.Carbon::parse($desde)->format('d/m/Y').' — hasta '.Carbon::parse($hasta)->format('d/m/Y')">
+    <x-page-header title="Informe de compras y margen mayorista" icon="percent" :subtitle="'Desde ' . Carbon::parse($desde)->format('d/m/Y') . ' — hasta ' . Carbon::parse($hasta)->format('d/m/Y')">
         @include('informes.partials.filtro-rango', [
             'ruta' => 'informes.margen-mayorista.index',
             'rutaExportar' => 'informes.margen-mayorista.exportar',
@@ -134,7 +136,8 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="6" class="text-center text-muted py-3">No hay compras de combustible en el periodo.</td>
+                                    <td colspan="6" class="text-center text-muted py-3">No hay compras de combustible en
+                                        el periodo.</td>
                                 </tr>
                             @endforelse
                         </tbody>
@@ -191,9 +194,11 @@
 
             @if (auth()->user()->isAdministrador())
                 <details class="card d-print-none">
-                    <summary class="card-body py-2 fw-semibold small" style="cursor:pointer;">Información del convenio de mayorista</summary>
+                    <summary class="card-body py-2 fw-semibold small" style="cursor:pointer;">Información del convenio de
+                        mayorista</summary>
                     <div class="card-body pt-0">
-                        <p class="small text-muted mb-2">Cada factura se liquida con los parámetros vigentes en su fecha.</p>
+                        <p class="small text-muted mb-2">Cada factura se liquida con los parámetros vigentes en su fecha.
+                        </p>
                         <table class="table table-sm mb-2">
                             <thead>
                                 <tr>
@@ -207,7 +212,8 @@
                                     <tr>
                                         <td>{{ $parametro->vigente_desde->format('d/m/Y') }}</td>
                                         <td class="text-end">{{ $porcentaje((float) $parametro->porcentaje) }}</td>
-                                        <td class="text-end">{{ number_format((float) $parametro->margen, 2, ',', '.') }}</td>
+                                        <td class="text-end">{{ number_format((float) $parametro->margen, 2, ',', '.') }}
+                                        </td>
                                     </tr>
                                 @endforeach
                             </tbody>
@@ -219,17 +225,20 @@
                             <input type="hidden" name="hasta" value="{{ $hasta }}">
                             <div>
                                 <label for="campo-vigente_desde" class="form-label small mb-1">Vigente desde</label>
-                                <input id="campo-vigente_desde" type="date" name="vigente_desde" class="form-control form-control-sm" required>
+                                <input id="campo-vigente_desde" type="date" name="vigente_desde"
+                                    class="form-control form-control-sm" required>
                             </div>
                             <div>
                                 <label for="campo-porcentaje" class="form-label small mb-1">% mayorista</label>
-                                <input id="campo-porcentaje" type="text" name="porcentaje" class="form-control form-control-sm text-end" style="width:6rem;"
-                                    inputmode="decimal" placeholder="0,3" required>
+                                <input id="campo-porcentaje" type="text" name="porcentaje"
+                                    class="form-control form-control-sm text-end" style="width:6rem;" inputmode="decimal"
+                                    placeholder="0,3" required>
                             </div>
                             <div>
                                 <label for="campo-margen" class="form-label small mb-1">Margen (coma decimal)</label>
-                                <input id="campo-margen" type="text" name="margen" class="form-control form-control-sm text-end" style="width:8rem;"
-                                    inputmode="decimal" placeholder="585,71" required>
+                                <input id="campo-margen" type="text" name="margen"
+                                    class="form-control form-control-sm text-end" style="width:8rem;" inputmode="decimal"
+                                    placeholder="585,71" required>
                             </div>
                             <button type="submit" class="btn btn-outline-primary btn-sm">Guardar</button>
                         </form>

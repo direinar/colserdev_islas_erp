@@ -94,7 +94,8 @@ class DashboardService
     private function planillas(User $usuario): Builder
     {
         return Turno::query()
-            ->when(! $usuario->isAdministrador() && ! $usuario->isJefePatios(), fn (Builder $consulta) => $consulta->where('user_id', $usuario->id));
+            ->noAnulados()
+            ->when(! $usuario->isAdministrador() && ! $usuario->isJefePatios() && ! $usuario->isIslero(), fn (Builder $consulta) => $consulta->where('user_id', $usuario->id));
     }
 
     private function agrupacion(string $desde, string $hasta): string

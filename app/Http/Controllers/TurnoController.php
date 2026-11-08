@@ -8,6 +8,7 @@ use App\Models\Customer;
 use App\Models\Lubricant;
 use App\Models\Turno;
 use App\Services\BorradorPlanillaTurnoService;
+use App\Services\CarteraTurnoSyncService;
 use App\Services\GuardarPlanillaTurnoService;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\Exceptions\HttpResponseException;
@@ -155,6 +156,7 @@ class TurnoController extends Controller
     public function pendientes(Request $request): View
     {
         $turnos = Turno::query()
+            ->noAnulados()
             ->where('revisado', false)
             ->orderByDesc('fecha')
             ->orderByDesc('numero_turno')
@@ -165,6 +167,7 @@ class TurnoController extends Controller
 
     public function revisar(Request $request, Turno $turno): RedirectResponse
     {
+        abort_if($turno->anulada, 422, 'Una planilla anulada no puede marcarse como revisada.');
         // No se revisa una planilla con SOBRANTE o FALTANTE sin trasladar.
         if ($turno->sobrante_pendiente === null) {
             return back()->withErrors(['revisar' => 'Turno #'.$turno->numero_turno.': abra la planilla y guárdela antes de marcarla como revisada, para verificar el sobrante o faltante.']);
@@ -199,6 +202,24 @@ class TurnoController extends Controller
 
         return redirect()->route('turnos.create', ['turno_busqueda' => $turno->numero_turno])
             ->with('success', 'Turno #'.$turno->numero_turno.' devuelto a PENDIENTE DE REVISIÓN. Ya se puede corregir.');
+    }
+
+    public function anular(Request $request, Turno $turno, CarteraTurnoSyncService $carteraSync): RedirectResponse
+    {
+        $request->validate([
+            'motivo_anulacion' => ['required', 'string', 'max:500'],
+        ]);
+
+        $turno->update([
+            'anulada' => true,
+            'anulada_por' => $request->user()->name,
+            'anulada_at' => now(),
+            'motivo_anulacion' => trim((string) $request->input('motivo_anulacion')),
+        ]);
+        $carteraSync->eliminarDeCartera($turno);
+
+        return redirect()->route('turnos.create', ['turno_busqueda' => $turno->numero_turno])
+            ->with('success', 'Turno #'.$turno->numero_turno.' anulado correctamente.');
     }
 
     /**
@@ -245,6 +266,11 @@ class TurnoController extends Controller
         // administrador): primero debe volverla a PENDIENTE DE REVISIÓN. Pasa cuando otro
         // usuario la revisó mientras esta persona la tenía abierta: se vuelve a la planilla
         // con el aviso (en vez de una página 403) y lo digitado queda en el borrador del navegador.
+        if ($existente->anulada) {
+            $this->rechazarGuardado($request, $existente,
+                'Sus cambios NO se guardaron: esta planilla está ANULADA y no puede modificarse.');
+        }
+
         if ($existente->revisado) {
             $this->rechazarGuardado($request, $existente,
                 'Sus cambios NO se guardaron: esta planilla la marcó como REVISADA '.$existente->revisado_por

@@ -17,6 +17,7 @@ class CarteraSaldoService
     public function saldoAnterior(int $customerId, string $fecha): float
     {
         $totales = CarteraMovimiento::query()
+            ->noAnulados()
             ->where('customer_id', $customerId)
             ->whereDate('fecha', '<', $fecha)
             ->selectRaw('COALESCE(SUM(vr_neto_cargo), 0) as cargos, COALESCE(SUM(abonos), 0) as abonos')
@@ -39,6 +40,7 @@ class CarteraSaldoService
 
         $movimientos = $this->ordenar(
             CarteraMovimiento::query()
+                ->noAnulados()
                 ->with('turno')
                 ->where('customer_id', $customerId)
                 ->whereDate('fecha', '>=', $desde)
@@ -83,7 +85,7 @@ class CarteraSaldoService
         $saldo = 0.0;
 
         $movimientos = $this->ordenar(
-            CarteraMovimiento::query()->where('customer_id', $customerId)->get()
+            CarteraMovimiento::query()->noAnulados()->where('customer_id', $customerId)->get()
         );
 
         foreach ($movimientos as $movimiento) {

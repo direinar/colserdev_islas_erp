@@ -32,6 +32,7 @@ class ComprobanteContableComprasExcelService
         $hoja->getStyle('A1')->getFont()->setBold(true)->setSize(14)->getColor()->setRGB('FF0000');
 
         $hoja->fromArray(['CUENTA', 'CONCEPTO', 'TERCERO', 'NIT', 'DEBITO', 'CREDITO'], null, 'A4');
+        $hoja->freezePane('A5');
         $encabezado = $hoja->getStyle('A4:F4');
         $encabezado->getFont()->setBold(true);
         $encabezado->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);

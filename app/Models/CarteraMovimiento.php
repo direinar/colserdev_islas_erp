@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 
 class CarteraMovimiento extends Model
@@ -62,6 +63,17 @@ class CarteraMovimiento extends Model
         'debito' => 'decimal:0',
         'credito' => 'decimal:0',
     ];
+
+    /**
+     * Mantiene saldos manuales y elimina del estado de cuenta el efecto de turnos anulados.
+     */
+    public function scopeNoAnulados(Builder $query): void
+    {
+        $query->where(function (Builder $movimientos): void {
+            $movimientos->whereNull('turno_id')
+                ->orWhereDoesntHave('turno', fn (Builder $turno) => $turno->where('anulada', true));
+        });
+    }
 
     public function customer()
     {

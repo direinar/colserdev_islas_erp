@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\AforoTanque;
+use App\Models\IngresoTanque;
 use App\Models\TanqueSaldoInicial;
 use App\Services\ControlTanquesExcelService;
 use App\Services\ControlTanquesService;
@@ -63,6 +64,9 @@ class ControlTanqueController extends Controller
             'aforos.*.tabla_corriente' => ['nullable', 'string', 'max:20'],
             'aforos.*.vara_acpm' => ['nullable', 'string', 'max:20'],
             'aforos.*.tabla_acpm' => ['nullable', 'string', 'max:20'],
+            'ingresos' => ['array'],
+            'ingresos.*.corriente' => ['nullable', 'string', 'max:20'],
+            'ingresos.*.acpm' => ['nullable', 'string', 'max:20'],
         ]);
 
         DB::transaction(function () use ($request): void {
@@ -91,6 +95,30 @@ class ControlTanqueController extends Controller
                 }
 
                 $aforo->fill($valores->all() + ['user_id' => $request->user()->id])->save();
+            }
+
+            foreach ($request->input('ingresos', []) as $fecha => $row) {
+                if (! $this->esFecha((string) $fecha)) {
+                    continue;
+                }
+
+                $corriente = trim((string) ($row['corriente'] ?? ''));
+                $acpm = trim((string) ($row['acpm'] ?? ''));
+
+                if ($corriente === '' && $acpm === '') {
+                    IngresoTanque::query()->whereDate('fecha', $fecha)->delete();
+
+                    continue;
+                }
+
+                IngresoTanque::query()->updateOrCreate(
+                    ['fecha' => $fecha],
+                    [
+                        'ingreso_corriente' => $corriente === '' ? 0 : NumberParser::quantity($corriente),
+                        'ingreso_acpm' => $acpm === '' ? 0 : NumberParser::quantity($acpm),
+                        'user_id' => $request->user()->id,
+                    ],
+                );
             }
         });
 

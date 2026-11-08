@@ -17,7 +17,7 @@ use PhpOffice\PhpSpreadsheet\Style\Fill;
 class ControlTanquesExcelService
 {
     /** El negativo (en FALTANTE/SOBRANTE, el faltante) sale en rojo. */
-    private const FORMATO_GALONES = '#,##0.00;[Red]-#,##0.00';
+    private const FORMATO_GALONES = '#,##0;[Red]-#,##0';
 
     /**
      * @var array<string, string>
@@ -55,6 +55,7 @@ class ControlTanquesExcelService
             'INGRESO', 'VENTA', 'SALDO', 'AFORO S/VARA', 'SALDO FINAL S/TABLA AFORO', 'FALTANTE/SOBRANTE',
             'VR. VENTA DIARIA', 'VR. VENTA ACUMULADA',
         ], null, 'A5');
+        $hoja->freezePane('A6');
 
         $hoja->getStyle('A1')->getFont()->getColor()->setRGB('FF0000');
         $encabezado = $hoja->getStyle('A4:O5');

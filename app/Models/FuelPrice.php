@@ -49,7 +49,7 @@ class FuelPrice extends Model
             ->where('turno_desde', '>', $this->turno_desde)
             ->min('turno_desde');
 
-        return Turno::query()
+        return Turno::query()->noAnulados()
             ->where('numero_turno', '>=', $this->turno_desde)
             ->when($siguienteCambio, fn ($turnos) => $turnos->where('numero_turno', '<', $siguienteCambio))
             ->exists();

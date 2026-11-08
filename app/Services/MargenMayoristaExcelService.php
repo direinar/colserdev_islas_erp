@@ -23,11 +23,12 @@ class MargenMayoristaExcelService
         $hoja = $libro->getActiveSheet();
         $hoja->setTitle('Margen mayorista');
 
-        $hoja->setCellValue('A1', 'INFORME MARGEN MAYORISTA');
+        $hoja->setCellValue('A1', 'INFORME DE COMPRAS Y MARGEN MAYORISTA');
         $hoja->setCellValue('A2', 'DESDE '.Carbon::parse($desde)->format('d/m/Y').'  HASTA '.Carbon::parse($hasta)->format('d/m/Y'));
         $hoja->getStyle('A1')->getFont()->setBold(true)->setSize(14)->getColor()->setRGB('FF0000');
 
         $hoja->fromArray(['FECHA', 'No. FACTURA', 'VR. FACTURAS', 'GALONES GASOLINA', 'GALONES ACPM', 'GALONES'], null, 'A4');
+        $hoja->freezePane('A5');
         $hoja->getStyle('A4:F4')->getFont()->setBold(true);
         $hoja->getStyle('A4:F4')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('DDEBF7');
 

@@ -21,12 +21,13 @@
     }
 
     @media print {
+
         nav,
         .navbar {
             display: none !important;
         }
 
-        body > .container-fluid {
+        body>.container-fluid {
             padding: 0 !important;
         }
 
@@ -83,7 +84,8 @@
                         <td class="text-center">
                             @if ($row['numero_turno'])
                                 <a href="{{ route('turnos.create', ['turno_busqueda' => $row['numero_turno']]) }}"
-                                    class="text-decoration-none" title="Abrir planilla del turno">{{ $row['numero_turno'] }}</a>
+                                    class="text-decoration-none"
+                                    title="Abrir planilla del turno">{{ $row['numero_turno'] }}</a>
                             @endif
                         </td>
                         <td class="text-center">
@@ -91,7 +93,8 @@
                                 {{ \Illuminate\Support\Carbon::parse($row['fecha_compra'])->format('d/m/Y') }}
                             @elseif ($row['fecha_compra'])
                                 <a href="{{ route($compraRoute, ['desde' => $row['fecha_compra'], 'hasta' => $row['fecha_compra']]) }}#compra-{{ $row['compra_id'] }}"
-                                    class="text-decoration-none" title="Consultar la compra">{{ \Illuminate\Support\Carbon::parse($row['fecha_compra'])->format('d/m/Y') }}</a>
+                                    class="text-decoration-none"
+                                    title="Consultar la compra">{{ \Illuminate\Support\Carbon::parse($row['fecha_compra'])->format('d/m/Y') }}</a>
                             @elseif ($row['fecha_venta'])
                                 {{ \Illuminate\Support\Carbon::parse($row['fecha_venta'])->format('d/m/Y') }}
                             @endif
@@ -100,19 +103,27 @@
                         @if ($mostrarReferencia)
                             <td>{{ $row['referencia'] }}</td>
                         @endif
-                        <td class="text-end">{{ $row['entradas'] > 0 ? number_format($row['entradas'], 0, ',', '.') : '' }}</td>
-                        <td class="text-end">{{ $row['salidas'] > 0 ? number_format($row['salidas'], 2, ',', '.') : '' }}</td>
-                        <td class="text-end">{{ number_format($row['saldo_unidades'], 2, ',', '.') }}</td>
-                        <td class="text-end">{{ $row['valor_entradas'] > 0 ? number_format($row['valor_entradas'], 0, ',', '.') : '' }}</td>
-                        <td class="text-end">{{ $row['salidas'] > 0 ? number_format($row['valor_salidas'], 0, ',', '.') : '' }}</td>
+                        <td class="text-end">
+                            {{ $row['entradas'] > 0 ? number_format($row['entradas'], 0, ',', '.') : '' }}</td>
+                        <td class="text-end">
+                            {{ $row['salidas'] > 0 ? number_format($row['salidas'], 0, ',', '.') : '' }}</td>
+                        <td class="text-end">{{ number_format($row['saldo_unidades'], 0, ',', '.') }}</td>
+                        <td class="text-end">
+                            {{ $row['valor_entradas'] > 0 ? number_format($row['valor_entradas'], 0, ',', '.') : '' }}
+                        </td>
+                        <td class="text-end">
+                            {{ $row['salidas'] > 0 ? number_format($row['valor_salidas'], 0, ',', '.') : '' }}</td>
                         <td class="text-end">{{ number_format($row['valor_saldo'], 0, ',', '.') }}</td>
                         <td class="text-end">{{ number_format($row['promedio'], 0, ',', '.') }}</td>
-                        <td class="text-end">{{ $row['tipo'] === 'venta' ? number_format($row['valor_venta'], 0, ',', '.') : '' }}</td>
-                        <td class="text-end">{{ $row['precio'] !== null ? number_format($row['precio'], 0, ',', '.') : '' }}</td>
+                        <td class="text-end">
+                            {{ $row['tipo'] === 'venta' ? number_format($row['valor_venta'], 0, ',', '.') : '' }}</td>
+                        <td class="text-end">
+                            {{ $row['precio'] !== null ? number_format($row['precio'], 0, ',', '.') : '' }}</td>
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="{{ $columnas }}" class="text-center text-muted py-3">No hay compras ni ventas registradas.</td>
+                        <td colspan="{{ $columnas }}" class="text-center text-muted py-3">No hay compras ni ventas
+                            registradas.</td>
                     </tr>
                 @endforelse
             </tbody>
@@ -121,8 +132,8 @@
                 <tr class="table-secondary fw-bold">
                     <td colspan="{{ $mostrarReferencia ? 4 : 3 }}" class="text-end">TOTALES</td>
                     <td class="text-end">{{ number_format($kardex['totales']['entradas'], 0, ',', '.') }}</td>
-                    <td class="text-end">{{ number_format($kardex['totales']['salidas'], 2, ',', '.') }}</td>
-                    <td class="text-end">{{ number_format($kardex['totales']['saldo_unidades'], 2, ',', '.') }}</td>
+                    <td class="text-end">{{ number_format($kardex['totales']['salidas'], 0, ',', '.') }}</td>
+                    <td class="text-end">{{ number_format($kardex['totales']['saldo_unidades'], 0, ',', '.') }}</td>
                     <td class="text-end">{{ number_format($kardex['totales']['valor_entradas'], 0, ',', '.') }}</td>
                     <td class="text-end">{{ number_format($kardex['totales']['valor_salidas'], 0, ',', '.') }}</td>
                     <td class="text-end">{{ number_format($kardex['totales']['valor_saldo'], 0, ',', '.') }}</td>

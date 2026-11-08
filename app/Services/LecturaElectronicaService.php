@@ -61,7 +61,7 @@ class LecturaElectronicaService
             $precios,
         );
 
-        $turnos = Turno::query()->whereDate('fecha', $fecha)->get();
+        $turnos = Turno::query()->noAnulados()->whereDate('fecha', $fecha)->get();
         $iapropiada = [
             'corriente' => ['galones' => (float) $turnos->sum('tirillas_galones_corriente'), 'valor' => (float) $turnos->sum('tirillas_valor_corriente')],
             'acpm' => ['galones' => (float) $turnos->sum('tirillas_galones_acpm'), 'valor' => (float) $turnos->sum('tirillas_valor_acpm')],
@@ -167,7 +167,7 @@ class LecturaElectronicaService
      */
     private function precios(string $fecha): array
     {
-        $ultimoTurno = Turno::query()->whereDate('fecha', $fecha)->orderByDesc('numero_turno')->first();
+        $ultimoTurno = Turno::query()->noAnulados()->whereDate('fecha', $fecha)->orderByDesc('numero_turno')->first();
         $siguiente = (int) Turno::query()->max('numero_turno') + 1;
 
         return [

@@ -112,11 +112,11 @@ test('el comprobante contable de ventas del periodo cuadra débitos y créditos'
     expect($lineas)->toBe([
         // Consignaciones y pagos electrónicos (1.410.000) menos los recaudos y anticipos (70.000): su
         // asiento está en el comprobante de Recaudos de cartera, por eso la cartera solo lleva ventas a crédito.
-        ['11050501', 'CONSIGNACIONES, TC, QR Y TRANSF.', '', '', 1340000.0, 0.0],
-        ['413601', 'DESCUENTOS EN VENTAS', '', '', 30000.0, 0.0],
-        ['519535', 'GASTOS DE GASOLINA EDS', '', '', 15000.0, 0.0],
-        ['11050501', 'VARIOS', '', '', 68000.0, 0.0],
-        ['11050501', 'FALT/SOBRANT/DIF. MENORES', '', '', 55000.0, 0.0],
+        ['11050501', 'CONSIGNACIONES, TC, QR Y TRANSF.', 'GENERAL', '', 1340000.0, 0.0],
+        ['413601', 'DESCUENTOS EN VENTAS', 'GENERAL', '', 30000.0, 0.0],
+        ['519535', 'GASTOS DE GASOLINA EDS', 'BYH AGROCOMERCIAL SAS', '830.104.399', 15000.0, 0.0],
+        ['11050501', 'VARIOS', 'GENERAL', '', 68000.0, 0.0],
+        ['11050501', 'FALTANTES/SOBRANTES', 'GENERAL', '', 55000.0, 0.0],
         ['13050501', 'CARTERA CLIENTES', 'CONSORCIO LIDER', '900111222', 250000.0, 0.0],
         ['41350701', 'VENTAS COMBUSTIBLE', '', '', 0.0, 1726000.0],
         // Costo al promedio de las salidas según cortes: 70 gal gasolina x 10.000 + 60 gal ACPM x 8.000.

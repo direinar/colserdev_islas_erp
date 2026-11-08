@@ -30,6 +30,7 @@ class RecaudosCarteraExcelService
         $hoja->getStyle('A1')->getFont()->setBold(true)->setSize(13)->getColor()->setRGB('FF0000');
 
         $hoja->fromArray(['PLANILLA', 'FECHA', 'CLIENTE', 'BANCO', 'CONCEPTO', 'VALOR'], null, 'A4');
+        $hoja->freezePane('A5');
         $hoja->getStyle('A4:F4')->getFont()->setBold(true);
         $hoja->getStyle('A4:F4')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('DDEBF7');
 

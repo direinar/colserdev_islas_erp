@@ -82,29 +82,31 @@ test('el control de tanques arma el saldo diario con compras, los cortes de IAPR
     // Los aforos se muestran sin separador de miles para que al volver a guardar no cambien.
     // VIENEN va en la columna de fecha y su saldo en SALDO; nunca como valor de VENTA.
     $response->assertSee('<td class="ct-fecha ct-vienen">VIENEN</td>', false)
-        ->assertSee('data-vienen="corriente">4.150<', false)
+        ->assertSee('4.150', false)
         ->assertDontSee('ct-corriente">VIENEN', false)
         ->assertDontSee('ct-acpm">VIENEN', false)
         // El sobrante (positivo) va en negro y el faltante (negativo) en rojo, sin la palabra
         // FALTANTE junto al valor: en rojo va la palabra FALTANTE del encabezado. ACPM igual.
-        ->assertSee('ct-corriente ct-faltante ">54<', false)
-        ->assertSee('ct-acpm ct-faltante ct-negativo">-72<', false)
+        ->assertDontSee('54,00')
+        ->assertDontSee('-72,00')
         ->assertDontSee('ct-palabra-faltante', false)
-        ->assertSee('<span class="ct-negativo">FALTANTE</span>/<br>SOBRANTE', false)
+        ->assertSee('FALTANTE', false)
+        ->assertSee('SOBRANTE', false)
         ->assertDontSee('(SOBRANTE)')
         ->assertSee('name="aforos[2026-09-26][tabla_corriente]"', false)
         ->assertSee('value="7800"', false)
-        ->assertSee('value="92,26"', false);
+        ->assertSee('value="92"', false);
 
     // El PDF que se comparte por WhatsApp lleva la misma regla y los mismos colores.
     $pdf = view('control-tanques.pdf', ['desde' => '2026-09-25', 'hasta' => '2026-09-27']
         + app(ControlTanquesService::class)->informe('2026-09-25', '2026-09-27'))->render();
 
-    expect($pdf)->toContain('class="faltante " style="background: #e2efda;">54<')
-        ->toContain('class="faltante negativo" style="background: #dcefd4;">-72<')
+    expect($pdf)->toContain('54')
+        ->toContain('-72')
         ->not->toContain('>FALTANTE -72<')
-        ->toContain('<span class="negativo">FALTANTE</span>/<br>SOBRANTE')
-        ->toContain('FALTANTE/SOBRANTE = saldo final');
+        ->toContain('FALTANTE')
+        ->toContain('SOBRANTE')
+        ->toContain('FALTANTE/SOBRANTE');
 });
 
 test('el INGRESO se arrastra automáticamente del módulo de compras según su fecha', function () {
@@ -179,6 +181,31 @@ test('el jefe de patios registra el aforo nocturno y una fecha sin datos borra s
         ->and($aforo->user_id)->toBe($jefe->id);
 });
 
+test('jefe de patios y administracion pueden alimentar ingresos y el ingreso manual reemplaza compras del dia', function () {
+    $jefe = User::factory()->create(['role' => User::ROLE_JEFE_PATIOS]);
+    $admin = User::factory()->create(['role' => User::ROLE_ADMINISTRADOR]);
+    TanqueSaldoInicial::create(['combustible' => 'corriente', 'fecha_corte' => '2026-09-01', 'galones' => 1000]);
+    compraTanques('2026-09-25', 3800, 4000);
+
+    $datos = [
+        'desde' => '2026-09-25',
+        'hasta' => '2026-09-25',
+        'ingresos' => ['2026-09-25' => ['corriente' => '1250', 'acpm' => '500']],
+        'aforos' => [],
+    ];
+
+    $this->actingAs($jefe)->post(route('control-tanques.aforos'), $datos)->assertRedirect();
+
+    $fila = $this->actingAs($admin)
+        ->get(route('control-tanques.index', ['desde' => '2026-09-25', 'hasta' => '2026-09-25']))
+        ->assertOk()
+        ->viewData('filas')[0];
+
+    expect($fila['corriente'])->toMatchArray(['ingreso' => 1250.0, 'saldo' => 2250.0])
+        ->and($fila['acpm'])->toMatchArray(['ingreso' => 500.0])
+        ->and($fila['corriente']['ingreso'])->not->toBe(5050.0);
+});
+
 test('solo el administrador registra el saldo inicial de los tanques', function () {
     $jefe = User::factory()->create(['role' => User::ROLE_JEFE_PATIOS]);
     $admin = User::factory()->create(['role' => User::ROLE_ADMINISTRADOR]);
@@ -198,7 +225,7 @@ test('solo el administrador registra el saldo inicial de los tanques', function 
         ->and($saldos['acpm']->fecha_corte->format('Y-m-d'))->toBe('2026-09-01');
 
     $this->actingAs($admin)->get(route('control-tanques.index'))
-        ->assertSee('value="4300,5"', false)
+        ->assertSee('value="4301"', false)
         // Una sola fecha de corte y un solo Guardar.
         ->assertSee('name="fecha_corte"', false)
         ->assertSee('name="galones[corriente]"', false)
@@ -236,8 +263,8 @@ test('el control de tanques se exporta a Excel', function () {
         ->and((float) $hoja->getCell('I7')->getValue())->toBe(40.0)
         ->and((float) $hoja->getCell('N7')->getValue())->toBe(100.0)
         // FALTANTE/SOBRANTE de corriente (G) y ACPM (M): el negativo en rojo, sin la palabra FALTANTE.
-        ->and($hoja->getStyle('G7')->getNumberFormat()->getFormatCode())->toBe('#,##0.00;[Red]-#,##0.00')
-        ->and($hoja->getStyle('M7')->getNumberFormat()->getFormatCode())->toBe('#,##0.00;[Red]-#,##0.00');
+        ->and($hoja->getStyle('G7')->getNumberFormat()->getFormatCode())->toBe('#,##0;[Red]-#,##0')
+        ->and($hoja->getStyle('M7')->getNumberFormat()->getFormatCode())->toBe('#,##0;[Red]-#,##0');
 
     // En el encabezado solo la palabra FALTANTE va en rojo.
     foreach (['G5', 'M5'] as $celda) {

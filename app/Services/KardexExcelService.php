@@ -17,7 +17,7 @@ class KardexExcelService
 {
     private const FORMATO_PESOS = '#,##0;[Red]-#,##0';
 
-    private const FORMATO_CANTIDAD = '#,##0.00;[Red]-#,##0.00';
+    private const FORMATO_CANTIDAD = '#,##0;[Red]-#,##0';
 
     /**
      * @param  array{rows: list<array<string, mixed>>, totales: array<string, float>}  $kardex
@@ -41,6 +41,7 @@ class KardexExcelService
         ];
         $ultima = Coordinate::stringFromColumnIndex(count($encabezados));
         $hoja->fromArray($encabezados, null, 'A4');
+        $hoja->freezePane('A5');
         $estilo = $hoja->getStyle("A4:{$ultima}4");
         $estilo->getFont()->setBold(true);
         $estilo->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setWrapText(true);

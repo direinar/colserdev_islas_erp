@@ -43,6 +43,7 @@ class CarteraEstadoCuentaExcelService
 
         $filaEncabezado = 7;
         $hoja->fromArray(self::ENCABEZADOS, null, 'A'.$filaEncabezado);
+        $hoja->freezePane('A8');
         $hoja->getStyle("A{$filaEncabezado}:M{$filaEncabezado}")->getFont()->setBold(true);
         $hoja->getStyle("A{$filaEncabezado}:M{$filaEncabezado}")->getFill()
             ->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('CCCCFF');

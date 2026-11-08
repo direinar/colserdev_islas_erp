@@ -37,6 +37,7 @@ class TablaExcel
 
         $ultima = Coordinate::stringFromColumnIndex(count($encabezados));
         $hoja->fromArray($encabezados, null, 'A4');
+        $hoja->freezePane('A5');
         $hoja->getStyle("A4:{$ultima}4")->getFont()->setBold(true);
         $hoja->getStyle("A4:{$ultima}4")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('DDEBF7');
 

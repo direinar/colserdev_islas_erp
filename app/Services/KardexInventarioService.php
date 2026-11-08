@@ -182,7 +182,7 @@ class KardexInventarioService
 
         // Una salida por planilla y referencia: se suman las líneas del mismo producto en el turno.
         $salidas = TurnoLubricante::query()
-            ->whereHas('turno')
+            ->whereHas('turno', fn ($query) => $query->noAnulados())
             ->with('turno')
             ->get()
             ->groupBy(fn (TurnoLubricante $linea): string => (string) $linea->producto)
@@ -302,7 +302,7 @@ class KardexInventarioService
                 (float) $compra->{$columnaCosto},
             ));
 
-        $salidas = Turno::query()
+        $salidas = Turno::query()->noAnulados()
             ->where(fn ($query) => $query->where($columnaSalidas, '>', 0)->orWhere($columnaVenta, '>', 0))
             ->get()
             ->map(fn (Turno $turno): array => $this->movimientoVenta(

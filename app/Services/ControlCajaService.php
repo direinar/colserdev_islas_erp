@@ -19,6 +19,12 @@ use Illuminate\Support\Collection;
  */
 class ControlCajaService
 {
+    private const TERCERO_GENERAL = 'GENERAL';
+
+    private const TERCERO_GASOLINA_EDS = 'BYH AGROCOMERCIAL SAS';
+
+    private const NIT_GASOLINA_EDS = '830.104.399';
+
     /**
      * Columnas que se totalizan al pie del informe.
      */
@@ -73,6 +79,7 @@ class ControlCajaService
     private function turnos(string $desde, string $hasta): Collection
     {
         return Turno::query()
+            ->noAnulados()
             ->whereDate('fecha', '>=', $desde)
             ->whereDate('fecha', '<=', $hasta)
             ->with(['lubricantes', 'consignaciones', 'qrPagos', 'transferencias', 'gasolinaEds', 'descuentos', 'cartera.cliente', 'varios', 'recaudos', 'user'])
@@ -208,12 +215,12 @@ class ControlCajaService
             // Se restan los recaudos y anticipos por islas ($totales['recaudos'] ya es negativo):
             // su asiento (débito a caja, crédito a la cartera del cliente) está en el
             // comprobante de Recaudos de cartera y no se repite aquí.
-            $linea('consignaciones_pagos', 'CONSIGNACIONES, TC, QR Y TRANSF.', $totales['consignaciones'] + $totales['pagos_electronicos'] + $totales['recaudos'], 0),
-            $linea('descuentos_ventas', 'DESCUENTOS EN VENTAS', $totales['puntos'] + $totales['descuentos'], 0),
-            $linea('gastos_gasolina_eds', 'GASTOS DE GASOLINA EDS', $totales['gasolina_eds'], 0),
-            $linea('varios', 'VARIOS', array_sum($totales['varios']), 0),
+            $linea('consignaciones_pagos', 'CONSIGNACIONES, TC, QR Y TRANSF.', $totales['consignaciones'] + $totales['pagos_electronicos'] + $totales['recaudos'], 0, self::TERCERO_GENERAL),
+            $linea('descuentos_ventas', 'DESCUENTOS EN VENTAS', $totales['puntos'] + $totales['descuentos'], 0, self::TERCERO_GENERAL),
+            $linea('gastos_gasolina_eds', 'GASTOS DE GASOLINA EDS', $totales['gasolina_eds'], 0, self::TERCERO_GASOLINA_EDS, self::NIT_GASOLINA_EDS),
+            $linea('varios', 'VARIOS', array_sum($totales['varios']), 0, self::TERCERO_GENERAL),
             // Neto de faltantes y sobrantes: si predomina el sobrante, va al crédito.
-            $linea('faltantes_sobrantes', 'FALT/SOBRANT/DIF. MENORES', max($faltantesSobrantes, 0), max(-$faltantesSobrantes, 0)),
+            $linea('faltantes_sobrantes', 'FALTANTES/SOBRANTES', max($faltantesSobrantes, 0), max(-$faltantesSobrantes, 0), self::TERCERO_GENERAL),
             ...$this->carteraPorCliente($turnos, $linea),
             $linea('ventas_combustible', 'VENTAS COMBUSTIBLE', 0, $totales['gasolina'] + $totales['acpm']),
             $linea('costo_ventas_combustible', 'COSTO DE VENTAS DE COMBUSTIBLE', $costoCombustible, 0),
@@ -223,6 +230,8 @@ class ControlCajaService
             $linea('inventario_canastilla', 'INVENTARIOS DE CANASTILLA', 0, $costoCanastilla),
             $linea('iva_por_pagar', 'IVA POR PAGAR', 0, $totales['iva']),
         ];
+
+        $lineas = array_values(array_filter($lineas, fn (array $linea): bool => $linea['debito'] != 0 || $linea['credito'] != 0));
 
         $debito = (float) array_sum(array_column($lineas, 'debito'));
         $credito = (float) array_sum(array_column($lineas, 'credito'));

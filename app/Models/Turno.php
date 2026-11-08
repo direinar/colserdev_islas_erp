@@ -14,6 +14,10 @@ class Turno extends Model
         'revisado_por',          // nombre del administrador que revisó la planilla
         'revisado',
         'revisado_at',
+        'anulada',
+        'anulada_por',
+        'anulada_at',
+        'motivo_anulacion',
         'precio_corriente',
         'precio_acpm',
         'tirillas_galones_corriente',
@@ -37,6 +41,8 @@ class Turno extends Model
         'fecha' => 'date',
         'revisado' => 'boolean',
         'revisado_at' => 'datetime',
+        'anulada' => 'boolean',
+        'anulada_at' => 'datetime',
         'precio_corriente' => 'decimal:2',
         'precio_acpm' => 'decimal:2',
         'tirillas_galones_corriente' => 'decimal:3',
@@ -68,7 +74,7 @@ class Turno extends Model
      */
     public function editablePor(User $user): bool
     {
-        if ($this->revisado) {
+        if ($this->revisado || $this->anulada) {
             return false;
         }
 
@@ -81,7 +87,7 @@ class Turno extends Model
      */
     public function visiblePara(User $user): bool
     {
-        if ($user->isAdministrador() || ! $this->exists || $this->user_id === $user->id) {
+        if ($user->isAdministrador() || $user->isIslero() || ! $this->exists || $this->user_id === $user->id) {
             return true;
         }
 
@@ -95,7 +101,7 @@ class Turno extends Model
      */
     public function scopeVisiblePara(Builder $query, User $user): void
     {
-        if ($user->isAdministrador()) {
+        if ($user->isAdministrador() || $user->isIslero()) {
             return;
         }
 
@@ -105,6 +111,16 @@ class Turno extends Model
             if ($user->isJefePatios()) {
                 $visibles->orWhereHas('user', fn (Builder $creador) => $creador->where('role', User::ROLE_ISLERO));
             }
+        });
+    }
+
+    /**
+     * Excluye planillas anuladas de cualquier informe operativo o contable.
+     */
+    public function scopeNoAnulados(Builder $query): void
+    {
+        $query->where(function (Builder $noAnuladas): void {
+            $noAnuladas->where('anulada', false)->orWhereNull('anulada');
         });
     }
 

@@ -30,6 +30,7 @@ class ComprobanteVentasExcelService
         $hoja->getStyle('A1')->getFont()->setBold(true)->setSize(14)->getColor()->setRGB('FF0000');
 
         $hoja->fromArray(['CUENTA', 'CONCEPTO', 'CLIENTE/TERCERO', 'NIT', 'DEBITO', 'CREDITO'], null, 'A4');
+        $hoja->freezePane('A5');
         $hoja->getStyle('A4:F4')->getFont()->setBold(true);
         $hoja->getStyle('A4:F4')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('CCCCFF');
 

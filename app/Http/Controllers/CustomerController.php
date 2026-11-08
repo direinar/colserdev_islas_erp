@@ -76,17 +76,17 @@ class CustomerController extends Controller
     /**
      * Si no se digita el D.V., se calcula del NIT con el algoritmo de la DIAN.
      *
-     * @return array{name: string, document: string, dv: string|null}
+     * @return array{name: string, document: string|null, dv: string|null}
      */
     private function validar(Request $request): array
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'document' => 'required|string|max:100',
+            'document' => 'nullable|string|max:100',
             'dv' => 'nullable|digits:1',
         ]);
 
-        $validated['dv'] = ($validated['dv'] ?? null) ?: Customer::digitoVerificacion($validated['document']);
+        $validated['dv'] = ($validated['dv'] ?? null) ?: Customer::digitoVerificacion($validated['document'] ?? null);
 
         return $validated;
     }

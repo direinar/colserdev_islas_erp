@@ -33,7 +33,7 @@ class InformeMargenMayoristaController extends Controller
 
         $libro = $excel->generar($desde, $hasta);
 
-        return DescargaExcel::respuesta($libro, 'margen-mayorista-'.$desde.'-a-'.$hasta.'.xlsx');
+        return DescargaExcel::respuesta($libro, 'compras-y-margen-mayorista-'.$desde.'-a-'.$hasta.'.xlsx');
     }
 
     /**

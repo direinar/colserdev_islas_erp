@@ -4,14 +4,16 @@ namespace App\Services;
 
 use App\Models\AforoTanque;
 use App\Models\Compra;
+use App\Models\IngresoTanque;
 use App\Models\TanqueSaldoInicial;
 use App\Models\Turno;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 
 /**
- * Informe de control de tanques, solo en galones. Ingresos y ventas no se digitan:
- * el ingreso sale de compras y la venta de los galones según cortes de IAPROPIADA
+ * Informe de control de tanques, solo en galones. Los ingresos se pueden digitar
+ * directamente en este informe; si no existe un registro manual, se leen de compras.
+ * La venta sale de los galones según cortes de IAPROPIADA
  * de la planilla de turnos (suma de los turnos de cada fecha), no de las lecturas
  * de los surtidores. Lo único que se registra aquí es el aforo nocturno del jefe de patios.
  *
@@ -43,12 +45,12 @@ class ControlTanquesService
     {
         $saldosIniciales = TanqueSaldoInicial::query()->get()->keyBy('combustible');
 
-        $ingresos = $this->porFecha(
+        $ingresos = $this->ingresosPorFecha(
             Compra::query()->whereDate('fecha', '>=', $desde)->whereDate('fecha', '<=', $hasta)->get(),
-            'compra',
+            IngresoTanque::query()->whereDate('fecha', '>=', $desde)->whereDate('fecha', '<=', $hasta)->get(),
         );
         $ventas = $this->porFecha(
-            Turno::query()->whereDate('fecha', '>=', $desde)->whereDate('fecha', '<=', $hasta)->get(),
+            Turno::query()->noAnulados()->whereDate('fecha', '>=', $desde)->whereDate('fecha', '<=', $hasta)->get(),
             'venta',
         );
         $aforos = AforoTanque::query()
@@ -143,8 +145,8 @@ class ControlTanquesService
             ->whereDate('fecha', '<', $desde)
             ->when($corte, fn ($query) => $query->whereDate('fecha', '>=', $corte));
 
-        $ingresos = (float) $antesDe(Compra::query())->sum(self::COLUMNAS[$combustible]['compra']);
-        $ventas = (float) $antesDe(Turno::query())->sum(self::COLUMNAS[$combustible]['venta']);
+        $ingresos = $this->ingresosAntesDe($combustible, $desde, $corte);
+        $ventas = (float) $antesDe(Turno::query()->noAnulados())->sum(self::COLUMNAS[$combustible]['venta']);
 
         return (float) ($saldoInicial?->galones ?? 0) + $ingresos - $ventas;
     }
@@ -168,5 +170,49 @@ class ControlTanquesService
         }
 
         return $porFecha;
+    }
+
+    /**
+     * Un ingreso digitado en Control de Tanques reemplaza el valor de compras de ese día.
+     * Así registrar la factura después no duplica el combustible del pedido.
+     *
+     * @return array<string, array<string, float>>
+     */
+    private function ingresosPorFecha(Collection $compras, Collection $manuales): array
+    {
+        $porFecha = $this->porFecha($compras, 'compra');
+
+        foreach ($manuales as $ingreso) {
+            $fecha = $ingreso->fecha->format('Y-m-d');
+            $porFecha[$fecha] = [
+                TanqueSaldoInicial::CORRIENTE => (float) $ingreso->ingreso_corriente,
+                TanqueSaldoInicial::ACPM => (float) $ingreso->ingreso_acpm,
+            ];
+        }
+
+        return $porFecha;
+    }
+
+    private function ingresosAntesDe(string $combustible, string $desde, ?string $corte): float
+    {
+        $compras = Compra::query()
+            ->whereDate('fecha', '<', $desde)
+            ->when($corte, fn ($query) => $query->whereDate('fecha', '>=', $corte))
+            ->get();
+        $manuales = IngresoTanque::query()
+            ->whereDate('fecha', '<', $desde)
+            ->when($corte, fn ($query) => $query->whereDate('fecha', '>=', $corte))
+            ->get()
+            ->keyBy(fn (IngresoTanque $ingreso): string => $ingreso->fecha->format('Y-m-d'));
+
+        $ingresos = $this->porFecha($compras, 'compra');
+        foreach ($manuales as $fecha => $ingreso) {
+            $ingresos[$fecha] = [
+                TanqueSaldoInicial::CORRIENTE => (float) $ingreso->ingreso_corriente,
+                TanqueSaldoInicial::ACPM => (float) $ingreso->ingreso_acpm,
+            ];
+        }
+
+        return (float) collect($ingresos)->sum($combustible);
     }
 }

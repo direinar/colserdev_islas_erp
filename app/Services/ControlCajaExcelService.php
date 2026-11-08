@@ -43,6 +43,7 @@ class ControlCajaExcelService
 
         $ultima = Coordinate::stringFromColumnIndex(count($encabezados));
         $hoja->fromArray($encabezados, null, 'A4');
+        $hoja->freezePane('A5');
         $encabezado = $hoja->getStyle("A4:{$ultima}4");
         $encabezado->getFont()->setBold(true);
         $encabezado->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setWrapText(true);

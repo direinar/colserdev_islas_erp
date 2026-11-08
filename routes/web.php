@@ -85,6 +85,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         Route::post('/turnos/{turno}/reabrir', [TurnoController::class, 'reabrir'])
             ->name('turnos.reabrir');
+
+        Route::post('/turnos/{turno}/anular', [TurnoController::class, 'anular'])
+            ->name('turnos.anular');
     });
 
     // El jefe de patios, además de la planilla de turnos, solo accede a Cartera - Estado de cuenta y a Control de tanques.

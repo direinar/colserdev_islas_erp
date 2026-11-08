@@ -26,7 +26,7 @@ class InformeCierreService
         $gasolina = $this->ventasDelPeriodo($this->kardex->gasolina()['rows'], $desde, $hasta);
         $canastilla = $this->ventasDelPeriodo($this->kardex->canastillaControl()['rows'], $desde, $hasta);
 
-        $turnos = Turno::query()
+        $turnos = Turno::query()->noAnulados()
             ->whereDate('fecha', '>=', $desde)
             ->whereDate('fecha', '<=', $hasta)
             ->with(['transferencias', 'descuentos'])
@@ -100,7 +100,7 @@ class InformeCierreService
             return 0.0;
         }
 
-        return (float) Turno::query()
+        return (float) Turno::query()->noAnulados()
             ->whereDate('fecha', '>=', $desde)
             ->whereDate('fecha', '<=', $hasta)
             ->get(['tirillas_galones_corriente', 'tirillas_galones_acpm'])

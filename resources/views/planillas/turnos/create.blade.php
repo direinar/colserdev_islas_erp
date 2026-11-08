@@ -6,9 +6,10 @@
         // Una planilla revisada queda bloqueada para todos; el administrador puede
         // devolverla a PENDIENTE DE REVISIÓN para corregirla.
         $turnoRevisado = isset($turno) && $turno && $turno->revisado;
+        $turnoAnulado = isset($turno) && $turno && $turno->anulada;
         // El islero y el jefe de patios solo modifican las planillas que ellos registraron.
-        $turnoDeOtro = isset($turno) && $turno && ! $turnoRevisado && ! $turno->editablePor(auth()->user());
-        $puedeGuardar = ! $turnoRevisado && ! $turnoDeOtro;
+        $turnoDeOtro = isset($turno) && $turno && !$turnoRevisado && !$turno->editablePor(auth()->user());
+        $puedeGuardar = !$turnoRevisado && !$turnoAnulado && !$turnoDeOtro;
     @endphp
 
     <x-page-header title="Planilla de turnos" icon="journal-check"
@@ -42,7 +43,8 @@
                     <div>
                         <label class="form-label small mb-0" for="turno-busqueda">Turno búsqueda</label>
                         <input type="number" name="turno_busqueda" id="turno-busqueda" min="1"
-                            class="form-control form-control-sm" style="width: 140px; max-width: 100%; text-align: left !important;" placeholder="N° de turno"
+                            class="form-control form-control-sm"
+                            style="width: 140px; max-width: 100%; text-align: left !important;" placeholder="N° de turno"
                             value="{{ request('turno_busqueda') }}">
                     </div>
                     <button type="submit" class="btn btn-sm btn-outline-primary">Buscar por turno</button>
@@ -74,7 +76,8 @@
         <div class="alert alert-success d-flex flex-wrap justify-content-between align-items-center gap-2">
             <div>
                 <strong>PLANILLA REVISADA.</strong> No se puede modificar ni alimentar.
-                Revisada por {{ $turno->revisado_por }}{{ $turno->revisado_at ? ' el '.$turno->revisado_at->format('d/m/Y H:i') : '' }}.
+                Revisada por
+                {{ $turno->revisado_por }}{{ $turno->revisado_at ? ' el ' . $turno->revisado_at->format('d/m/Y H:i') : '' }}.
             </div>
             @if (auth()->user()->isAdministrador())
                 <form method="POST" action="{{ route('turnos.reabrir', $turno) }}" class="mb-0"
@@ -86,7 +89,34 @@
         </div>
     @endif
 
+    @if ($turnoAnulado)
+        <div class="alert alert-danger d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <div>
+                <strong class="fs-4">A N U L A D A</strong>
+                <div>Por
+                    {{ $turno->anulada_por }}{{ $turno->anulada_at ? ' el ' . $turno->anulada_at->format('d/m/Y H:i') : '' }}.
+                </div>
+                @if ($turno->motivo_anulacion)
+                    <div>Motivo: {{ $turno->motivo_anulacion }}</div>
+                @endif
+            </div>
+        </div>
+    @endif
+
     <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('#turno-form input[type="text"], #turno-form input[type="number"]').forEach(
+                input => {
+                    if (input.value.trim() !== '' && !input.readOnly && !input.disabled) {
+                        input.classList.add('valor-historico');
+                    }
+
+                    input.addEventListener('focus', () => input.classList.remove('valor-historico'), {
+                        once: true
+                    });
+                });
+        });
+
         // Vacía todos los campos editables de la planilla (deja intactos los readonly/hidden)
         // y dispara los eventos que usa galones.js para recalcular totales en pantalla.
         function limpiarPlanilla() {
@@ -145,7 +175,8 @@
 
             Swal.fire({
                 title: 'Seleccione el ' + campo,
-                text: 'En ' + seccion.titulo + ' primero debe SELECCIONAR el ' + campo + ' y luego digitar el valor.',
+                text: 'En ' + seccion.titulo + ' primero debe SELECCIONAR el ' + campo +
+                    ' y luego digitar el valor.',
                 icon: 'warning',
                 confirmButtonText: 'Entendido',
             }).then(() => select?.focus());
@@ -183,10 +214,16 @@
             const regla = REQUISITOS_PREVIOS.find(r => campo.matches?.(r.campos));
             const requisito = regla && campo.closest('tr')?.querySelector(regla.requisito);
 
-            return requisito && requisito.value.trim() === '' ? { regla, requisito } : null;
+            return requisito && requisito.value.trim() === '' ? {
+                regla,
+                requisito
+            } : null;
         }
 
-        function avisarRequisito({ regla, requisito }) {
+        function avisarRequisito({
+            regla,
+            requisito
+        }) {
             Swal.fire({
                 title: regla.titulo,
                 text: regla.texto,
@@ -263,7 +300,8 @@
                     for (const input of this.querySelectorAll(seccion.valor)) {
                         if (input.disabled) continue;
 
-                        const valor = Number(String(input.value).replace(/\./g, '').replace(/,/g, '.')) || 0;
+                        const valor = Number(String(input.value).replace(/\./g, '').replace(/,/g, '.')) ||
+                            0;
                         const select = clienteDeLaFila(input, seccion);
 
                         if (valor !== 0 && select && !select.value) {
@@ -303,13 +341,25 @@
         }
     </script>
 
+    <style>
+        #turno-form input.valor-historico {
+            color: transparent !important;
+            text-shadow: 0 0 0 #777;
+        }
+
+        #turno-form input.valor-historico:focus {
+            color: inherit !important;
+            text-shadow: none;
+        }
+    </style>
+
     {{-- data-*: el borrador del navegador se borra solo cuando el guardado fue exitoso y no se
          ofrece recuperar en una planilla bloqueada; data-estado-url consulta, antes de guardar,
          si otro usuario la marcó como revisada mientras estaba abierta. --}}
     <form method="POST" action="{{ route('turnos.store') }}" id="turno-form"
         @if (session('planilla_guardada')) data-guardado-ok="1" @endif
         @if (session()->hasOldInput('numero_turno')) data-borrador-servidor="1" @endif
-        @if (! $puedeGuardar) data-bloqueada="1" @endif
+        @if (!$puedeGuardar) data-bloqueada="1" @endif
         @if (isset($turno) && $turno && $turno->exists && $puedeGuardar) data-estado-url="{{ route('turnos.estado', $turno) }}" @endif
         @if (session('borrador_descartar')) data-borrador-descartar="{{ session('borrador_descartar') }}" @endif>
         @csrf
@@ -319,161 +369,167 @@
             <input type="hidden" name="planilla_nueva" value="1">
         @endunless
         {{-- Planilla revisada: todos los campos y botones de la planilla quedan deshabilitados. --}}
-        <fieldset @disabled(! $puedeGuardar) style="min-width: 0;">
+        <fieldset @disabled(!$puedeGuardar) style="min-width: 0;">
 
-        {{-- HEADER --}}
+            {{-- HEADER --}}
 
-        <div class="pastel-section mb-3">
+            <div class="pastel-section mb-3">
 
-            <div class="row align-items-center g-2">
+                <div class="row align-items-center g-2">
 
-                <div class="col-md-6">
+                    <div class="col-md-6">
 
-                    <h2 class="h5 mb-0 fw-bold">
-                        DATOS DEL TURNO
-                    </h2>
+                        <h2 class="h5 mb-0 fw-bold">
+                            DATOS DEL TURNO
+                        </h2>
+
+                    </div>
+
+                    <div class="col-md-6 d-flex flex-wrap align-items-center gap-2 justify-content-md-end">
+
+                        <label class="fw-semibold mb-0" for="turno-fecha">FECHA:</label>
+
+                        <input type="date" name="fecha" id="turno-fecha"
+                            class="form-control form-control-sm d-inline-block w-auto dato-turno-destacado"
+                            value="{{ old('fecha', isset($turno) && $turno ? $turno->fecha->toDateString() : request('fecha', date('Y-m-d'))) }}"
+                            required>
+
+                        <label class="fw-semibold mb-0" for="turno-numero">TURNO:</label>
+
+                        {{-- Mostrar turno formateado y bloquear edición; enviar valor entero en campo hidden --}}
+                        @php
+                            $displayNumber = isset($turno) && $turno ? $turno->numero_turno : $nextNumber ?? 1;
+                        @endphp
+                        <input type="hidden" name="numero_turno" value="{{ $displayNumber }}">
+                        <input type="text" id="turno-numero"
+                            class="form-control form-control-sm d-inline-block dato-turno-destacado" style="width: 90px"
+                            value="{{ str_pad($displayNumber, 3, '0', STR_PAD_LEFT) }}" readonly>
+
+                    </div>
 
                 </div>
 
-                <div class="col-md-6 d-flex flex-wrap align-items-center gap-2 justify-content-md-end">
+            </div>
 
-                    <label class="fw-semibold mb-0" for="turno-fecha">FECHA:</label>
+            <style>
+                /* Fecha y número de turno resaltados para identificar la planilla de un vistazo. */
+                /* custom.css fija el color de input.form-control con !important; por eso aquí también. */
+                input.form-control.dato-turno-destacado {
+                    color: #d40000 !important;
+                    font-size: 1.15rem;
+                    font-weight: 700;
+                }
+            </style>
 
-                    <input type="date" name="fecha" id="turno-fecha" class="form-control form-control-sm d-inline-block w-auto dato-turno-destacado"
-                        value="{{ old('fecha', isset($turno) && $turno ? $turno->fecha->toDateString() : request('fecha', date('Y-m-d'))) }}" required>
+            @if (session('success'))
+                <div class="alert alert-success">
+                    {{ session('success') }}
+                </div>
+            @endif
 
-                    <label class="fw-semibold mb-0" for="turno-numero">TURNO:</label>
-
-                    {{-- Mostrar turno formateado y bloquear edición; enviar valor entero en campo hidden --}}
-                    @php
-                        $displayNumber = isset($turno) && $turno ? $turno->numero_turno : $nextNumber ?? 1;
-                    @endphp
-                    <input type="hidden" name="numero_turno" value="{{ $displayNumber }}">
-                    <input type="text" id="turno-numero" class="form-control form-control-sm d-inline-block dato-turno-destacado" style="width: 90px"
-                        value="{{ str_pad($displayNumber, 3, '0', STR_PAD_LEFT) }}" readonly>
-
+            @if ($errors->any())
+                <div class="alert alert-danger" id="errores-planilla">
+                    <ul class="mb-0">
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
                 </div>
 
-            </div>
-
-        </div>
-
-        <style>
-            /* Fecha y número de turno resaltados para identificar la planilla de un vistazo. */
-            /* custom.css fija el color de input.form-control con !important; por eso aquí también. */
-            input.form-control.dato-turno-destacado {
-                color: #d40000 !important;
-                font-size: 1.15rem;
-                font-weight: 700;
-            }
-        </style>
-
-        @if (session('success'))
-            <div class="alert alert-success">
-                {{ session('success') }}
-            </div>
-        @endif
-
-        @if ($errors->any())
-            <div class="alert alert-danger" id="errores-planilla">
-                <ul class="mb-0">
-                    @foreach ($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                </ul>
-            </div>
-
-            {{-- El aviso de arriba no se ve si se está más abajo en la planilla: se avisa también en
+                {{-- El aviso de arriba no se ve si se está más abajo en la planilla: se avisa también en
                  una ventana, para que no parezca que se guardó (lo digitado vuelve sin guardar). --}}
-            <script>
-                document.addEventListener('DOMContentLoaded', function() {
-                    Swal.fire({
-                        title: 'La planilla NO se guardó',
-                        html: @json('<ul class="text-start mb-0">'.collect($errors->all())->map(fn ($error) => '<li>'.e($error).'</li>')->implode('').'</ul>'),
-                        icon: 'error',
-                        confirmButtonText: 'Corregir',
+                <script>
+                    document.addEventListener('DOMContentLoaded', function() {
+                        Swal.fire({
+                            title: 'La planilla NO se guardó',
+                            html: @json(
+                                '<ul class="text-start mb-0">' .
+                                    collect($errors->all())->map(fn($error) => '<li>' . e($error) . '</li>')->implode('') .
+                                    '</ul>'),
+                            icon: 'error',
+                            confirmButtonText: 'Corregir',
+                        });
                     });
-                });
-            </script>
-        @endif
+                </script>
+            @endif
 
-        {{-- CONTENIDO --}}
+            {{-- CONTENIDO --}}
 
-        @php
-            // Un turno guardado ya tiene su precio ligado (snapshot); uno nuevo usa el
-            // precio que rige para su número de turno (no para la fecha: el precio puede
-            // cambiar entre turnos del mismo día). Sin fallback a config(): si no hay un
-            // registro de FuelPrice vigente, el precio es 0 para forzar a que se registre
-            // el precio real en Precios de Combustible.
-            $precioCorriente = isset($turno)
-                ? $turno->precio_corriente
-                : (float) \App\Models\FuelPrice::precioParaTurno('Gasolina', (int) $displayNumber);
-            $precioAcpm = isset($turno)
-                ? $turno->precio_acpm
-                : (float) \App\Models\FuelPrice::precioParaTurno('ACPM', (int) $displayNumber);
-        @endphp
+            @php
+                // Un turno guardado ya tiene su precio ligado (snapshot); uno nuevo usa el
+                // precio que rige para su número de turno (no para la fecha: el precio puede
+                // cambiar entre turnos del mismo día). Sin fallback a config(): si no hay un
+                // registro de FuelPrice vigente, el precio es 0 para forzar a que se registre
+                // el precio real en Precios de Combustible.
+                $precioCorriente = isset($turno)
+                    ? $turno->precio_corriente
+                    : (float) \App\Models\FuelPrice::precioParaTurno('Gasolina', (int) $displayNumber);
+                $precioAcpm = isset($turno)
+                    ? $turno->precio_acpm
+                    : (float) \App\Models\FuelPrice::precioParaTurno('ACPM', (int) $displayNumber);
+            @endphp
 
-        <div class="row">
+            <div class="row">
 
-            {{-- COLUMNA IZQUIERDA --}}
+                {{-- COLUMNA IZQUIERDA --}}
 
-            <div class="col-lg-4">
+                <div class="col-lg-4">
 
-                @include('planillas.turnos.partials.ventas')
+                    @include('planillas.turnos.partials.ventas')
 
-                @include('planillas.turnos.partials.precios')
+                    @include('planillas.turnos.partials.precios')
 
-                @include('planillas.turnos.partials.lubricantes')
+                    @include('planillas.turnos.partials.lubricantes')
 
-                @include('planillas.turnos.partials.resumen')
+                    @include('planillas.turnos.partials.resumen')
 
-                @include('planillas.turnos.partials.sobrantes')
+                    @include('planillas.turnos.partials.sobrantes')
 
+                </div>
+
+                {{-- CENTRO --}}
+
+                <div class="col-lg-8">
+
+                    {{-- Ocupa todo el ancho --}}
+                    @include('planillas.turnos.partials.medios_pago')
+
+                    {{-- Fila inferior --}}
+                    <div class="row mt-3">
+
+                        <div class="col-md-6">
+                            @include('planillas.turnos.partials.transferencias')
+                        </div>
+
+                        <div class="col-md-6">
+                            @include('planillas.turnos.partials.recaudos')
+                        </div>
+
+                    </div>
+                    {{-- Fila inferior --}}
+                    <div class="row mt-3">
+
+                        <div class="col-md-6">
+                            @include('planillas.turnos.partials.gasolina_eds')
+                        </div>
+
+                        <div class="col-md-6">
+                            @include('planillas.turnos.partials.varios')
+                        </div>
+
+                    </div>
+
+                    {{-- Resumen y Recaudos Administración --}}
+                    <div class="row mt-3">
+                        <div class="col-lg-6">
+                            @include('planillas.turnos.partials.resumen_recibido_turno')
+                        </div>
+                        <div class="col-lg-6">
+                            @include('planillas.turnos.partials.recaudos_admin')
+                        </div>
+                    </div>
+                </div>
             </div>
-
-            {{-- CENTRO --}}
-
-            <div class="col-lg-8">
-
-                {{-- Ocupa todo el ancho --}}
-                @include('planillas.turnos.partials.medios_pago')
-
-                {{-- Fila inferior --}}
-                <div class="row mt-3">
-
-                    <div class="col-md-6">
-                        @include('planillas.turnos.partials.transferencias')
-                    </div>
-
-                    <div class="col-md-6">
-                        @include('planillas.turnos.partials.recaudos')
-                    </div>
-
-                </div>
-                {{-- Fila inferior --}}
-                <div class="row mt-3">
-
-                    <div class="col-md-6">
-                        @include('planillas.turnos.partials.gasolina_eds')
-                    </div>
-
-                    <div class="col-md-6">
-                        @include('planillas.turnos.partials.varios')
-                    </div>
-
-                </div>
-
-                {{-- Resumen y Recaudos Administración --}}
-                <div class="row mt-3">
-                    <div class="col-lg-6">
-                        @include('planillas.turnos.partials.resumen_recibido_turno')
-                    </div>
-                    <div class="col-lg-6">
-                        @include('planillas.turnos.partials.recaudos_admin')
-                    </div>
-                </div>
-            </div>
-        </div>
 
         </fieldset>
 
@@ -490,6 +546,36 @@
 
     </form>
 
+    @if (isset($turno) && $turno && $turno->exists && auth()->user()->isAdministrador() && !$turnoAnulado)
+        <form method="POST" action="{{ route('turnos.anular', $turno) }}" class="d-print-none mt-3"
+            onsubmit="return confirm('¿Anular definitivamente esta planilla?');">
+            @csrf
+            <div class="input-group input-group-sm" style="max-width: 42rem;">
+                <input type="text" name="motivo_anulacion" class="form-control" maxlength="500" required
+                    placeholder="Motivo de anulación">
+                <button type="submit" class="btn btn-outline-danger">Anular planilla</button>
+            </div>
+        </form>
+    @endif
+
+    @if ($turnoAnulado)
+        <style>
+            @media print {
+                body::before {
+                    content: 'A N U L A D A';
+                    position: fixed;
+                    inset: 40% 0 auto;
+                    color: #d00;
+                    font-size: 4rem;
+                    font-weight: 900;
+                    text-align: center;
+                    transform: rotate(-20deg);
+                    z-index: 9999;
+                }
+            }
+        </style>
+    @endif
+
     <script>
         // Si otro usuario marca la planilla como REVISADA mientras está abierta, se avisa antes de
         // guardar (y cada minuto) para no perder el trabajo: lo digitado queda en el borrador.
@@ -500,7 +586,12 @@
 
             let verificada = false;
 
-            const consultar = () => fetch(url, { headers: { Accept: 'application/json' }, credentials: 'same-origin' })
+            const consultar = () => fetch(url, {
+                    headers: {
+                        Accept: 'application/json'
+                    },
+                    credentials: 'same-origin'
+                })
                 .then(respuesta => respuesta.ok ? respuesta.json() : null)
                 .catch(() => null);
 
@@ -526,7 +617,12 @@
                 const estado = await consultar();
                 if (estado?.revisado) {
                     mostrarAviso(estado);
-                    Swal.fire({ title: 'Planilla REVISADA', text: mensaje(estado), icon: 'warning', confirmButtonText: 'Entendido' });
+                    Swal.fire({
+                        title: 'Planilla REVISADA',
+                        text: mensaje(estado),
+                        icon: 'warning',
+                        confirmButtonText: 'Entendido'
+                    });
                     return;
                 }
 

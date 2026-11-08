@@ -22,8 +22,12 @@ class Customer extends Model
     /**
      * Dígito de verificación de la DIAN (módulo 11) para un NIT; null si el documento no tiene dígitos.
      */
-    public static function digitoVerificacion(string $nit): ?string
+    public static function digitoVerificacion(?string $nit): ?string
     {
+        if ($nit === null) {
+            return null;
+        }
+
         $digitos = preg_replace('/\D/', '', $nit);
 
         if ($digitos === '' || strlen($digitos) > count(self::PESOS_DV)) {

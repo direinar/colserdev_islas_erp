@@ -66,7 +66,7 @@ class RecaudosCarteraService
      */
     private function recaudos(string $desde, string $hasta): Collection
     {
-        $enPeriodo = fn ($query) => $query->whereHas('turno', fn ($turno) => $turno
+        $enPeriodo = fn ($query) => $query->whereHas('turno', fn ($turno) => $turno->noAnulados()
             ->whereDate('fecha', '>=', $desde)
             ->whereDate('fecha', '<=', $hasta));
 
@@ -136,16 +136,26 @@ class RecaudosCarteraService
             ->groupBy('banco')
             ->sortKeys()
             ->each(function (Collection $delBanco, string $nombre) use (&$lineas, $bancos): void {
+                $valor = (float) $delBanco->sum('valor');
+                $cuenta = (string) $bancos->firstWhere('name', $nombre)?->cuenta_contable;
+
+                if ($valor <= 0 || $cuenta === '') {
+                    return;
+                }
+
                 $lineas[] = [
-                    'cuenta' => (string) $bancos->firstWhere('name', $nombre)?->cuenta_contable,
+                    'cuenta' => $cuenta,
                     'nombre' => $nombre,
-                    'debito' => (float) $delBanco->sum('valor'),
+                    'debito' => $valor,
                     'credito' => 0.0,
                 ];
             });
 
         // Cada abono va en forma individual, por cliente.
         foreach ($recaudos->sortBy('cliente', SORT_NATURAL | SORT_FLAG_CASE) as $recaudo) {
+            if ((float) $recaudo['valor'] <= 0 || $cuentaCartera === '') {
+                continue;
+            }
             $lineas[] = [
                 'cuenta' => $cuentaCartera,
                 'nombre' => $recaudo['cliente'],

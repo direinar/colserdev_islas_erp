@@ -5,8 +5,8 @@
 @php
     use Illuminate\Support\Carbon;
 
-    $pesos = fn (float $valor): string => $valor ? number_format($valor, 0, ',', '.') : '';
-    $pesosSiempre = fn (float $valor): string => number_format($valor, 0, ',', '.');
+    $pesos = fn(float $valor): string => $valor ? number_format($valor, 0, ',', '.') : '';
+    $pesosSiempre = fn(float $valor): string => number_format($valor, 0, ',', '.');
 @endphp
 
 @section('content')
@@ -38,8 +38,13 @@
             letter-spacing: .05rem;
         }
 
-        .cc-tabla td.num { text-align: right; }
-        .cc-tabla .cc-negativo { color: #ff0000; }
+        .cc-tabla td.num {
+            text-align: right;
+        }
+
+        .cc-tabla .cc-negativo {
+            color: #ff0000;
+        }
 
         .cc-tabla tfoot td {
             font-weight: 800;
@@ -47,16 +52,18 @@
         }
 
         @page {
+            size: landscape;
             margin: 10mm;
         }
 
         @media print {
+
             nav,
             .navbar {
                 display: none !important;
             }
 
-            body > .container-fluid {
+            body>.container-fluid {
                 padding: 0 !important;
             }
 
@@ -68,14 +75,18 @@
             }
 
             .cc-tabla {
+                font-size: 8px;
                 -webkit-print-color-adjust: exact;
                 print-color-adjust: exact;
             }
         }
     </style>
 
-    <x-page-header title="Comprobante contable de ventas" icon="journal-text"
-        :subtitle="'Desde '.Carbon::parse($desde)->format('d/m/Y').' — hasta '.Carbon::parse($hasta)->format('d/m/Y').'. Toda la información viene de la planilla de turnos.'">
+    <x-page-header title="Comprobante contable de ventas" icon="journal-text" :subtitle="'Desde ' .
+        Carbon::parse($desde)->format('d/m/Y') .
+        ' — hasta ' .
+        Carbon::parse($hasta)->format('d/m/Y') .
+        '. Toda la información viene de la planilla de turnos.'">
         @include('informes.partials.filtro-rango', [
             'ruta' => 'informes.comprobante-ventas.index',
             'rutaExportar' => 'informes.comprobante-ventas.exportar',
@@ -101,7 +112,8 @@
                     <table class="cc-tabla">
                         <thead>
                             <tr>
-                                <th colspan="6" class="cc-grupo" style="background:#ccccff;">COMPROBANTE CONTABLE DE VENTAS</th>
+                                <th colspan="6" class="cc-grupo" style="background:#ccccff;">COMPROBANTE CONTABLE DE
+                                    VENTAS</th>
                             </tr>
                             <tr style="background:#ccccff;">
                                 <th>CUENTA</th>
@@ -132,7 +144,8 @@
                             </tr>
                             <tr>
                                 <td colspan="4" class="text-end">DIFERENCIA</td>
-                                <td colspan="2" class="num {{ round($comprobante['diferencia']) != 0 ? 'cc-negativo' : '' }}">
+                                <td colspan="2"
+                                    class="num {{ round($comprobante['diferencia']) != 0 ? 'cc-negativo' : '' }}">
                                     {{ $pesosSiempre($comprobante['diferencia']) }}
                                 </td>
                             </tr>
@@ -142,14 +155,16 @@
             </div>
             @if (round($comprobante['diferencia']) != 0)
                 <div class="alert alert-warning mt-2 small d-print-none">
-                    El comprobante no cuadra: normalmente es un sobrante o faltante de alguna planilla que no se ha trasladado.
+                    El comprobante no cuadra: normalmente es un sobrante o faltante de alguna planilla que no se ha
+                    trasladado.
                 </div>
             @endif
         </div>
 
         <div class="col-12 col-xl-4 d-print-none">
             <details class="card">
-                <summary class="card-body py-2 fw-semibold small" style="cursor:pointer;">Cuentas contables del comprobante</summary>
+                <summary class="card-body py-2 fw-semibold small" style="cursor:pointer;">Cuentas contables del comprobante
+                </summary>
                 <form method="POST" action="{{ route('informes.comprobante-ventas.cuentas') }}" class="card-body pt-0">
                     @csrf
                     <input type="hidden" name="desde" value="{{ $desde }}">
@@ -162,8 +177,10 @@
                                         <label for="cuenta-{{ $clave }}">{{ $cuenta->descripcion }}</label>
                                     </td>
                                     <td style="width:9rem;">
-                                        <input type="text" id="cuenta-{{ $clave }}" name="cuentas[{{ $clave }}][cuenta]" class="form-control form-control-sm"
-                                            value="{{ $cuenta->cuenta }}" required maxlength="30">
+                                        <input type="text" id="cuenta-{{ $clave }}"
+                                            name="cuentas[{{ $clave }}][cuenta]"
+                                            class="form-control form-control-sm" value="{{ $cuenta->cuenta }}" required
+                                            maxlength="30">
                                     </td>
                                 </tr>
                             @endforeach
