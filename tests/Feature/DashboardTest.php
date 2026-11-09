@@ -97,7 +97,7 @@ test('los rangos largos se agrupan por mes', function () {
         ->and($resumen['periodos'])->toHaveCount(4);
 });
 
-test('el islero solo ve en el dashboard sus propias planillas', function () {
+test('el islero ve en el dashboard todas las planillas, como en la planilla de turnos', function () {
     $islero = User::factory()->create(['role' => User::ROLE_ISLERO]);
     $otro = User::factory()->create(['role' => User::ROLE_ISLERO]);
 
@@ -106,8 +106,8 @@ test('el islero solo ve en el dashboard sus propias planillas', function () {
 
     $kpis = app(DashboardService::class)->resumen('2026-10-01', '2026-10-01', $islero)['kpis'];
 
-    expect($kpis['turnos'])->toBe(1)
-        ->and($kpis['ventas'])->toBe(1000.0);
+    expect($kpis['turnos'])->toBe(2)
+        ->and($kpis['ventas'])->toBe(6000.0);
 });
 
 test('sin planillas en el rango el dashboard lo indica en lugar de mostrar gráficas vacías', function () {

@@ -7,9 +7,12 @@ use App\Models\Banco;
 use App\Models\Customer;
 use App\Models\Lubricant;
 use App\Models\Turno;
+use App\Services\AuditoriaPlanillaService;
 use App\Services\BorradorPlanillaTurnoService;
 use App\Services\CarteraTurnoSyncService;
 use App\Services\GuardarPlanillaTurnoService;
+use App\Support\DescargaExcel;
+use App\Support\TablaExcel;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\JsonResponse;
@@ -17,6 +20,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
  * Planilla de turnos: consultar, validar, autorizar y delegar. El guardado está en
@@ -204,7 +208,7 @@ class TurnoController extends Controller
             ->with('success', 'Turno #'.$turno->numero_turno.' devuelto a PENDIENTE DE REVISIÓN. Ya se puede corregir.');
     }
 
-    public function anular(Request $request, Turno $turno, CarteraTurnoSyncService $carteraSync): RedirectResponse
+    public function anular(Request $request, Turno $turno, CarteraTurnoSyncService $carteraSync, AuditoriaPlanillaService $auditoria): RedirectResponse
     {
         $request->validate([
             'motivo_anulacion' => ['required', 'string', 'max:500'],
@@ -217,9 +221,33 @@ class TurnoController extends Controller
             'motivo_anulacion' => trim((string) $request->input('motivo_anulacion')),
         ]);
         $carteraSync->eliminarDeCartera($turno);
+        // Queda en el historial de la planilla quién la anuló y con qué datos.
+        $auditoria->registrarAnulacion($turno, $request->user());
 
         return redirect()->route('turnos.create', ['turno_busqueda' => $turno->numero_turno])
             ->with('success', 'Turno #'.$turno->numero_turno.' anulado correctamente.');
+    }
+
+    /**
+     * Excel del recuadro CONSIGNACIONES de una planilla guardada.
+     */
+    public function exportarConsignaciones(Request $request, Turno $turno): StreamedResponse
+    {
+        abort_unless($turno->visiblePara($request->user()), 403);
+
+        $consignaciones = $turno->consignaciones()->orderBy('id')->get();
+
+        return DescargaExcel::respuesta(
+            TablaExcel::generar(
+                'Consignaciones turno '.$turno->numero_turno,
+                'Fecha '.$turno->fecha->format('d/m/Y').' — '.$turno->nombre_vendedor,
+                ['No.', 'VALOR'],
+                $consignaciones->map(fn ($consignacion): array => [(string) $consignacion->consignacion_no, (float) $consignacion->valor]),
+                [0],
+                ['TOTAL', (float) $consignaciones->sum('valor')],
+            ),
+            'consignaciones-turno-'.$turno->numero_turno.'.xlsx',
+        );
     }
 
     /**

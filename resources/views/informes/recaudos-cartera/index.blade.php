@@ -103,7 +103,7 @@
     <div class="row g-3">
         <div class="col-12 col-xl-9">
             <div class="card">
-                <div class="table-responsive">
+                <div class="table-responsive titulos-fijos">
                     <table class="rc-tabla">
                         <thead>
                             <tr>

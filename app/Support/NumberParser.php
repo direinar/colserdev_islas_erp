@@ -45,6 +45,23 @@ class NumberParser
     }
 
     /**
+     * Whole-gallon fields of Control de tanques (ingresos de carrotanque, saldo inicial):
+     * "3.800" is typed with a thousands dot and means 3800, never 3,8 galones. A dot
+     * followed by exactly three digits is a thousands separator; anything else falls
+     * back to quantity() so "3800,5" or "3800.5" still keep their decimals.
+     */
+    public static function wholeQuantity(mixed $value): float
+    {
+        $clean = trim((string) $value);
+
+        if (preg_match('/^-?\d{1,3}(\.\d{3})+(,\d+)?$/', $clean) === 1) {
+            return self::decimal($clean);
+        }
+
+        return self::quantity($clean);
+    }
+
+    /**
      * Quantity fields (galones, lecturas) can carry real decimals, so a lone
      * '.' or ',' is ambiguous: the separator closest to the end of the
      * string is treated as the decimal point, repeated separators can only

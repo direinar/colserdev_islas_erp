@@ -1260,6 +1260,47 @@ input[inputmode="decimal"] {
     gap: .5rem;
 }
 
+/* Títulos inmovilizados (inventarios, saldos de cartera, estado de cuenta, control de caja,
+   compras, recaudos de cartera): la tabla se desplaza dentro de su recuadro y el encabezado
+   queda fijo arriba. Al imprimir la tabla sale completa. */
+.titulos-fijos {
+    max-height: calc(100vh - 170px);
+    overflow: auto;
+}
+
+.titulos-fijos > table > thead {
+    position: sticky;
+    top: 0;
+    z-index: 3;
+}
+
+/* Fondo opaco para que las filas no se vean por debajo del título al desplazarse. */
+.titulos-fijos > table > thead th {
+    background-clip: padding-box;
+}
+
+.titulos-fijos > table > thead th:not([style*="background"]) {
+    background-color: var(--bs-table-bg, #fff);
+}
+
+@media print {
+    .titulos-fijos {
+        max-height: none;
+        overflow: visible;
+    }
+
+    .titulos-fijos > table > thead {
+        position: static;
+    }
+}
+
+/* + AGREGAR FILA siempre al lado derecho, también cuando baja de línea (canastilla, pagos
+   electrónicos y las demás tablas de la planilla). */
+.medio-pago-toolbar > button,
+.canastilla-toolbar > button {
+    margin-left: auto;
+}
+
 @media (max-width: 767.98px) {
     h2,
     .h2 {

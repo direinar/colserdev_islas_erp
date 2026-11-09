@@ -117,7 +117,8 @@ test('el islero y el jefe de patios solo modifican sus planillas; el administrad
     guardarPlanilla($ana, 3, ['observaciones' => 'original']);
 
     // Ya no es una página 403: vuelve con el aviso y la planilla no cambia.
-    guardarPlanilla($beto, 3, ['observaciones' => 'cambiado por Beto'])->assertRedirect(route('turnos.create'))
+    // Todos los isleros ven todas las planillas: vuelve a la planilla con el aviso.
+    guardarPlanilla($beto, 3, ['observaciones' => 'cambiado por Beto'])->assertRedirect(route('turnos.create', ['turno_busqueda' => 3]))
         ->assertSessionHasErrors(['planilla' => 'Sus cambios NO se guardaron: esta planilla la registró otro usuario; solo él o el administrador la pueden modificar.']);
     guardarPlanilla($jefe, 3, ['observaciones' => 'cambiado por el jefe'])->assertRedirect(route('turnos.create', ['turno_busqueda' => 3]))
         ->assertSessionHasErrors('planilla');
@@ -137,7 +138,7 @@ test('el islero y el jefe de patios solo modifican sus planillas; el administrad
         ->and($turno->user_id)->toBe($ana->id);
 });
 
-test('el islero solo ve sus planillas y el jefe de patios las suyas y las de los isleros', function () {
+test('los isleros ven todas las planillas y el jefe de patios las suyas y las de los isleros', function () {
     $ana = User::factory()->create(['role' => User::ROLE_ISLERO]);
     $beto = User::factory()->create(['role' => User::ROLE_ISLERO]);
     $jefe = User::factory()->create(['role' => User::ROLE_JEFE_PATIOS]);
@@ -154,15 +155,15 @@ test('el islero solo ve sus planillas y el jefe de patios las suyas y las de los
         ->viewData('turnosDeFecha')->pluck('numero_turno')->all();
 
     $verPlanilla($ana, 1)->assertOk();
-    $verPlanilla($beto, 1)->assertForbidden();
-    $verPlanilla($ana, 2)->assertForbidden();
+    $verPlanilla($beto, 1)->assertOk();
+    $verPlanilla($ana, 2)->assertOk();
     $verPlanilla($jefe, 1)->assertOk();
     $verPlanilla($otroJefe, 2)->assertForbidden();
     $verPlanilla($jefe, 3)->assertForbidden();
     $verPlanilla($admin, 2)->assertOk();
 
-    expect($planillasDelDia($ana))->toBe([1])
-        ->and($planillasDelDia($beto))->toBe([])
+    expect($planillasDelDia($ana))->toBe([1, 2, 3])
+        ->and($planillasDelDia($beto))->toBe([1, 2, 3])
         ->and($planillasDelDia($jefe))->toBe([1, 2])
         ->and($planillasDelDia($admin))->toBe([1, 2, 3]);
 });

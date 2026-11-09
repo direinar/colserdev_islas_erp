@@ -49,7 +49,7 @@
                 </div>
             </div>
 
-            <div class="table-responsive p-3">
+            <div class="table-responsive titulos-fijos p-3">
                 <table class="table table-bordered table-sm mb-0 align-middle">
                     <thead class="table-light">
                         <tr>

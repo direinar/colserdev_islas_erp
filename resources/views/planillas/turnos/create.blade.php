@@ -104,17 +104,16 @@
     @endif
 
     <script>
+        // Sin la lista de números digitados antes que el navegador despliega al escribir (tapaba
+        // la planilla). Se aplica también a las filas que se agregan después (al enfocarlas).
+        document.addEventListener('focusin', function(event) {
+            if (event.target.matches?.('#turno-form input:not([type="hidden"])')) {
+                event.target.setAttribute('autocomplete', 'off');
+            }
+        });
         document.addEventListener('DOMContentLoaded', function() {
-            document.querySelectorAll('#turno-form input[type="text"], #turno-form input[type="number"]').forEach(
-                input => {
-                    if (input.value.trim() !== '' && !input.readOnly && !input.disabled) {
-                        input.classList.add('valor-historico');
-                    }
-
-                    input.addEventListener('focus', () => input.classList.remove('valor-historico'), {
-                        once: true
-                    });
-                });
+            document.querySelectorAll('#turno-form input:not([type="hidden"])')
+                .forEach(input => input.setAttribute('autocomplete', 'off'));
         });
 
         // Vacía todos los campos editables de la planilla (deja intactos los readonly/hidden)
@@ -341,22 +340,10 @@
         }
     </script>
 
-    <style>
-        #turno-form input.valor-historico {
-            color: transparent !important;
-            text-shadow: 0 0 0 #777;
-        }
-
-        #turno-form input.valor-historico:focus {
-            color: inherit !important;
-            text-shadow: none;
-        }
-    </style>
-
     {{-- data-*: el borrador del navegador se borra solo cuando el guardado fue exitoso y no se
          ofrece recuperar en una planilla bloqueada; data-estado-url consulta, antes de guardar,
          si otro usuario la marcó como revisada mientras estaba abierta. --}}
-    <form method="POST" action="{{ route('turnos.store') }}" id="turno-form"
+    <form method="POST" action="{{ route('turnos.store') }}" id="turno-form" autocomplete="off"
         @if (session('planilla_guardada')) data-guardado-ok="1" @endif
         @if (session()->hasOldInput('numero_turno')) data-borrador-servidor="1" @endif
         @if (!$puedeGuardar) data-bloqueada="1" @endif

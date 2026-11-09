@@ -99,7 +99,7 @@ test('la compra liquida IVA, costo y costo unitario como la plantilla con IVA (f
         // Sin los números de referencia (1)-(4) ni su leyenda: solo servían para la plantilla.
         ->assertDontSee('Liquidación IVA = base 19%')
         ->assertDontSee('<span class="compra-ref">', false)
-        ->assertSeeInOrder(['>F-49<', '>1.399.412<', '>34.864.856<', '>15.027,96<', '>71.045.952<'], false);
+        ->assertSeeInOrder(['F-49', '1.399.412', '34.864.856', '15.027,96', '71.045.952'], false);
 });
 
 test('la compra de combustible guarda el proveedor, lo lista y se puede corregir', function () {

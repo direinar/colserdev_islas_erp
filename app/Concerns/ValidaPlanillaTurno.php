@@ -180,7 +180,8 @@ trait ValidaPlanillaTurno
         $enOtraPlanilla = TurnoConsignacion::query()
             ->with('turno:id,numero_turno')
             ->whereIn('consignacion_no', $numeros)
-            ->whereHas('turno', fn ($turno) => $turno->where('numero_turno', '!=', $request->input('numero_turno')))
+            // El No. de una planilla anulada se puede volver a usar.
+            ->whereHas('turno', fn ($turno) => $turno->noAnulados()->where('numero_turno', '!=', $request->input('numero_turno')))
             ->first();
 
         return $enOtraPlanilla

@@ -4,9 +4,20 @@
         <div class="medio-pago-section">
             <div class="medio-pago-toolbar">
                 <div class="medio-pago-title">CONSIGNACIONES</div>
-                <button type="button" id="add-consignacion-row" class="btn btn-sm btn-outline-primary medio-pago-add-btn">
-                    + AGREGAR FILA
-                </button>
+                <div class="ms-auto d-flex flex-wrap gap-1">
+                    <button type="button" id="imprimir-consignaciones" class="btn btn-sm btn-outline-secondary medio-pago-add-btn">
+                        IMPRIMIR
+                    </button>
+                    {{-- El Excel sale de lo guardado: en una planilla nueva aún no hay consignaciones guardadas. --}}
+                    @if (isset($turno) && $turno && $turno->exists)
+                        <a href="{{ route('turnos.consignaciones.exportar', $turno) }}" class="btn btn-sm btn-outline-success medio-pago-add-btn">
+                            EXCEL
+                        </a>
+                    @endif
+                    <button type="button" id="add-consignacion-row" class="btn btn-sm btn-outline-primary medio-pago-add-btn">
+                        + AGREGAR FILA
+                    </button>
+                </div>
             </div>
 
             <div class="table-responsive">
@@ -57,15 +68,40 @@
                         @endif
                     </tbody>
                     <tfoot>
+                        {{-- El total va al margen derecho del recuadro. --}}
                         <tr class="medio-pago-total-row">
-                            <td class="text-end">TOTAL</td>
-                            <td id="total-consignaciones" class="text-end">0</td>
-                            <td></td>
+                            <td class="text-start">TOTAL</td>
+                            <td colspan="2" id="total-consignaciones" class="text-end">0</td>
                         </tr>
                     </tfoot>
                 </table>
             </div>
         </div>
+
+        <script>
+            // IMPRIMIR: solo el recuadro de consignaciones, con lo que está en pantalla.
+            document.getElementById('imprimir-consignaciones')?.addEventListener('click', function() {
+                const filas = Array.from(document.querySelectorAll('#consignaciones-body tr'))
+                    .map(fila => [fila.querySelector('.consignacion-no-input')?.value || '', fila.querySelector('.consignacion-valor-input')?.value || ''])
+                    .filter(([numero, valor]) => numero.trim() !== '' || valor.trim() !== '');
+                const escapar = texto => String(texto).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+                const fecha = document.getElementById('turno-fecha')?.value || '';
+                const turno = document.getElementById('turno-numero')?.value || '';
+                const total = document.getElementById('total-consignaciones')?.textContent || '0';
+
+                const ventana = window.open('', '_blank');
+                if (!ventana) return;
+                ventana.document.write(`<!DOCTYPE html><html lang="es"><head><meta charset="utf-8"><title>Consignaciones turno ${escapar(turno)}</title>
+                    <style>body{font-family:Arial,sans-serif;font-size:12px}table{border-collapse:collapse;width:100%}th,td{border:1px solid #888;padding:4px 6px}td.v{text-align:right}tfoot td{font-weight:bold}</style></head>
+                    <body><h3>CONSIGNACIONES — TURNO ${escapar(turno)} — ${escapar(fecha)}</h3>
+                    <table><thead><tr><th>No.</th><th>VALOR</th></tr></thead><tbody>
+                    ${filas.map(([numero, valor]) => `<tr><td>${escapar(numero)}</td><td class="v">${escapar(valor)}</td></tr>`).join('')}
+                    </tbody><tfoot><tr><td>TOTAL</td><td class="v">${escapar(total)}</td></tr></tfoot></table></body></html>`);
+                ventana.document.close();
+                ventana.focus();
+                ventana.print();
+            });
+        </script>
 
         <div class="medio-pago-section">
             <div class="medio-pago-toolbar">

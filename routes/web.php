@@ -9,6 +9,7 @@ use App\Http\Controllers\CompraLubricanteController;
 use App\Http\Controllers\ComprobanteContableCompraController;
 use App\Http\Controllers\ConteoCatalogoController;
 use App\Http\Controllers\ConteoController;
+use App\Http\Controllers\ControlPlanillasController;
 use App\Http\Controllers\ControlTanqueController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
@@ -51,6 +52,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/turnos/{turno}/estado', [TurnoController::class, 'estado'])
             ->name('turnos.estado');
 
+        Route::get('/turnos/{turno}/consignaciones/exportar', [TurnoController::class, 'exportarConsignaciones'])
+            ->name('turnos.consignaciones.exportar');
+
         // Lectura electrónica por fecha: la registran los mismos roles que la planilla de turnos
         // (islero, jefe de patios y administradores), como cuando iba dentro de la planilla.
         Route::get('/lectura-electronica', [LecturaElectronicaController::class, 'index'])
@@ -88,6 +92,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         Route::post('/turnos/{turno}/anular', [TurnoController::class, 'anular'])
             ->name('turnos.anular');
+
+        // Control de planillas borradas o incompletas.
+        Route::get('/control-planillas', [ControlPlanillasController::class, 'index'])
+            ->name('control-planillas.index');
+
+        Route::get('/control-planillas/turno/{numero}', [ControlPlanillasController::class, 'historial'])
+            ->whereNumber('numero')
+            ->name('control-planillas.historial');
+
+        Route::post('/control-planillas/{auditoria}/atender', [ControlPlanillasController::class, 'atender'])
+            ->name('control-planillas.atender');
     });
 
     // El jefe de patios, además de la planilla de turnos, solo accede a Cartera - Estado de cuenta y a Control de tanques.
@@ -249,6 +264,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         Route::get('/informes/cierre/exportar', [InformeCierreController::class, 'exportar'])
             ->name('informes.cierre.exportar');
+
+        Route::get('/informes/cierre/pdf', [InformeCierreController::class, 'pdf'])
+            ->name('informes.cierre.pdf');
 
         Route::post('/informes/cierre/contrato', [InformeCierreController::class, 'guardarContrato'])
             ->name('informes.cierre.contrato');

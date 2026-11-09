@@ -178,7 +178,7 @@
         </div>
 
         <div class="card is-kpi">
-            <div class="table-responsive">
+            <div class="table-responsive titulos-fijos">
                 <table class="is-tabla">
                     <thead>
                         <tr>
@@ -238,7 +238,7 @@
         </div>
 
         <div class="card is-kpi">
-            <div class="table-responsive">
+            <div class="table-responsive titulos-fijos">
                 <table class="is-tabla">
                     <thead>
                         <tr>
@@ -284,7 +284,7 @@
             (compras de lubricantes menos ventas de canastilla de las planillas).</div>
     @else
         <div class="card is-kpi">
-            <div class="table-responsive">
+            <div class="table-responsive titulos-fijos">
                 <table class="is-tabla">
                     <thead>
                         <tr>

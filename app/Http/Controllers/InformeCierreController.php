@@ -8,8 +8,10 @@ use App\Services\InformeCierreExcelService;
 use App\Services\InformeCierreService;
 use App\Support\DescargaExcel;
 use App\Support\NumberParser;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -34,6 +36,22 @@ class InformeCierreController extends Controller
         $libro = $excel->generar($desde, $hasta);
 
         return DescargaExcel::respuesta($libro, 'informes-de-gestion-'.$desde.'-a-'.$hasta.'.xlsx');
+    }
+
+    /**
+     * Informes de gestión en PDF, para descargarlo o compartirlo por WhatsApp desde el módulo.
+     */
+    public function pdf(Request $request, InformeCierreService $cierre, InformeCierreExcelService $excel): Response
+    {
+        [$desde, $hasta] = $this->rango($request);
+        $informe = $cierre->informe($desde, $hasta);
+
+        return Pdf::loadView('informes.cierre.pdf', [
+            'desde' => $desde,
+            'hasta' => $hasta,
+            'renglones' => $excel->renglones($informe['valores']),
+            'estadisticas' => $excel->estadisticas($informe['estadisticas']),
+        ])->download('informes-de-gestion-'.$desde.'-a-'.$hasta.'.pdf');
     }
 
     /**

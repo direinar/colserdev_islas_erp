@@ -111,14 +111,14 @@ class ControlTanqueController extends Controller
                     continue;
                 }
 
-                IngresoTanque::query()->updateOrCreate(
-                    ['fecha' => $fecha],
-                    [
-                        'ingreso_corriente' => $corriente === '' ? 0 : NumberParser::quantity($corriente),
-                        'ingreso_acpm' => $acpm === '' ? 0 : NumberParser::quantity($acpm),
-                        'user_id' => $request->user()->id,
-                    ],
-                );
+                $ingreso = IngresoTanque::query()->whereDate('fecha', $fecha)->first()
+                    ?? new IngresoTanque(['fecha' => $fecha]);
+
+                $ingreso->fill([
+                    'ingreso_corriente' => $corriente === '' ? 0 : NumberParser::wholeQuantity($corriente),
+                    'ingreso_acpm' => $acpm === '' ? 0 : NumberParser::wholeQuantity($acpm),
+                    'user_id' => $request->user()->id,
+                ])->save();
             }
         });
 
@@ -152,7 +152,7 @@ class ControlTanqueController extends Controller
                     ['combustible' => $combustible],
                     [
                         'fecha_corte' => $request->input('fecha_corte'),
-                        'galones' => NumberParser::quantity($galones),
+                        'galones' => NumberParser::wholeQuantity($galones),
                     ],
                 );
             }

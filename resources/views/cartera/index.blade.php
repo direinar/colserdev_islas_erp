@@ -65,8 +65,14 @@
 
             /* Compacto para que quepa el mayor número de transacciones por hoja. */
             #cartera-table {
-                font-size: 9px;
-                line-height: 1.15;
+                font-size: 8px;
+                line-height: 1.1;
+            }
+
+            /* Los campos (placas, producto, galones...) imprimían con su tamaño normal. */
+            #cartera-table input,
+            #cartera-table select {
+                font-size: inherit !important;
             }
 
             #cartera-table > :not(caption) > * > * {
@@ -213,7 +219,7 @@
                 <input type="hidden" name="fecha_inicial" value="{{ $fechaInicial }}">
                 <input type="hidden" name="fecha_final" value="{{ $fechaFinal }}">
 
-                <div class="table-responsive">
+                <div class="table-responsive titulos-fijos">
                     <table class="table table-bordered table-sm mb-0" id="cartera-table">
                         <thead style="background-color:#ccccff;">
                             <tr>

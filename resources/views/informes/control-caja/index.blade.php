@@ -116,7 +116,7 @@
     @endif
 
     <div class="card mb-3">
-        <div class="table-responsive">
+        <div class="table-responsive titulos-fijos">
             <table class="cc-tabla">
                 <thead>
                     <tr>

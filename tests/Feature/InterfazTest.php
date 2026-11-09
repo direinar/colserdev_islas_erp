@@ -50,10 +50,11 @@ test('el menú tiene los nombres acordados y Compras ya no muestra los registros
 
     $html = $this->actingAs($admin)->get(route('dashboard'))->assertOk()->getContent();
 
-    $inicioInformes = strpos($html, '>
-                                Informes');
-    $inicioCompras = strpos($html, '>
-                                Compras');
+    // El menú se ubica por su texto, sin depender de la sangría del archivo.
+    preg_match('/>\s*Informes\s*</', $html, $informes, PREG_OFFSET_CAPTURE);
+    preg_match('/>\s*Compras\s*</', $html, $compras, PREG_OFFSET_CAPTURE);
+    $inicioInformes = $informes[0][1];
+    $inicioCompras = $compras[0][1];
     $menuInformes = substr($html, $inicioInformes, strpos($html, '</ul>', $inicioInformes) - $inicioInformes);
     $menuCompras = substr($html, $inicioCompras, strpos($html, '</ul>', $inicioCompras) - $inicioCompras);
 

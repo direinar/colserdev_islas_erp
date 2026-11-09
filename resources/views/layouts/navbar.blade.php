@@ -57,10 +57,17 @@
 
                         {{-- OPERACIÓN --}}
                         @if ($user->canAccessTurnos())
+                            {{-- Alarma de planillas borradas o incompletas para administración y gerencia:
+                                 alertas sin revisar + números de turno que faltan. Va en una sola línea: este
+                                 archivo usa la forma corta y mezclarla con la de bloque rompe la compilación. --}}
+                            @php($alarmasPlanillas = $user->isAdministrador() ? \App\Models\TurnoAuditoria::query()->pendientes()->count() + count(app(\App\Services\AuditoriaPlanillaService::class)->numerosFaltantes()) : 0)
                             <li class="nav-item dropdown">
-                                <a class="nav-link dropdown-toggle {{ request()->is('turnos*') || request()->is('lectura-electronica*') ? 'active' : '' }}"
+                                <a class="nav-link dropdown-toggle {{ request()->is('turnos*') || request()->is('lectura-electronica*') || request()->is('control-planillas*') ? 'active' : '' }}"
                                     href="#" data-bs-toggle="dropdown">
                                     Operación
+                                    @if ($alarmasPlanillas > 0)
+                                        <span class="badge rounded-pill text-bg-danger" title="Alertas de planillas">{{ $alarmasPlanillas }}</span>
+                                    @endif
                                 </a>
                                 <ul class="dropdown-menu">
                                     <li>
@@ -78,6 +85,14 @@
                                         <li>
                                             <a class="dropdown-item" href="{{ route('turnos.pendientes') }}">
                                                 Planillas pendientes de revisión
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item" href="{{ route('control-planillas.index') }}">
+                                                Control de planillas
+                                                @if ($alarmasPlanillas > 0)
+                                                    <span class="badge text-bg-danger">{{ $alarmasPlanillas }}</span>
+                                                @endif
                                             </a>
                                         </li>
                                     @endif

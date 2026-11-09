@@ -218,6 +218,8 @@ class ConteoService
         $numeros = range($desde, $hasta);
         $deTurnos = TurnoConsignacion::query()
             ->whereIn('consignacion_no', array_map('strval', $numeros))
+            // Una planilla anulada no aporta consignaciones al conteo.
+            ->whereHas('turno', fn ($turno) => $turno->noAnulados())
             ->get()
             ->groupBy(fn (TurnoConsignacion $fila): int => (int) $fila->consignacion_no);
 

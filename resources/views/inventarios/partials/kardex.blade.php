@@ -45,7 +45,7 @@
 </style>
 
 <x-erp-card :title="$titulo">
-    <div class="table-responsive">
+    <div class="table-responsive titulos-fijos">
         <table class="table table-bordered table-sm mb-0 align-middle kardex-table">
             <thead>
                 <tr style="background-color:#000; color:#ff1c1c; letter-spacing:.25rem; font-weight:800;">

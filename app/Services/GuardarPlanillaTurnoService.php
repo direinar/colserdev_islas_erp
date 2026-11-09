@@ -22,6 +22,7 @@ class GuardarPlanillaTurnoService
     public function __construct(
         private CarteraTurnoSyncService $carteraSync,
         private CuadreTurnoService $cuadre,
+        private AuditoriaPlanillaService $auditoria,
     ) {}
 
     /**
@@ -55,6 +56,9 @@ class GuardarPlanillaTurnoService
                 'traslado_faltante' => $trasladoFaltante,
             ];
 
+            // Resumen antes de reemplazar las filas: si el guardado quita datos, queda la alerta.
+            $antes = $turno ? $this->auditoria->resumen($turno) : null;
+
             if ($turno) {
                 $turno->update($atributos);
                 $this->borrarFilas($turno, $usuario);
@@ -84,6 +88,8 @@ class GuardarPlanillaTurnoService
 
             // Al final: la cartera lee créditos y recaudos ya guardados del turno.
             $this->carteraSync->sincronizar($turno);
+
+            $this->auditoria->registrarGuardado($turno, $antes, $usuario);
 
             return $turno;
         });

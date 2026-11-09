@@ -41,7 +41,7 @@ test('el margen mayorista del periodo es total de galones por porcentaje por mar
     $response = $this->actingAs($admin)
         ->get(route('informes.margen-mayorista.index', ['desde' => '2026-03-01', 'hasta' => '2026-03-31']))
         ->assertOk()
-        ->assertSee('Informe margen mayorista')
+        ->assertSee('Informe de compras y margen mayorista')
         ->assertSee('7.734.535');
 
     expect($response->viewData('facturas'))->toHaveCount(7)
@@ -98,7 +98,7 @@ test('el informe de margen mayorista se exporta a Excel', function () {
     $response = $this->actingAs($admin)
         ->get(route('informes.margen-mayorista.exportar', ['desde' => '2026-03-01', 'hasta' => '2026-03-31']))
         ->assertOk()
-        ->assertDownload('margen-mayorista-2026-03-01-a-2026-03-31.xlsx');
+        ->assertDownload('compras-y-margen-mayorista-2026-03-01-a-2026-03-31.xlsx');
 
     $archivo = tempnam(sys_get_temp_dir(), 'mayorista').'.xlsx';
     file_put_contents($archivo, $response->streamedContent());

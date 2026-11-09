@@ -173,6 +173,11 @@
             'ruta' => 'informes.cierre.index',
             'rutaExportar' => 'informes.cierre.exportar',
         ])
+        <a href="{{ route('informes.cierre.pdf', ['desde' => $desde, 'hasta' => $hasta]) }}" class="btn btn-outline-light btn-sm">
+            <i class="bi bi-file-earmark-pdf" aria-hidden="true"></i> PDF
+        </a>
+        <x-compartir-pdf :url="route('informes.cierre.pdf', ['desde' => $desde, 'hasta' => $hasta])"
+            :archivo="'informes-de-gestion-'.$desde.'-a-'.$hasta.'.pdf'" titulo="Informes de gestión" />
     </x-page-header>
 
     @if (session('success'))

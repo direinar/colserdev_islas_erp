@@ -207,6 +207,17 @@ test('jefe de patios y administracion pueden alimentar ingresos y el ingreso man
     expect($fila['corriente'])->toMatchArray(['ingreso' => 1250.0, 'saldo' => 2250.0])
         ->and($fila['acpm'])->toMatchArray(['ingreso' => 500.0])
         ->and($fila['corriente']['ingreso'])->not->toBe(5050.0);
+
+    // Con punto de miles, como se digita normalmente: 3.800 son 3800 galones, no 3,8.
+    $datos['ingresos']['2026-09-25'] = ['corriente' => '3.800', 'acpm' => '2.500'];
+    $this->actingAs($admin)->post(route('control-tanques.aforos'), $datos)->assertRedirect();
+
+    $fila = $this->actingAs($jefe)
+        ->get(route('control-tanques.index', ['desde' => '2026-09-25', 'hasta' => '2026-09-25']))
+        ->viewData('filas')[0];
+
+    expect($fila['corriente']['ingreso'])->toBe(3800.0)
+        ->and($fila['acpm']['ingreso'])->toBe(2500.0);
 });
 
 test('solo el administrador registra el saldo inicial de los tanques', function () {

@@ -221,7 +221,7 @@
             {{ \Illuminate\Support\Carbon::parse($hasta)->format('d/m/Y') }}
         </div>
 
-        <div class="table-responsive">
+        <div class="table-responsive titulos-fijos">
             <table class="table table-bordered table-sm mb-0 compras-tabla" id="compras-registradas">
                 <thead>
                     @include('compras.partials.encabezado', ['accionImprimible' => false])

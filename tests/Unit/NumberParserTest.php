@@ -23,3 +23,14 @@ test('quantity, money y decimal siguen convenciones distintas a propósito', fun
         // Compras, cartera y anticipos (es-CO): punto de miles.
         ->and(NumberParser::decimal('1.250'))->toBe(1250.0);
 });
+
+test('wholeQuantity lee el punto seguido de tres cifras como miles en galones enteros', function (string $entrada, float $esperado) {
+    expect(NumberParser::wholeQuantity($entrada))->toBe($esperado);
+})->with([
+    'punto de miles' => ['3.800', 3800.0],
+    'sin separador' => ['2500', 2500.0],
+    'miles y decimales' => ['3.800,5', 3800.5],
+    'decimal con coma' => ['3800,5', 3800.5],
+    'decimal con punto' => ['3800.5', 3800.5],
+    'vacío' => ['', 0.0],
+]);
