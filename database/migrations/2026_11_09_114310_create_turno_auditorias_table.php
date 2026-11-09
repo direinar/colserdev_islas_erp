@@ -26,7 +26,7 @@ return new class extends Migration
             $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamps();
 
-            $table->index(['alerta', 'atendida_at']);
+            $table->index('atendida_at');
             $table->index('numero_turno');
         });
     }
