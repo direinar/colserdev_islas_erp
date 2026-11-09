@@ -165,7 +165,7 @@ test('el jefe de patios registra el aforo nocturno y una fecha sin datos borra s
             'desde' => '2026-09-25',
             'hasta' => '2026-09-26',
             'aforos' => [
-                '2026-09-25' => ['vara_corriente' => '63', 'tabla_corriente' => '3.246,5', 'vara_acpm' => '52,55', 'tabla_acpm' => '4262'],
+                '2026-09-25' => ['vara_corriente' => '63', 'tabla_corriente' => '3.246,5', 'vara_acpm' => '52.55', 'tabla_acpm' => '4.715'],
                 '2026-09-26' => ['vara_corriente' => '', 'tabla_corriente' => '', 'vara_acpm' => '', 'tabla_acpm' => ''],
             ],
         ])
@@ -177,7 +177,8 @@ test('el jefe de patios registra el aforo nocturno y una fecha sin datos borra s
         ->and((float) $aforo->vara_corriente)->toBe(63.0)
         ->and((float) $aforo->tabla_corriente)->toBe(3246.5)
         ->and((float) $aforo->vara_acpm)->toBe(52.55)
-        ->and((float) $aforo->tabla_acpm)->toBe(4262.0)
+        // Galones con punto de miles: 4.715 son 4715 galones, no 4,7.
+        ->and((float) $aforo->tabla_acpm)->toBe(4715.0)
         ->and($aforo->user_id)->toBe($jefe->id);
 });
 

@@ -80,6 +80,9 @@
 
         <script>
             // IMPRIMIR: solo el recuadro de consignaciones, con lo que está en pantalla.
+            // Las etiquetas de cierre van como <\/head> y <\/body>: Livewire inyecta sus estilos y
+            // scripts antes del primer cierre literal que encuentre, y dentro de este texto rompía
+            // el script y desacomodaba los recuadros de la planilla.
             document.getElementById('imprimir-consignaciones')?.addEventListener('click', function() {
                 const filas = Array.from(document.querySelectorAll('#consignaciones-body tr'))
                     .map(fila => [fila.querySelector('.consignacion-no-input')?.value || '', fila.querySelector('.consignacion-valor-input')?.value || ''])
@@ -92,11 +95,11 @@
                 const ventana = window.open('', '_blank');
                 if (!ventana) return;
                 ventana.document.write(`<!DOCTYPE html><html lang="es"><head><meta charset="utf-8"><title>Consignaciones turno ${escapar(turno)}</title>
-                    <style>body{font-family:Arial,sans-serif;font-size:12px}table{border-collapse:collapse;width:100%}th,td{border:1px solid #888;padding:4px 6px}td.v{text-align:right}tfoot td{font-weight:bold}</style></head>
+                    <style>body{font-family:Arial,sans-serif;font-size:12px}table{border-collapse:collapse;width:100%}th,td{border:1px solid #888;padding:4px 6px}td.v{text-align:right}tfoot td{font-weight:bold}</style><\/head>
                     <body><h3>CONSIGNACIONES — TURNO ${escapar(turno)} — ${escapar(fecha)}</h3>
                     <table><thead><tr><th>No.</th><th>VALOR</th></tr></thead><tbody>
                     ${filas.map(([numero, valor]) => `<tr><td>${escapar(numero)}</td><td class="v">${escapar(valor)}</td></tr>`).join('')}
-                    </tbody><tfoot><tr><td>TOTAL</td><td class="v">${escapar(total)}</td></tr></tfoot></table></body></html>`);
+                    </tbody><tfoot><tr><td>TOTAL</td><td class="v">${escapar(total)}</td></tr></tfoot></table><\/body><\/html>`);
                 ventana.document.close();
                 ventana.focus();
                 ventana.print();

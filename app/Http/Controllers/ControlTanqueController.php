@@ -75,11 +75,15 @@ class ControlTanqueController extends Controller
                     continue;
                 }
 
+                // Los galones de la tabla se digitan con punto de miles ("4.715" = 4715 galones);
+                // la vara (centímetros) puede llevar decimales con punto ("52.55").
                 $valores = collect(['vara_corriente', 'tabla_corriente', 'vara_acpm', 'tabla_acpm'])
                     ->mapWithKeys(fn (string $campo): array => [
                         $campo => trim((string) ($row[$campo] ?? '')) === ''
                             ? null
-                            : NumberParser::quantity($row[$campo]),
+                            : (str_starts_with($campo, 'tabla_')
+                                ? NumberParser::wholeQuantity($row[$campo])
+                                : NumberParser::quantity($row[$campo])),
                     ]);
 
                 $aforo = AforoTanque::query()->whereDate('fecha', $fecha)->first();

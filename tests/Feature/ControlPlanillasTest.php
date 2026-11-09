@@ -95,6 +95,12 @@ test('el recuadro de consignaciones tiene imprimir y Excel y el total va al marg
         // Sin la lista de números digitados antes que despliega el navegador.
         ->assertSee('id="turno-form" autocomplete="off"', false);
 
+    // Livewire inyecta sus scripts antes del primer </body>: si el script de IMPRIMIR trae esa
+    // etiqueta literal, el script se corta, sale como texto y desacomoda los recuadros.
+    $html = (string) $this->actingAs($admin)->get(route('turnos.create', ['turno_busqueda' => 7]))->getContent();
+    expect(substr_count($html, '</head>'))->toBe(1)
+        ->and(substr_count($html, '</body>'))->toBe(1);
+
     $this->actingAs($admin)->get(route('turnos.consignaciones.exportar', $turno))->assertDownload('consignaciones-turno-7.xlsx');
 });
 
