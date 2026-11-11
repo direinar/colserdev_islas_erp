@@ -104,11 +104,12 @@
                     <table class="rc-tabla">
                         <thead>
                             <tr>
-                                <th colspan="4" class="rc-titulo-tabla">COMPROBANTE CONTABLE DE RECAUDOS DE CARTERA</th>
+                                <th colspan="5" class="rc-titulo-tabla">COMPROBANTE CONTABLE DE RECAUDOS DE CARTERA</th>
                             </tr>
                             <tr>
                                 <th>CUENTA</th>
                                 <th>NOMBRE</th>
+                                <th>NIT</th>
                                 <th>DEBITO</th>
                                 <th>CREDITO</th>
                             </tr>
@@ -118,6 +119,7 @@
                                 <tr>
                                     <td>{{ $linea['cuenta'] }}</td>
                                     <td>{{ $linea['nombre'] }}</td>
+                                    <td>{{ $linea['nit'] }}</td>
                                     <td class="num">{{ $pesos($linea['debito']) }}</td>
                                     <td class="num">{{ $pesos($linea['credito']) }}</td>
                                 </tr>
@@ -125,12 +127,12 @@
                         </tbody>
                         <tfoot>
                             <tr>
-                                <td colspan="2" class="text-end">TOTALES</td>
+                                <td colspan="3" class="text-end">TOTALES</td>
                                 <td class="num">{{ $pesosSiempre($comprobante['debito']) }}</td>
                                 <td class="num">{{ $pesosSiempre($comprobante['credito']) }}</td>
                             </tr>
                             <tr>
-                                <td colspan="2" class="text-end">DIFERENCIA</td>
+                                <td colspan="3" class="text-end">DIFERENCIA</td>
                                 <td colspan="2" class="num">{{ $pesosSiempre($comprobante['diferencia']) }}</td>
                             </tr>
                         </tfoot>

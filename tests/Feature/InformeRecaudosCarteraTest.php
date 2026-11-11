@@ -51,11 +51,11 @@ test('el informe lista cada recaudo del periodo con su banco y concepto', functi
     $recaudos = array_map(fn (array $r): array => array_values($r), $response->viewData('recaudos'));
 
     expect($recaudos)->toBe([
-        [20, '2026-09-25', 'JUAN CARLOS GIL', 'CAJA', 'Recaudo por Islas', 500000.0],
-        [20, '2026-09-25', 'CONSORCIO LIDER', 'BANCOLOMBIA', 'Recaudo por Admón', 300000.0],
-        [20, '2026-09-25', 'JUAN CARLOS GIL', 'DAVIVIENDA', 'Recaudo por Admón', 200000.0],
-        [21, '2026-09-26', 'ARKATEC', 'CAJA', 'Recaudo por Islas', 100000.0],
-        [21, '2026-09-26', 'ARKATEC', 'CAJA', 'Recaudo por Admón', 50000.0],
+        [20, '2026-09-25', 'JUAN CARLOS GIL', '1001', 'CAJA', 'Recaudo por Islas', 500000.0],
+        [20, '2026-09-25', 'CONSORCIO LIDER', '1002', 'BANCOLOMBIA', 'Recaudo por Admón', 300000.0],
+        [20, '2026-09-25', 'JUAN CARLOS GIL', '1001', 'DAVIVIENDA', 'Recaudo por Admón', 200000.0],
+        [21, '2026-09-26', 'ARKATEC', '1003', 'CAJA', 'Recaudo por Islas', 100000.0],
+        [21, '2026-09-26', 'ARKATEC', '1003', 'CAJA', 'Recaudo por Admón', 50000.0],
     ])
         ->and($response->viewData('total'))->toBe(1150000.0);
 });
@@ -71,15 +71,16 @@ test('el comprobante debita caja y cada banco y acredita la cartera de cada clie
         ->viewData('comprobante');
 
     expect(array_map(fn (array $linea): array => array_values($linea), $comprobante['lineas']))->toBe([
-        ['11050501', 'RECAUDO POR ISLAS', 600000.0, 0.0],
-        ['11100510', 'BANCOLOMBIA', 300000.0, 0.0],
-        ['11050501', 'CAJA', 50000.0, 0.0],
-        ['11100502', 'DAVIVIENDA', 200000.0, 0.0],
-        ['13050501', 'ARKATEC', 0.0, 100000.0],
-        ['13050501', 'ARKATEC', 0.0, 50000.0],
-        ['13050501', 'CONSORCIO LIDER', 0.0, 300000.0],
-        ['13050501', 'JUAN CARLOS GIL', 0.0, 500000.0],
-        ['13050501', 'JUAN CARLOS GIL', 0.0, 200000.0],
+        // Caja y bancos sin NIT; cada abono con el NIT del cliente.
+        ['11050501', 'RECAUDO POR ISLAS', '', 600000.0, 0.0],
+        ['11100510', 'BANCOLOMBIA', '', 300000.0, 0.0],
+        ['11050501', 'CAJA', '', 50000.0, 0.0],
+        ['11100502', 'DAVIVIENDA', '', 200000.0, 0.0],
+        ['13050501', 'ARKATEC', '1003', 0.0, 100000.0],
+        ['13050501', 'ARKATEC', '1003', 0.0, 50000.0],
+        ['13050501', 'CONSORCIO LIDER', '1002', 0.0, 300000.0],
+        ['13050501', 'JUAN CARLOS GIL', '1001', 0.0, 500000.0],
+        ['13050501', 'JUAN CARLOS GIL', '1001', 0.0, 200000.0],
     ])
         ->and($comprobante['debito'])->toBe(1150000.0)
         ->and($comprobante['credito'])->toBe(1150000.0)
@@ -145,6 +146,8 @@ test('el comprobante contable de recaudos de cartera se exporta a Excel', functi
 
     expect($hoja->getCell('A1')->getValue())->toBe('COMPROBANTE CONTABLE DE RECAUDOS DE CARTERA')
         ->and($hoja->getCell('A5')->getValue())->toBe('11050501')
-        ->and($hoja->getCell('B14')->getValue())->toBe('TOTALES')
-        ->and((float) $hoja->getCell('C14')->getValue())->toBe(1150000.0);
+        ->and($hoja->getCell('C4')->getValue())->toBe('NIT')
+        ->and($hoja->getCell('C9')->getValue())->toBe('1003')
+        ->and($hoja->getCell('C14')->getValue())->toBe('TOTALES')
+        ->and((float) $hoja->getCell('D14')->getValue())->toBe(1150000.0);
 });

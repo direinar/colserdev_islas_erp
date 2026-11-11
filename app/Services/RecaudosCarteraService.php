@@ -26,7 +26,7 @@ class RecaudosCarteraService
      * Informe de recaudos de cartera: los recaudos del periodo y su total.
      *
      * @return array{
-     *     recaudos: list<array{planilla: int, fecha: string, cliente: string, banco: string, concepto: string, valor: float}>,
+     *     recaudos: list<array{planilla: int, fecha: string, cliente: string, nit: string, banco: string, concepto: string, valor: float}>,
      *     total: float
      * }
      */
@@ -44,7 +44,7 @@ class RecaudosCarteraService
      * Comprobante contable de recaudos de cartera (módulo aparte) con sus cuentas.
      *
      * @return array{
-     *     comprobante: array{lineas: list<array{cuenta: string, nombre: string, debito: float, credito: float}>, debito: float, credito: float, diferencia: float},
+     *     comprobante: array{lineas: list<array{cuenta: string, nombre: string, nit: string, debito: float, credito: float}>, debito: float, credito: float, diferencia: float},
      *     cuentas: Collection<string, ComprobanteRecaudoCuenta>,
      *     bancos: Collection<int, Banco>
      * }
@@ -62,7 +62,7 @@ class RecaudosCarteraService
     }
 
     /**
-     * @return Collection<int, array{planilla: int, fecha: string, cliente: string, banco: string, concepto: string, valor: float}>
+     * @return Collection<int, array{planilla: int, fecha: string, cliente: string, nit: string, banco: string, concepto: string, valor: float}>
      */
     private function recaudos(string $desde, string $hasta): Collection
     {
@@ -77,6 +77,7 @@ class RecaudosCarteraService
                 'planilla' => (int) $recaudo->turno->numero_turno,
                 'fecha' => $recaudo->turno->fecha->format('Y-m-d'),
                 'cliente' => (string) ($recaudo->cliente?->name ?? 'SIN CLIENTE'),
+                'nit' => (string) $recaudo->cliente?->document,
                 'banco' => 'CAJA',
                 'concepto' => self::CONCEPTO_ISLAS,
                 'valor' => (float) $recaudo->valor,
@@ -90,6 +91,7 @@ class RecaudosCarteraService
                 'planilla' => (int) $recaudo->turno->numero_turno,
                 'fecha' => $recaudo->turno->fecha->format('Y-m-d'),
                 'cliente' => (string) ($recaudo->responsable?->name ?? 'SIN CLIENTE'),
+                'nit' => (string) $recaudo->responsable?->document,
                 'banco' => trim((string) $recaudo->banco) !== '' ? trim((string) $recaudo->banco) : 'SIN BANCO',
                 'concepto' => self::CONCEPTO_ADMIN,
                 'valor' => (float) $recaudo->valor,
@@ -115,7 +117,7 @@ class RecaudosCarteraService
      * @param  Collection<int, array<string, mixed>>  $recaudos
      * @param  Collection<string, ComprobanteRecaudoCuenta>  $cuentas
      * @param  Collection<int, Banco>  $bancos
-     * @return array{lineas: list<array{cuenta: string, nombre: string, debito: float, credito: float}>, debito: float, credito: float, diferencia: float}
+     * @return array{lineas: list<array{cuenta: string, nombre: string, nit: string, debito: float, credito: float}>, debito: float, credito: float, diferencia: float}
      */
     private function comprobante(Collection $recaudos, Collection $cuentas, Collection $bancos): array
     {
@@ -127,6 +129,7 @@ class RecaudosCarteraService
             $lineas[] = [
                 'cuenta' => (string) $cuentas->get(ComprobanteRecaudoCuenta::RECAUDO_ISLAS)?->cuenta,
                 'nombre' => 'RECAUDO POR ISLAS',
+                'nit' => '',
                 'debito' => $islas,
                 'credito' => 0.0,
             ];
@@ -146,12 +149,13 @@ class RecaudosCarteraService
                 $lineas[] = [
                     'cuenta' => $cuenta,
                     'nombre' => $nombre,
+                    'nit' => '',
                     'debito' => $valor,
                     'credito' => 0.0,
                 ];
             });
 
-        // Cada abono va en forma individual, por cliente.
+        // Cada abono va en forma individual, por cliente y con su NIT (el documento del tercero).
         foreach ($recaudos->sortBy('cliente', SORT_NATURAL | SORT_FLAG_CASE) as $recaudo) {
             if ((float) $recaudo['valor'] <= 0 || $cuentaCartera === '') {
                 continue;
@@ -159,6 +163,7 @@ class RecaudosCarteraService
             $lineas[] = [
                 'cuenta' => $cuentaCartera,
                 'nombre' => $recaudo['cliente'],
+                'nit' => $recaudo['nit'],
                 'debito' => 0.0,
                 'credito' => $recaudo['valor'],
             ];

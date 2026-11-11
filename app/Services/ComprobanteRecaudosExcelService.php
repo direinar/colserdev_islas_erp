@@ -29,27 +29,29 @@ class ComprobanteRecaudosExcelService
         $hoja->setCellValue('A2', 'DESDE '.Carbon::parse($desde)->format('d/m/Y').'  HASTA '.Carbon::parse($hasta)->format('d/m/Y'));
         $hoja->getStyle('A1')->getFont()->setBold(true)->setSize(13)->getColor()->setRGB('FF0000');
 
-        $hoja->fromArray(['CUENTA', 'NOMBRE', 'DEBITO', 'CREDITO'], null, 'A4');
+        $hoja->fromArray(['CUENTA', 'NOMBRE', 'NIT', 'DEBITO', 'CREDITO'], null, 'A4');
         $hoja->freezePane('A5');
-        $hoja->getStyle('A4:D4')->getFont()->setBold(true);
-        $hoja->getStyle('A4:D4')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('DDEBF7');
+        $hoja->getStyle('A4:E4')->getFont()->setBold(true);
+        $hoja->getStyle('A4:E4')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('DDEBF7');
 
         $fila = 4;
         foreach ($comprobante['lineas'] as $linea) {
             $fila++;
             $hoja->setCellValueExplicit("A{$fila}", $linea['cuenta'], DataType::TYPE_STRING);
             $hoja->setCellValue("B{$fila}", $linea['nombre']);
-            $hoja->setCellValue("C{$fila}", $linea['debito'] ?: null);
-            $hoja->setCellValue("D{$fila}", $linea['credito'] ?: null);
+            // Como texto: un NIT no se suma ni pierde sus ceros a la izquierda.
+            $hoja->setCellValueExplicit("C{$fila}", $linea['nit'], DataType::TYPE_STRING);
+            $hoja->setCellValue("D{$fila}", $linea['debito'] ?: null);
+            $hoja->setCellValue("E{$fila}", $linea['credito'] ?: null);
         }
         $fila++;
-        $hoja->fromArray(['TOTALES', $comprobante['debito'], $comprobante['credito']], null, 'B'.$fila);
-        $hoja->fromArray(['DIFERENCIA', $comprobante['diferencia']], null, 'B'.($fila + 1));
-        $hoja->getStyle("A{$fila}:D".($fila + 1))->getFont()->setBold(true);
-        $hoja->getStyle('C5:D'.($fila + 1))->getNumberFormat()->setFormatCode(self::FORMATO_PESOS);
-        $hoja->getStyle("A4:D{$fila}")->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
+        $hoja->fromArray(['TOTALES', $comprobante['debito'], $comprobante['credito']], null, 'C'.$fila);
+        $hoja->fromArray(['DIFERENCIA', $comprobante['diferencia']], null, 'C'.($fila + 1));
+        $hoja->getStyle("A{$fila}:E".($fila + 1))->getFont()->setBold(true);
+        $hoja->getStyle('D5:E'.($fila + 1))->getNumberFormat()->setFormatCode(self::FORMATO_PESOS);
+        $hoja->getStyle("A4:E{$fila}")->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
 
-        foreach (['A', 'B', 'C', 'D'] as $columna) {
+        foreach (['A', 'B', 'C', 'D', 'E'] as $columna) {
             $hoja->getColumnDimension($columna)->setAutoSize(true);
         }
 
