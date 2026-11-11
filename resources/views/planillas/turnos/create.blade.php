@@ -17,6 +17,15 @@
         <a href="{{ route('turnos.create') }}" class="btn btn-outline-light btn-sm">
             <i class="bi bi-file-earmark-plus" aria-hidden="true"></i> Nuevo
         </a>
+        {{-- Exportan lo guardado: una planilla nueva aún no tiene nada que exportar. --}}
+        @if (isset($turno) && $turno && $turno->exists)
+            <a href="{{ route('turnos.pdf', $turno) }}" class="btn btn-outline-light btn-sm" id="planilla-pdf">
+                <i class="bi bi-file-earmark-pdf" aria-hidden="true"></i> PDF
+            </a>
+            <a href="{{ route('turnos.excel', $turno) }}" class="btn btn-outline-light btn-sm" id="planilla-excel">
+                <i class="bi bi-file-earmark-excel" aria-hidden="true"></i> Excel
+            </a>
+        @endif
         @if ($puedeGuardar)
             <button type="button" class="btn btn-outline-light btn-sm" onclick="limpiarPlanilla()">
                 <i class="bi bi-eraser" aria-hidden="true"></i> Limpiar

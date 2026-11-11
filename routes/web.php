@@ -55,6 +55,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/turnos/{turno}/consignaciones/exportar', [TurnoController::class, 'exportarConsignaciones'])
             ->name('turnos.consignaciones.exportar');
 
+        Route::get('/turnos/{turno}/pdf', [TurnoController::class, 'pdf'])
+            ->name('turnos.pdf');
+
+        Route::get('/turnos/{turno}/excel', [TurnoController::class, 'excel'])
+            ->name('turnos.excel');
+
         // Lectura electrónica por fecha: la registran los mismos roles que la planilla de turnos
         // (islero, jefe de patios y administradores), como cuando iba dentro de la planilla.
         Route::get('/lectura-electronica', [LecturaElectronicaController::class, 'index'])

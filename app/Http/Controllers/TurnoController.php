@@ -11,13 +11,16 @@ use App\Services\AuditoriaPlanillaService;
 use App\Services\BorradorPlanillaTurnoService;
 use App\Services\CarteraTurnoSyncService;
 use App\Services\GuardarPlanillaTurnoService;
+use App\Services\PlanillaTurnoExportService;
 use App\Support\DescargaExcel;
 use App\Support\TablaExcel;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -248,6 +251,30 @@ class TurnoController extends Controller
             ),
             'consignaciones-turno-'.$turno->numero_turno.'.xlsx',
         );
+    }
+
+    /**
+     * La planilla guardada completa en PDF, para imprimirla o compartirla.
+     */
+    public function pdf(Request $request, Turno $turno, PlanillaTurnoExportService $exportacion): Response
+    {
+        abort_unless($turno->visiblePara($request->user()), 403);
+
+        return Pdf::loadView('planillas.turnos.pdf', [
+            'turno' => $turno,
+            'encabezado' => $exportacion->encabezado($turno),
+            'secciones' => $exportacion->secciones($turno),
+        ])->download('planilla-turno-'.$turno->numero_turno.'.pdf');
+    }
+
+    /**
+     * La planilla guardada completa en Excel, con las mismas secciones del PDF.
+     */
+    public function excel(Request $request, Turno $turno, PlanillaTurnoExportService $exportacion): StreamedResponse
+    {
+        abort_unless($turno->visiblePara($request->user()), 403);
+
+        return DescargaExcel::respuesta($exportacion->excel($turno), 'planilla-turno-'.$turno->numero_turno.'.xlsx');
     }
 
     /**
