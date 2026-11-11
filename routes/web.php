@@ -52,9 +52,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/turnos/{turno}/estado', [TurnoController::class, 'estado'])
             ->name('turnos.estado');
 
-        Route::get('/turnos/{turno}/consignaciones/exportar', [TurnoController::class, 'exportarConsignaciones'])
-            ->name('turnos.consignaciones.exportar');
-
         Route::get('/turnos/{turno}/pdf', [TurnoController::class, 'pdf'])
             ->name('turnos.pdf');
 

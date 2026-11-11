@@ -83,25 +83,45 @@ test('el control lista las planillas incompletas y los numeros de turno que falt
     $pantalla->assertSee('NÚMEROS DE TURNO FALTANTES (1)');
 });
 
-test('el recuadro de consignaciones tiene imprimir y Excel y el total va al margen derecho', function () {
+test('consignaciones sin imprimir ni Excel y con TOTAL a la derecha; sin Limpiar y con Anular solo para administracion', function () {
     $admin = User::factory()->create(['role' => User::ROLE_ADMINISTRADOR]);
+    $islero = User::factory()->create(['role' => User::ROLE_ISLERO]);
     guardarControl($admin, 7, [['SURTIDOR 1 CTE', '10']], [['2390', '100.000'], ['2387', '63.950']]);
-    $turno = Turno::query()->sole();
 
-    $this->actingAs($admin)->get(route('turnos.create', ['turno_busqueda' => 7]))
-        ->assertSee('id="imprimir-consignaciones"', false)
-        ->assertSee(route('turnos.consignaciones.exportar', $turno))
+    $html = (string) $this->actingAs($admin)->get(route('turnos.create', ['turno_busqueda' => 7]))
+        ->assertDontSee('IMPRIMIR')
+        ->assertDontSee('consignaciones/exportar')
+        ->assertSee('<td class="text-end">TOTAL</td>', false)
         ->assertSee('<td colspan="2" id="total-consignaciones" class="text-end">', false)
+        ->assertDontSee('Limpiar')
+        ->assertSee('id="anular-planilla"', false)
+        ->assertSee('id="anular-planilla-form"', false)
+        ->assertSee('Esta acción no se puede deshacer.')
         // Sin la lista de números digitados antes que despliega el navegador.
-        ->assertSee('id="turno-form" autocomplete="off"', false);
+        ->assertSee('id="turno-form" autocomplete="off"', false)
+        ->getContent();
 
-    // Livewire inyecta sus scripts antes del primer </body>: si el script de IMPRIMIR trae esa
-    // etiqueta literal, el script se corta, sale como texto y desacomoda los recuadros.
-    $html = (string) $this->actingAs($admin)->get(route('turnos.create', ['turno_busqueda' => 7]))->getContent();
+    // Livewire inyecta sus scripts antes del primer </body>: un script con esa etiqueta literal
+    // se corta, sale como texto y desacomoda los recuadros.
     expect(substr_count($html, '</head>'))->toBe(1)
         ->and(substr_count($html, '</body>'))->toBe(1);
 
-    $this->actingAs($admin)->get(route('turnos.consignaciones.exportar', $turno))->assertDownload('consignaciones-turno-7.xlsx');
+    // NUEVO abre la planilla en blanco y sin Anular.
+    $this->actingAs($admin)->get(route('turnos.create'))
+        ->assertDontSee('id="anular-planilla"', false)
+        ->assertDontSee('value="2390"', false);
+
+    // El islero no ve Anular ni puede anular.
+    $this->actingAs($islero)->get(route('turnos.create', ['turno_busqueda' => 7]))->assertDontSee('id="anular-planilla"', false);
+    $turno = Turno::query()->sole();
+    $this->actingAs($islero)->post(route('turnos.anular', $turno), ['motivo_anulacion' => 'x'])->assertForbidden();
+
+    $this->actingAs($admin)->post(route('turnos.anular', $turno), ['motivo_anulacion' => 'Duplicada'])
+        ->assertSessionHas('success', 'Turno #7 ANULADO: quedó bloqueado, nadie lo puede modificar y ya no se tiene en cuenta en informes, cartera, conteo ni control de tanques.');
+    expect($turno->fresh()->anulada)->toBeTrue();
+    $this->actingAs($admin)->get(route('turnos.create', ['turno_busqueda' => 7]))
+        ->assertSee('A N U L A D A')
+        ->assertDontSee('id="anular-planilla"', false);
 });
 
 test('el informe de gestion se descarga en PDF y se comparte por WhatsApp', function () {

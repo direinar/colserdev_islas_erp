@@ -26,10 +26,15 @@
                 <i class="bi bi-file-earmark-excel" aria-hidden="true"></i> Excel
             </a>
         @endif
-        @if ($puedeGuardar)
-            <button type="button" class="btn btn-outline-light btn-sm" onclick="limpiarPlanilla()">
-                <i class="bi bi-eraser" aria-hidden="true"></i> Limpiar
+        {{-- Sin botón Limpiar (se oprimía por error y borraba lo digitado): NUEVO abre una planilla
+             en blanco. ANULAR solo para gerente y administración. --}}
+        @if (isset($turno) && $turno && $turno->exists && auth()->user()->isAdministrador() && !$turnoAnulado)
+            <button type="button" class="btn btn-danger btn-sm border-light" id="anular-planilla"
+                onclick="anularPlanilla()">
+                <i class="bi bi-x-octagon" aria-hidden="true"></i> Anular
             </button>
+        @endif
+        @if ($puedeGuardar)
             <button type="submit" form="turno-form" class="btn btn-light btn-sm">
                 <i class="bi bi-save" aria-hidden="true"></i> Guardar
             </button>
@@ -125,21 +130,35 @@
                 .forEach(input => input.setAttribute('autocomplete', 'off'));
         });
 
-        // Vacía todos los campos editables de la planilla (deja intactos los readonly/hidden)
-        // y dispara los eventos que usa galones.js para recalcular totales en pantalla.
-        function limpiarPlanilla() {
+        // ANULAR: explica qué pasa con la planilla y pide el motivo, que queda en su historial.
+        function anularPlanilla() {
+            const form = document.getElementById('anular-planilla-form');
+            if (!form) return;
+
             Swal.fire({
-                title: '¿Limpiar planilla?',
-                text: 'Se borrarán todos los campos de la planilla. Esta acción no se puede deshacer.',
+                title: '¿Anular la planilla del turno ' + form.dataset.turno + '?',
+                html: '<div class="text-start">Al anularla:<ul class="mt-2 mb-2">' +
+                    '<li>Queda <strong>bloqueada</strong>: nadie la puede modificar ni volver a usar.</li>' +
+                    '<li>Sus ventas y su dinero <strong>no se tienen en cuenta</strong> en informes, cartera, conteo ni control de tanques.</li>' +
+                    '<li>Sus números de consignación quedan libres para usarse en otra planilla.</li>' +
+                    '<li>Se sigue pudiendo consultar, marcada como <strong>ANULADA</strong>.</li>' +
+                    '</ul><strong class="text-danger">Esta acción no se puede deshacer.</strong></div>',
                 icon: 'warning',
+                input: 'text',
+                inputLabel: 'Motivo de la anulación',
+                inputPlaceholder: 'Ej.: planilla duplicada, digitada en el turno equivocado…',
+                inputAttributes: { maxlength: 500 },
+                inputValidator: valor => valor.trim() === '' ? 'Escriba el motivo de la anulación.' : undefined,
                 showCancelButton: true,
-                confirmButtonText: 'Sí, limpiar',
+                confirmButtonText: 'Sí, anular',
                 cancelButtonText: 'Cancelar',
                 confirmButtonColor: '#dc3545',
                 reverseButtons: true,
-            }).then(result => {
-                if (result.isConfirmed) {
-                    ejecutarLimpiezaPlanilla();
+                focusCancel: true,
+            }).then(resultado => {
+                if (resultado.isConfirmed) {
+                    form.querySelector('[name="motivo_anulacion"]').value = resultado.value.trim();
+                    form.submit();
                 }
             });
         }
@@ -323,30 +342,6 @@
             }, true);
         });
 
-        function ejecutarLimpiezaPlanilla() {
-            const form = document.getElementById('turno-form');
-            if (!form) return;
-
-            form.querySelectorAll('input, select, textarea').forEach(el => {
-                if (el.type === 'hidden' || el.type === 'checkbox' || el.type === 'radio' || el.readOnly || el
-                    .disabled) {
-                    return;
-                }
-
-                if (el.tagName === 'SELECT') {
-                    el.selectedIndex = 0;
-                } else {
-                    el.value = '';
-                }
-
-                el.dispatchEvent(new Event('input', {
-                    bubbles: true
-                }));
-                el.dispatchEvent(new Event('change', {
-                    bubbles: true
-                }));
-            });
-        }
     </script>
 
     {{-- data-*: el borrador del navegador se borra solo cuando el guardado fue exitoso y no se
@@ -543,14 +538,11 @@
     </form>
 
     @if (isset($turno) && $turno && $turno->exists && auth()->user()->isAdministrador() && !$turnoAnulado)
-        <form method="POST" action="{{ route('turnos.anular', $turno) }}" class="d-print-none mt-3"
-            onsubmit="return confirm('¿Anular definitivamente esta planilla?');">
+        {{-- Lo envía el botón ANULAR de la cabecera, después de confirmar y escribir el motivo. --}}
+        <form method="POST" action="{{ route('turnos.anular', $turno) }}" id="anular-planilla-form" class="d-none"
+            data-turno="{{ str_pad($turno->numero_turno, 3, '0', STR_PAD_LEFT) }}">
             @csrf
-            <div class="input-group input-group-sm" style="max-width: 42rem;">
-                <input type="text" name="motivo_anulacion" class="form-control" maxlength="500" required
-                    placeholder="Motivo de anulación">
-                <button type="submit" class="btn btn-outline-danger">Anular planilla</button>
-            </div>
+            <input type="hidden" name="motivo_anulacion">
         </form>
     @endif
 

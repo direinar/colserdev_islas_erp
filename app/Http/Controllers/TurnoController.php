@@ -13,7 +13,6 @@ use App\Services\CarteraTurnoSyncService;
 use App\Services\GuardarPlanillaTurnoService;
 use App\Services\PlanillaTurnoExportService;
 use App\Support\DescargaExcel;
-use App\Support\TablaExcel;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\Exceptions\HttpResponseException;
@@ -228,29 +227,7 @@ class TurnoController extends Controller
         $auditoria->registrarAnulacion($turno, $request->user());
 
         return redirect()->route('turnos.create', ['turno_busqueda' => $turno->numero_turno])
-            ->with('success', 'Turno #'.$turno->numero_turno.' anulado correctamente.');
-    }
-
-    /**
-     * Excel del recuadro CONSIGNACIONES de una planilla guardada.
-     */
-    public function exportarConsignaciones(Request $request, Turno $turno): StreamedResponse
-    {
-        abort_unless($turno->visiblePara($request->user()), 403);
-
-        $consignaciones = $turno->consignaciones()->orderBy('id')->get();
-
-        return DescargaExcel::respuesta(
-            TablaExcel::generar(
-                'Consignaciones turno '.$turno->numero_turno,
-                'Fecha '.$turno->fecha->format('d/m/Y').' — '.$turno->nombre_vendedor,
-                ['No.', 'VALOR'],
-                $consignaciones->map(fn ($consignacion): array => [(string) $consignacion->consignacion_no, (float) $consignacion->valor]),
-                [0],
-                ['TOTAL', (float) $consignaciones->sum('valor')],
-            ),
-            'consignaciones-turno-'.$turno->numero_turno.'.xlsx',
-        );
+            ->with('success', 'Turno #'.$turno->numero_turno.' ANULADO: quedó bloqueado, nadie lo puede modificar y ya no se tiene en cuenta en informes, cartera, conteo ni control de tanques.');
     }
 
     /**
