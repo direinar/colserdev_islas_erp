@@ -6,6 +6,7 @@ use App\Models\ComprobanteVentaCuenta;
 use App\Models\Turno;
 use App\Models\TurnoCartera;
 use App\Models\TurnoVarios;
+use App\Support\TerceroComprobante;
 use Illuminate\Support\Collection;
 
 /**
@@ -231,7 +232,10 @@ class ControlCajaService
             $linea('iva_por_pagar', 'IVA POR PAGAR', 0, $totales['iva']),
         ];
 
-        $lineas = array_values(array_filter($lineas, fn (array $linea): bool => $linea['debito'] != 0 || $linea['credito'] != 0));
+        $lineas = array_values(array_map(
+            TerceroComprobante::aplicar(...),
+            array_filter($lineas, fn (array $linea): bool => $linea['debito'] != 0 || $linea['credito'] != 0),
+        ));
 
         $debito = (float) array_sum(array_column($lineas, 'debito'));
         $credito = (float) array_sum(array_column($lineas, 'credito'));

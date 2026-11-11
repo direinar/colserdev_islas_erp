@@ -118,14 +118,15 @@ test('el comprobante contable de ventas del periodo cuadra débitos y créditos'
         ['11050501', 'VARIOS', 'GENERAL', '', 68000.0, 0.0],
         ['11050501', 'FALTANTES/SOBRANTES', 'GENERAL', '', 55000.0, 0.0],
         ['13050501', 'CARTERA CLIENTES', 'CONSORCIO LIDER', '900111222', 250000.0, 0.0],
-        ['41350701', 'VENTAS COMBUSTIBLE', '', '', 0.0, 1726000.0],
+        // Sin NIT: el tercero es GENERAL y el NIT queda en blanco.
+        ['41350701', 'VENTAS COMBUSTIBLE', 'GENERAL', '', 0.0, 1726000.0],
         // Costo al promedio de las salidas según cortes: 70 gal gasolina x 10.000 + 60 gal ACPM x 8.000.
-        ['41350801', 'COSTO DE VENTAS DE COMBUSTIBLE', '', '', 1180000.0, 0.0],
-        ['143508', 'INVENTARIOS DE COMBUSTIBLES', '', '', 0.0, 1180000.0],
-        ['41351001', 'VENTAS DE CANASTILLA', '', '', 0.0, 26890.0],
-        ['41351002', 'COSTO DE VENTAS CANASTILLA', '', '', 20000.0, 0.0],
-        ['143509', 'INVENTARIOS DE CANASTILLA', '', '', 0.0, 20000.0],
-        ['23670501', 'IVA POR PAGAR', '', '', 0.0, 5110.0],
+        ['41350801', 'COSTO DE VENTAS DE COMBUSTIBLE', 'GENERAL', '', 1180000.0, 0.0],
+        ['143508', 'INVENTARIOS DE COMBUSTIBLES', 'GENERAL', '', 0.0, 1180000.0],
+        ['41351001', 'VENTAS DE CANASTILLA', 'GENERAL', '', 0.0, 26890.0],
+        ['41351002', 'COSTO DE VENTAS CANASTILLA', 'GENERAL', '', 20000.0, 0.0],
+        ['143509', 'INVENTARIOS DE CANASTILLA', 'GENERAL', '', 0.0, 20000.0],
+        ['23670501', 'IVA POR PAGAR', 'GENERAL', '', 0.0, 5110.0],
     ])
         ->and($comprobante['debito'])->toBe(2958000.0)
         ->and($comprobante['credito'])->toBe(2958000.0)

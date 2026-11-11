@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Compra;
 use App\Models\CompraLubricante;
 use App\Models\ComprobanteCompraCuenta;
+use App\Support\TerceroComprobante;
 use Illuminate\Support\Collection;
 
 /**
@@ -38,6 +39,7 @@ class ComprobanteContableComprasService
         $lineas = $this->combustibles($cuentas, $desde, $hasta)
             ->concat($this->canastilla($cuentas, $desde, $hasta))
             ->concat($this->descuentosCompras($cuentas, $desde, $hasta))
+            ->map(TerceroComprobante::aplicar(...))
             ->values()
             ->all();
 
