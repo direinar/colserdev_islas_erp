@@ -3,6 +3,7 @@
 use App\Models\Banco;
 use App\Models\ComprobanteRecaudoCuenta;
 use App\Models\Customer;
+use App\Models\FuelPrice;
 use App\Models\Turno;
 use App\Models\User;
 use PhpOffice\PhpSpreadsheet\IOFactory;
@@ -150,4 +151,33 @@ test('el comprobante contable de recaudos de cartera se exporta a Excel', functi
         ->and($hoja->getCell('C9')->getValue())->toBe('1003')
         ->and($hoja->getCell('C14')->getValue())->toBe('TOTALES')
         ->and((float) $hoja->getCell('D14')->getValue())->toBe(1150000.0);
+});
+
+test('una fila de recaudo sin cliente y en 0 no se guarda ni sale en el informe', function () {
+    $admin = User::factory()->create(['role' => User::ROLE_ADMINISTRADOR]);
+    FuelPrice::create(['name' => 'Gasolina', 'price' => 16395, 'turno_desde' => 1, 'active' => true]);
+    FuelPrice::create(['name' => 'ACPM', 'price' => 11725, 'turno_desde' => 1, 'active' => true]);
+    recaudosDelPeriodo();
+
+    $this->actingAs($admin)->post(route('turnos.store'), [
+        'fecha' => '2026-09-27',
+        'numero_turno' => 30,
+        'ventas' => [['surtidor' => 'SURTIDOR 1 CTE', 'combustible' => 'CTE', 'no_cierre' => '1', 'galones' => '10']],
+        'consignaciones' => [['consignacion_no' => '7001', 'consignacion_valor' => '163.950']],
+        'recaudos' => [['cliente_id' => '', 'valor' => '0']],
+        'recaudos_admin' => [['banco' => '', 'responsable_id' => '', 'valor' => '0']],
+    ])->assertSessionHasNoErrors();
+    $turno30 = Turno::query()->where('numero_turno', 30)->sole();
+
+    expect($turno30->recaudos()->count())->toBe(0)
+        ->and($turno30->recaudosAdmin()->count())->toBe(0);
+
+    // Las que ya quedaron guardadas en 0 tampoco salen en el informe.
+    $turno30->recaudos()->create(['cliente_id' => null, 'valor' => 0, 'total' => 0]);
+    $turno30->recaudosAdmin()->create(['banco' => null, 'responsable_id' => null, 'valor' => 0, 'total' => 0]);
+
+    $this->actingAs($admin)
+        ->get(route('informes.recaudos-cartera.index', ['desde' => '2026-09-01', 'hasta' => '2026-09-30']))
+        ->assertDontSee('SIN CLIENTE')
+        ->assertDontSee('SIN BANCO');
 });

@@ -66,7 +66,8 @@ class RecaudosCarteraService
      */
     private function recaudos(string $desde, string $hasta): Collection
     {
-        $enPeriodo = fn ($query) => $query->whereHas('turno', fn ($turno) => $turno->noAnulados()
+        // Un recaudo en $0 no es un recaudo (filas en 0 que quedaron guardadas en planillas).
+        $enPeriodo = fn ($query) => $query->where('valor', '!=', 0)->whereHas('turno', fn ($turno) => $turno->noAnulados()
             ->whereDate('fecha', '>=', $desde)
             ->whereDate('fecha', '<=', $hasta));
 

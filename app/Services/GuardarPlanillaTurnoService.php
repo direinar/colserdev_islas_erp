@@ -374,7 +374,9 @@ class GuardarPlanillaTurnoService
             $valor = NumberParser::money($row['valor'] ?? null);
             $clienteId = ($row['cliente_id'] ?? null) ?: null;
 
-            if (FilaPlanilla::vacia($row, ['cliente_id', 'valor'])) {
+            // Un recaudo sin cliente y en 0 no es un recaudo: no se guarda (salía en el informe
+            // de recaudos de cartera como "SIN CLIENTE" por $0).
+            if (FilaPlanilla::vacia($row, ['cliente_id', 'valor']) || ($clienteId === null && $valor == 0)) {
                 continue;
             }
 
@@ -463,7 +465,9 @@ class GuardarPlanillaTurnoService
             $responsableId = ($row['responsable_id'] ?? null) ?: null;
             $valor = NumberParser::money($row['valor'] ?? null);
 
-            if (FilaPlanilla::vacia($row, ['banco', 'responsable_id', 'valor'])) {
+            // Sin banco, sin cliente y en 0 no es un recaudo ("SIN BANCO / SIN CLIENTE" por $0).
+            if (FilaPlanilla::vacia($row, ['banco', 'responsable_id', 'valor'])
+                || (trim((string) $banco) === '' && $responsableId === null && $valor == 0)) {
                 continue;
             }
 
