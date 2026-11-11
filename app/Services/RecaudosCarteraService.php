@@ -136,12 +136,13 @@ class RecaudosCarteraService
             ];
         }
 
+        // Bancos: cada recaudo por administración en su propia línea, sin sumarlos por banco.
+        // Ordenados por banco y, dentro de cada uno, por fecha y planilla.
         $recaudos->where('concepto', self::CONCEPTO_ADMIN)
-            ->groupBy('banco')
-            ->sortKeys()
-            ->each(function (Collection $delBanco, string $nombre) use (&$lineas, $bancos): void {
-                $valor = (float) $delBanco->sum('valor');
-                $cuenta = (string) $bancos->firstWhere('name', $nombre)?->cuenta_contable;
+            ->sortBy([['banco', 'asc'], ['fecha', 'asc'], ['planilla', 'asc']])
+            ->each(function (array $recaudo) use (&$lineas, $bancos): void {
+                $valor = (float) $recaudo['valor'];
+                $cuenta = (string) $bancos->firstWhere('name', $recaudo['banco'])?->cuenta_contable;
 
                 if ($valor <= 0 || $cuenta === '') {
                     return;
@@ -149,7 +150,7 @@ class RecaudosCarteraService
 
                 $lineas[] = [
                     'cuenta' => $cuenta,
-                    'nombre' => $nombre,
+                    'nombre' => $recaudo['banco'],
                     'nit' => '',
                     'debito' => $valor,
                     'credito' => 0.0,

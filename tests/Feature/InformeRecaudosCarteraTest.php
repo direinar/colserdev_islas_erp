@@ -181,3 +181,28 @@ test('una fila de recaudo sin cliente y en 0 no se guarda ni sale en el informe'
         ->assertDontSee('SIN CLIENTE')
         ->assertDontSee('SIN BANCO');
 });
+
+test('en el comprobante cada recaudo por administracion va en su propia linea de banco, sin sumarlos', function () {
+    $admin = User::factory()->create(['role' => User::ROLE_ADMINISTRADOR]);
+    recaudosDelPeriodo();
+    $yudy = Customer::create(['name' => 'YUDY SUAREZ', 'document' => '1004']);
+    Turno::query()->where('numero_turno', 21)->sole()
+        ->recaudosAdmin()->create(['banco' => 'DAVIVIENDA', 'responsable_id' => $yudy->id, 'valor' => 964800, 'total' => 964800]);
+
+    $comprobante = $this->actingAs($admin)
+        ->get(route('informes.comprobante-recaudos.index', ['desde' => '2026-09-01', 'hasta' => '2026-09-30']))
+        ->viewData('comprobante');
+
+    $debitos = collect($comprobante['lineas'])->where('debito', '>', 0)
+        ->map(fn (array $linea): array => [$linea['nombre'], $linea['debito']])->values()->all();
+
+    expect($debitos)->toBe([
+        // Islas sigue sumado en una sola línea.
+        ['RECAUDO POR ISLAS', 600000.0],
+        ['BANCOLOMBIA', 300000.0],
+        ['CAJA', 50000.0],
+        ['DAVIVIENDA', 200000.0],
+        ['DAVIVIENDA', 964800.0],
+    ])
+        ->and($comprobante['diferencia'])->toBe(0.0);
+});
