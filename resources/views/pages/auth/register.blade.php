@@ -5,7 +5,7 @@
         <!-- Session Status -->
         <x-auth-session-status class="text-center" :status="session('status')" />
 
-        <form method="POST" action="{{ route('register.store') }}" class="flex flex-col gap-6">
+        <form method="POST" data-sin-aviso action="{{ route('register.store') }}" class="flex flex-col gap-6">
             @csrf
             <!-- Name -->
             <flux:input

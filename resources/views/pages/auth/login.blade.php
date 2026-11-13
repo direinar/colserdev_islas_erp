@@ -5,7 +5,7 @@
         <!-- Session Status -->
         <x-auth-session-status class="text-center" :status="session('status')" />
 
-        <form method="POST" action="{{ route('login.store') }}" class="auth-form">
+        <form method="POST" data-sin-aviso action="{{ route('login.store') }}" class="auth-form">
             @csrf
 
             <label for="email">{{ __('Correo') }}</label>

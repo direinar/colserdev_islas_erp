@@ -6,7 +6,9 @@ use Laravel\Fortify\Features;
 test('login screen can be rendered', function () {
     $response = $this->get(route('login'));
 
-    $response->assertOk();
+    $response->assertOk()
+        // El aviso de "información sin guardar" no aplica al ingreso.
+        ->assertSee('<form method="POST" data-sin-aviso', false);
 });
 
 test('users can authenticate using the login screen', function () {

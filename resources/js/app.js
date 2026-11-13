@@ -5,6 +5,7 @@ import './money-format';
 import './galones';
 import './lubricantes';
 import './turno-autosave';
+import './aviso-sin-guardar';
 import './pwa';
 
 window.Swal = Swal;

@@ -397,33 +397,21 @@
     </form>
 
     <script>
-        // Aforos e ingresos digitados sin guardar: se avisa antes de perderlos. El GUARDAR del
-        // saldo inicial recarga la página y botaba lo digitado en la tabla sin decir nada.
-        (function() {
+        // El aviso general al salir sin guardar está en resources/js/aviso-sin-guardar.js. Aquí,
+        // además, el GUARDAR del saldo inicial recarga la página y botaba sin decir nada lo
+        // digitado en la tabla: se explica qué se pierde antes de continuar.
+        document.getElementById('saldo-inicial-form')?.addEventListener('submit', function(event) {
             const aforos = document.getElementById('aforos-form');
-            if (!aforos) return;
+            if (!window.avisoSinGuardar?.hayCambios(aforos)) return;
 
-            let sinGuardar = false;
-            aforos.addEventListener('input', () => sinGuardar = true);
-            aforos.addEventListener('submit', () => sinGuardar = false);
-
-            window.addEventListener('beforeunload', function(event) {
-                if (sinGuardar) {
-                    event.preventDefault();
-                    event.returnValue = '';
-                }
-            });
-
-            document.getElementById('saldo-inicial-form')?.addEventListener('submit', function(event) {
-                if (sinGuardar && !confirm('Hay aforos o ingresos digitados en la tabla que NO se han guardado.\n\n' +
-                        'Este botón solo guarda el saldo inicial y lo digitado en la tabla se perderá.\n\n' +
-                        'Oprima Cancelar y use GUARDAR AFOROS, o Aceptar para continuar sin guardarlos.')) {
-                    event.preventDefault();
-                    return;
-                }
-                sinGuardar = false;
-            });
-        })();
+            if (!confirm('Hay aforos o ingresos digitados en la tabla que NO se han guardado.\n\n' +
+                    'Este botón solo guarda el saldo inicial y lo digitado en la tabla se perderá.\n\n' +
+                    'Oprima Cancelar y use GUARDAR AFOROS, o Aceptar para continuar sin guardarlos.')) {
+                event.preventDefault();
+                return;
+            }
+            window.avisoSinGuardar.descartar();
+        });
     </script>
 
     <div class="small text-muted mt-2">ESTE INFORME SOLO CONTIENE GALONES. Registre el ingreso del pedido en la columna
