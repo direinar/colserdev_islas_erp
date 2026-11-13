@@ -311,3 +311,14 @@ test('el control de tanques se descarga en PDF y se puede compartir desde el mó
 
     $this->actingAs($islero)->get(route('control-tanques.pdf'))->assertForbidden();
 });
+
+test('los aforos tienen GUARDAR tambien al pie y el saldo inicial avisa si hay aforos sin guardar', function () {
+    $admin = User::factory()->create(['role' => User::ROLE_ADMINISTRADOR]);
+
+    $this->actingAs($admin)->get(route('control-tanques.index', ['desde' => '2026-11-01', 'hasta' => '2026-11-12']))
+        ->assertOk()
+        ->assertSee('id="guardar-aforos-pie"', false)
+        ->assertSee('id="saldo-inicial-form"', false)
+        ->assertSee('Guardar saldo inicial')
+        ->assertSee('NO se han guardado', false);
+});

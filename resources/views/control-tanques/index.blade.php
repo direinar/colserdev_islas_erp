@@ -243,7 +243,8 @@
     @if ($esAdministrador)
         {{-- Un solo informe: una fecha de corte y un GUARDAR para los dos tanques. --}}
         <div class="card mb-3 d-print-none">
-            <form method="POST" action="{{ route('control-tanques.saldo-inicial') }}" class="card-body py-2">
+            <form method="POST" action="{{ route('control-tanques.saldo-inicial') }}" class="card-body py-2"
+                id="saldo-inicial-form">
                 @csrf
                 <input type="hidden" name="desde" value="{{ $desde }}">
                 <input type="hidden" name="hasta" value="{{ $hasta }}">
@@ -267,7 +268,7 @@
                                 value="{{ $saldoInicial ? $aforoInput((float) $saldoInicial->galones, 0) : '' }}">
                         </div>
                     @endforeach
-                    <button type="submit" class="btn btn-outline-primary btn-sm">Guardar</button>
+                    <button type="submit" class="btn btn-outline-primary btn-sm">Guardar saldo inicial</button>
                 </div>
             </form>
         </div>
@@ -386,7 +387,44 @@
                 </table>
             </div>
         </div>
+
+        {{-- Segundo botón al pie: al terminar de digitar la tabla no hay que volver arriba. --}}
+        <div class="d-flex justify-content-end mt-2 d-print-none">
+            <button type="submit" class="btn btn-danger" id="guardar-aforos-pie">
+                <i class="bi bi-save" aria-hidden="true"></i> GUARDAR AFOROS E INGRESOS
+            </button>
+        </div>
     </form>
+
+    <script>
+        // Aforos e ingresos digitados sin guardar: se avisa antes de perderlos. El GUARDAR del
+        // saldo inicial recarga la página y botaba lo digitado en la tabla sin decir nada.
+        (function() {
+            const aforos = document.getElementById('aforos-form');
+            if (!aforos) return;
+
+            let sinGuardar = false;
+            aforos.addEventListener('input', () => sinGuardar = true);
+            aforos.addEventListener('submit', () => sinGuardar = false);
+
+            window.addEventListener('beforeunload', function(event) {
+                if (sinGuardar) {
+                    event.preventDefault();
+                    event.returnValue = '';
+                }
+            });
+
+            document.getElementById('saldo-inicial-form')?.addEventListener('submit', function(event) {
+                if (sinGuardar && !confirm('Hay aforos o ingresos digitados en la tabla que NO se han guardado.\n\n' +
+                        'Este botón solo guarda el saldo inicial y lo digitado en la tabla se perderá.\n\n' +
+                        'Oprima Cancelar y use GUARDAR AFOROS, o Aceptar para continuar sin guardarlos.')) {
+                    event.preventDefault();
+                    return;
+                }
+                sinGuardar = false;
+            });
+        })();
+    </script>
 
     <div class="small text-muted mt-2">ESTE INFORME SOLO CONTIENE GALONES. Registre el ingreso del pedido en la columna
         INGRESO; si no se registra, se conserva el valor de compras. Las ventas salen según cortes de IAPROPIADA
