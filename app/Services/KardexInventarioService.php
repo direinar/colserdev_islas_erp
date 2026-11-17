@@ -4,14 +4,17 @@ namespace App\Services;
 
 use App\Models\Compra;
 use App\Models\CompraLubricante;
+use App\Models\InventarioAjuste;
 use App\Models\InventarioSaldoInicial;
 use App\Models\Turno;
 use App\Models\TurnoLubricante;
 use Illuminate\Support\Collection;
 
 /**
- * Kardex de inventario al costo promedio. Solo lee el saldo inicial, compras y planillas de turno:
- * el inventario no se edita, todas las correcciones se hacen en su origen.
+ * Kardex de inventario al costo promedio. Lee el saldo inicial, compras, planillas de turno y
+ * ajustes de inventario (avería, pérdida, sobrante…): el inventario no se edita, las
+ * correcciones se hacen en su origen. Los ajustes van al costo promedio y nunca son venta,
+ * así que no entran al costo de ventas (los informes solo toman las filas tipo 'venta').
  */
 class KardexInventarioService
 {
@@ -209,12 +212,17 @@ class KardexInventarioService
             ->filter(fn (InventarioSaldoInicial $saldo): bool => $saldo->inventario === InventarioSaldoInicial::CANASTILLA)
             ->keyBy('referencia');
 
-        $referencias = $entradas->keys()->concat($salidas->keys())->concat($saldos->keys())->filter()->unique()->sort()->values();
+        $ajustes = $this->ajustes(InventarioSaldoInicial::CANASTILLA)->groupBy('referencia');
+
+        $referencias = $entradas->keys()->concat($salidas->keys())->concat($saldos->keys())->concat($ajustes->keys())
+            ->filter()->unique()->sort()->values();
 
         return $this->memoria['canastilla'] = $referencias
             ->mapWithKeys(fn (string $referencia): array => [
                 $referencia => $this->calcular($this->conSaldoInicial(
-                    ($entradas->get($referencia) ?? collect())->concat($salidas->get($referencia) ?? collect()),
+                    ($entradas->get($referencia) ?? collect())
+                        ->concat($salidas->get($referencia) ?? collect())
+                        ->concat(($ajustes->get($referencia) ?? collect())->values()),
                     $saldos->get($referencia),
                 )),
             ])
@@ -314,9 +322,45 @@ class KardexInventarioService
             ));
 
         return $this->calcular($this->conSaldoInicial(
-            $entradas->concat($salidas),
+            $entradas->concat($salidas)->concat($this->ajustes($inventario)),
             $this->saldosIniciales()->get($inventario.'|'),
         ));
+    }
+
+    /**
+     * Movimientos de los ajustes de un inventario (con 'referencia' para canastilla). Van el
+     * mismo día después de compras y ventas, con el motivo en la columna No. FC.
+     *
+     * @return Collection<int, array<string, mixed>>
+     */
+    private function ajustes(string $inventario): Collection
+    {
+        return InventarioAjuste::query()
+            ->where('inventario', $inventario)
+            ->get()
+            ->map(function (InventarioAjuste $ajuste): array {
+                $fecha = $ajuste->fecha->format('Y-m-d');
+                $unidades = (float) $ajuste->unidades;
+                $entrada = $ajuste->esEntrada();
+
+                return [
+                    'tipo' => 'ajuste',
+                    'numero_turno' => null,
+                    'fecha_venta' => null,
+                    'fecha_compra' => $fecha,
+                    'compra_id' => null,
+                    'factura' => 'AJUSTE: '.$ajuste->nombreMotivo(),
+                    'entradas' => $entrada ? $unidades : 0.0,
+                    // Una entrada por ajuste entra al promedio del momento (lo calcula calcular()).
+                    'valor_entradas' => 0.0,
+                    'al_promedio' => $entrada,
+                    'salidas' => $entrada ? 0.0 : $unidades,
+                    'valor_venta' => 0.0,
+                    'precio' => null,
+                    'referencia' => (string) $ajuste->referencia,
+                    'orden' => $fecha.'-2-'.sprintf('%010d', $ajuste->id),
+                ];
+            });
     }
 
     /**
@@ -389,6 +433,11 @@ class KardexInventarioService
             ->values()
             ->map(function (array $movimiento) use (&$saldoUnidades, &$saldoValor, &$promedio, &$totales): array {
                 unset($movimiento['orden']);
+
+                if ($movimiento['al_promedio'] ?? false) {
+                    $movimiento['valor_entradas'] = $movimiento['entradas'] * $promedio;
+                }
+                unset($movimiento['al_promedio']);
 
                 $valorSalidas = $movimiento['salidas'] * $promedio;
                 $saldoUnidades += $movimiento['entradas'] - $movimiento['salidas'];

@@ -6,6 +6,7 @@ import './galones';
 import './lubricantes';
 import './turno-autosave';
 import './aviso-sin-guardar';
+import './pdf-revisado';
 import './pwa';
 
 window.Swal = Swal;

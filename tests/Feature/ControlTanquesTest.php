@@ -252,10 +252,14 @@ test('solo el administrador registra el saldo inicial de los tanques', function 
     expect(TanqueSaldoInicial::query()->pluck('combustible')->all())->toBe(['corriente']);
 });
 
-test('el islero no tiene acceso al control de tanques', function () {
+test('el islero entra al control de tanques y lo ve en el menu de informes', function () {
     $islero = User::factory()->create(['role' => User::ROLE_ISLERO]);
 
-    $this->actingAs($islero)->get(route('control-tanques.index'))->assertForbidden();
+    $this->actingAs($islero)->get(route('control-tanques.index'))->assertOk();
+    $this->actingAs($islero)->get(route('turnos.create'))
+        ->assertSee(route('control-tanques.index'))
+        // En Informes solo ve el control de tanques.
+        ->assertDontSee(route('informes.control-caja.index'));
 });
 
 test('el control de tanques se exporta a Excel', function () {
@@ -309,7 +313,8 @@ test('el control de tanques se descarga en PDF y se puede compartir desde el mó
     expect($pdf->headers->get('content-type'))->toBe('application/pdf')
         ->and(substr((string) $pdf->getContent(), 0, 5))->toBe('%PDF-');
 
-    $this->actingAs($islero)->get(route('control-tanques.pdf'))->assertForbidden();
+    // Los isleros también lo descargan y comparten.
+    $this->actingAs($islero)->get(route('control-tanques.pdf'))->assertOk();
 });
 
 test('los aforos tienen GUARDAR tambien al pie y el saldo inicial avisa si hay aforos sin guardar', function () {

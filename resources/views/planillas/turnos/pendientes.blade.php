@@ -2,6 +2,7 @@
 
 @section('content')
     <x-page-header title="Planillas pendientes de revisión" icon="hourglass-split">
+        <x-carpeta-planillas />
         <a href="{{ route('turnos.create') }}" class="btn btn-light">Volver a turnos</a>
     </x-page-header>
 

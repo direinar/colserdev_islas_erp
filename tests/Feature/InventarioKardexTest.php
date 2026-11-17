@@ -225,8 +225,8 @@ test('el kardex de canastilla consulta lo mismo sin importar cuántas referencia
         $kardex->canastilla($referencia);
     }
 
-    // Saldos iniciales + compras + líneas de canastilla + sus turnos, sin importar el número de referencias.
-    expect(count(DB::getQueryLog()))->toBeLessThanOrEqual(4)
+    // Saldos iniciales + compras + líneas de canastilla + sus turnos + ajustes, sin importar el número de referencias.
+    expect(count(DB::getQueryLog()))->toBeLessThanOrEqual(5)
         ->and($control['totales']['salidas'])->toBe(6.0)
         ->and($kardex->referenciasCanastilla())->toBe(['A', 'B', 'C', 'D', 'E', 'F'])
         // Los informes de la misma petición comparten la instancia (y lo ya calculado).

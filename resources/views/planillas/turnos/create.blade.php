@@ -26,6 +26,10 @@
                 <i class="bi bi-file-earmark-excel" aria-hidden="true"></i> Excel
             </a>
         @endif
+        {{-- Donde queda el PDF de la planilla al marcarla como revisada. --}}
+        @if (isset($turno) && $turno && $turno->exists && !$turno->revisado && auth()->user()->isAdministrador())
+            <x-carpeta-planillas />
+        @endif
         {{-- Sin botón Limpiar (se oprimía por error y borraba lo digitado): NUEVO abre una planilla
              en blanco. ANULAR solo para gerente y administración. --}}
         @if (isset($turno) && $turno && $turno->exists && auth()->user()->isAdministrador() && !$turnoAnulado)

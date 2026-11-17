@@ -16,6 +16,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\FuelPriceController;
 use App\Http\Controllers\InformeAnticipoBimestralController;
 use App\Http\Controllers\InformeCierreController;
+use App\Http\Controllers\InformeComisionesController;
 use App\Http\Controllers\InformeComprobanteComprasController;
 use App\Http\Controllers\InformeComprobanteRecaudosController;
 use App\Http\Controllers\InformeComprobanteVentasController;
@@ -24,6 +25,7 @@ use App\Http\Controllers\InformeMargenMayoristaController;
 use App\Http\Controllers\InformeRecaudosCarteraController;
 use App\Http\Controllers\InformeSaldosController;
 use App\Http\Controllers\InventarioAcpmController;
+use App\Http\Controllers\InventarioAjusteController;
 use App\Http\Controllers\InventarioGasolinaController;
 use App\Http\Controllers\InventarioLubricanteController;
 use App\Http\Controllers\InventarioSaldoInicialController;
@@ -108,7 +110,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             ->name('control-planillas.atender');
     });
 
-    // El jefe de patios, además de la planilla de turnos, solo accede a Cartera - Estado de cuenta y a Control de tanques.
+    // El jefe de patios, además de la planilla de turnos, accede a Cartera - Estado de cuenta y a Control de tanques.
     Route::middleware('role:'.implode(',', [User::ROLE_JEFE_PATIOS, ...User::rolesAdministrativos()]))->group(function () {
         Route::get('/cartera', [CarteraController::class, 'index'])
             ->name('cartera.index');
@@ -121,7 +123,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         Route::get('/cartera/pdf', [CarteraController::class, 'pdf'])
             ->name('cartera.pdf');
+    });
 
+    // Control de tanques: también los isleros (consultan y registran aforos e ingresos del pedido;
+    // el saldo inicial sigue siendo solo de administración).
+    Route::middleware('role:'.implode(',', [User::ROLE_ISLERO, User::ROLE_JEFE_PATIOS, ...User::rolesAdministrativos()]))->group(function () {
         Route::get('/control-tanques', [ControlTanqueController::class, 'index'])
             ->name('control-tanques.index');
 
@@ -211,6 +217,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/inventarios/saldos-iniciales', [InventarioSaldoInicialController::class, 'store'])
             ->name('inventarios-saldos-iniciales.store');
 
+        // Ajustes por avería, pérdida, vencimiento, consumo interno o sobrante en conteo.
+        Route::get('/inventarios/ajustes', [InventarioAjusteController::class, 'index'])
+            ->name('inventarios-ajustes.index');
+
+        Route::post('/inventarios/ajustes', [InventarioAjusteController::class, 'store'])
+            ->name('inventarios-ajustes.store');
+
+        Route::delete('/inventarios/ajustes/{ajuste}', [InventarioAjusteController::class, 'destroy'])
+            ->name('inventarios-ajustes.destroy');
+
         Route::post('/control-tanques/saldo-inicial', [ControlTanqueController::class, 'guardarSaldoInicial'])
             ->name('control-tanques.saldo-inicial');
 
@@ -228,6 +244,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         Route::post('/informes/anticipo-bimestral/margenes', [InformeAnticipoBimestralController::class, 'guardarMargen'])
             ->name('informes.anticipo-bimestral.margenes');
+
+        Route::get('/informes/comisiones', [InformeComisionesController::class, 'index'])
+            ->name('informes.comisiones.index');
+
+        Route::get('/informes/comisiones/exportar', [InformeComisionesController::class, 'exportar'])
+            ->name('informes.comisiones.exportar');
+
+        Route::post('/informes/comisiones/porcentajes', [InformeComisionesController::class, 'guardarPorcentajes'])
+            ->name('informes.comisiones.porcentajes');
 
         Route::get('/informes/control-caja', [InformeControlCajaController::class, 'index'])
             ->name('informes.control-caja.index');

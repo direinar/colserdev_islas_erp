@@ -164,9 +164,12 @@ class User extends Authenticatable
         return $this->isAdministrador() || $this->isJefePatios();
     }
 
+    /**
+     * Informe de tanques: administración, jefe de patios e isleros (aforos e ingresos del pedido).
+     */
     public function canAccessControlTanques(): bool
     {
-        return $this->isAdministrador() || $this->isJefePatios();
+        return $this->isAdministrador() || $this->isJefePatios() || $this->isIslero();
     }
 
     public function canAccessCompras(): bool

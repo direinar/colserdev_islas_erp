@@ -89,7 +89,10 @@
                             @endif
                         </td>
                         <td class="text-center">
-                            @if (in_array($row['tipo'], ['saldo_inicial', 'saldo_anterior'], true))
+                            @if ($row['tipo'] === 'ajuste')
+                                <a href="{{ route('inventarios-ajustes.index') }}" class="text-decoration-none"
+                                    title="Ver los ajustes de inventario">{{ \Illuminate\Support\Carbon::parse($row['fecha_compra'])->format('d/m/Y') }}</a>
+                            @elseif (in_array($row['tipo'], ['saldo_inicial', 'saldo_anterior'], true))
                                 {{ \Illuminate\Support\Carbon::parse($row['fecha_compra'])->format('d/m/Y') }}
                             @elseif ($row['fecha_compra'])
                                 <a href="{{ route($compraRoute, ['desde' => $row['fecha_compra'], 'hasta' => $row['fecha_compra']]) }}#compra-{{ $row['compra_id'] }}"

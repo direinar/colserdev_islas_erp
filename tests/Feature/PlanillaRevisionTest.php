@@ -210,3 +210,23 @@ test('los centavos de las ventas no dejan un sobrante de $1 que la pantalla mues
 
     expect($turno->fresh()->revisado)->toBeTrue();
 });
+
+test('al marcar revisada, la pagina siguiente ordena guardar el PDF de la planilla en la carpeta de planillas', function () {
+    $admin = User::factory()->create(['role' => User::ROLE_ADMINISTRADOR]);
+    $turno = Turno::create(['fecha' => '2026-09-25', 'numero_turno' => 253, 'sobrante_pendiente' => 0]);
+
+    $this->actingAs($admin)->get(route('turnos.pendientes'))
+        ->assertSee('data-carpeta-planillas', false)
+        ->assertDontSee('id="pdf-revisado"', false);
+
+    $this->actingAs($admin)->from(route('turnos.pendientes'))->post(route('turnos.revisar', $turno))
+        ->assertRedirect(route('turnos.pendientes'))
+        ->assertSessionHas('pdf_revisado', ['url' => route('turnos.pdf', $turno), 'numero' => 253]);
+
+    $this->actingAs($admin)->get(route('turnos.pendientes'))
+        ->assertSee('id="pdf-revisado" class="d-none" data-url="'.route('turnos.pdf', $turno).'"', false)
+        ->assertSee('data-numero="253"', false);
+
+    // El PDF que se guarda es el de la planilla completa.
+    $this->actingAs($admin)->get(route('turnos.pdf', $turno))->assertDownload('planilla-turno-253.pdf');
+});

@@ -24,13 +24,20 @@ use Illuminate\Support\Facades\DB;
 class LecturaElectronicaService
 {
     /**
+     * Diferencia (en pesos) entre la lectura electrónica y los cierres de IAPROPIADA a
+     * partir de la cual se alerta.
+     */
+    public const UMBRAL_ALERTA = 3000;
+
+    /**
      * @return array{
      *     fecha: string,
      *     filas: list<array{manguera: string, combustible: string, inicial: float|null, final: float|null, galones: float, inicial_bloqueada: bool}>,
      *     precios: array{corriente: float, acpm: float},
      *     lecturas: array<string, array{galones: float, valor: float}>,
      *     iapropiada: array<string, array{galones: float, valor: float}>,
-     *     diferencia: array<string, array{galones: float, valor: float}>
+     *     diferencia: array<string, array{galones: float, valor: float}>,
+     *     alertas: list<array{nombre: string, valor: float}>
      * }
      */
     public function informe(string $fecha): array
@@ -83,7 +90,30 @@ class LecturaElectronicaService
             'lecturas' => $lecturas,
             'iapropiada' => $iapropiada,
             'diferencia' => $diferencia,
+            'alertas' => $this->alertas($filas, $diferencia),
         ];
+    }
+
+    /**
+     * Diferencias mayores a UMBRAL_ALERTA (en valor, sobrante o faltante) por combustible y en
+     * el total. Solo cuando todas las mangueras tienen lectura final: con lecturas a medias la
+     * diferencia sale grande sin ser un faltante real.
+     *
+     * @param  list<array{final: float|null}>  $filas
+     * @param  array<string, array{galones: float, valor: float}>  $diferencia
+     * @return list<array{nombre: string, valor: float}>
+     */
+    private function alertas(array $filas, array $diferencia): array
+    {
+        if (collect($filas)->contains(fn (array $fila): bool => $fila['final'] === null)) {
+            return [];
+        }
+
+        return collect(['corriente' => 'CORRIENTE', 'acpm' => 'ACPM', 'total' => 'TOTAL'])
+            ->filter(fn (string $nombre, string $clave): bool => abs(round($diferencia[$clave]['valor'])) > self::UMBRAL_ALERTA)
+            ->map(fn (string $nombre, string $clave): array => ['nombre' => $nombre, 'valor' => round($diferencia[$clave]['valor'])])
+            ->values()
+            ->all();
     }
 
     /**

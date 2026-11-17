@@ -116,3 +116,30 @@ test('el islero y el jefe de patios registran la lectura electrónica, que ven e
     'islero' => User::ROLE_ISLERO,
     'jefe de patios' => User::ROLE_JEFE_PATIOS,
 ]);
+
+test('alerta cuando la diferencia con IAPROPIADA supera $3.000, solo con todas las lecturas finales', function () {
+    $admin = User::factory()->create(['role' => User::ROLE_ADMINISTRADOR]);
+    turnoLectura('2026-10-25', 50, 10, 5);
+    $ceros = array_fill_keys(array_keys(LecturaElectronica::MANGUERAS), '0');
+
+    // A medias (faltan finales): la diferencia es grande pero no es un faltante real.
+    guardarLectura($admin, '2026-10-25', ['PLUS 01' => '10'], $ceros);
+    $this->actingAs($admin)->get(route('lectura-electronica.index', ['fecha' => '2026-10-25']))
+        ->assertViewHas('alertas', [])
+        ->assertDontSee('id="alerta-lectura"', false);
+
+    // Completa: corriente cuadra; ACPM vendió 0,5 galones más ($5.000 de sobrante).
+    guardarLectura($admin, '2026-10-25', array_merge($ceros, ['PLUS 01' => '10', 'ACPM 03' => '5.5']), $ceros);
+    $informe = $this->actingAs($admin)->get(route('lectura-electronica.index', ['fecha' => '2026-10-25']));
+
+    expect($informe->viewData('alertas'))->toBe([
+        ['nombre' => 'ACPM', 'valor' => 5000.0],
+        ['nombre' => 'TOTAL', 'valor' => 5000.0],
+    ]);
+    $informe->assertSee('id="alerta-lectura"', false)
+        ->assertSee('ACPM: SOBRANTE de $5.000 · TOTAL: SOBRANTE de $5.000');
+
+    // Una diferencia de $3.000 o menos no alerta.
+    guardarLectura($admin, '2026-10-25', array_merge($ceros, ['PLUS 01' => '10', 'ACPM 03' => '5.3']), $ceros);
+    $this->actingAs($admin)->get(route('lectura-electronica.index', ['fecha' => '2026-10-25']))->assertViewHas('alertas', []);
+});

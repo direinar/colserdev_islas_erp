@@ -23,6 +23,12 @@
 
     @include('layouts.navbar')
 
+    {{-- Planilla recién marcada como revisada: su PDF se guarda en la carpeta de planillas (pdf-revisado.js). --}}
+    @if (session('pdf_revisado'))
+        <div id="pdf-revisado" class="d-none" data-url="{{ session('pdf_revisado')['url'] }}"
+            data-numero="{{ session('pdf_revisado')['numero'] }}"></div>
+    @endif
+
     <div class="container-fluid py-2">
         <main>
             @yield('content')

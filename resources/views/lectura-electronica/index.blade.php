@@ -86,6 +86,34 @@
         </div>
     @endif
 
+    {{-- Alerta: diferencia mayor a $3.000 entre la lectura electrónica y los cierres de IAPROPIADA. --}}
+    @if ($alertas !== [])
+        @php($textoAlertas = collect($alertas)->map(fn ($a) => $a['nombre'].': '.($a['valor'] < 0 ? 'FALTANTE' : 'SOBRANTE').' de $'.$pesos(abs($a['valor'])))->implode(' · '))
+        <div class="alert alert-danger d-flex align-items-start gap-2" id="alerta-lectura">
+            <i class="bi bi-exclamation-triangle-fill fs-5" aria-hidden="true"></i>
+            <div>
+                <strong>Diferencia mayor a ${{ $pesos(\App\Services\LecturaElectronicaService::UMBRAL_ALERTA) }}</strong>
+                entre la lectura electrónica y los cierres de IAPROPIADA del {{ Carbon::parse($fecha)->format('d/m/Y') }}.
+                <div>{{ $textoAlertas }}</div>
+                <small>Revise las lecturas finales y las planillas de turno del día.</small>
+            </div>
+        </div>
+
+        @if (session('success'))
+            {{-- Al guardar, además, en una ventana para que no pase desapercibida. --}}
+            <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    Swal.fire({
+                        title: 'Diferencia mayor a ${{ $pesos(\App\Services\LecturaElectronicaService::UMBRAL_ALERTA) }}',
+                        text: @json($textoAlertas),
+                        icon: 'warning',
+                        confirmButtonText: 'Entendido',
+                    });
+                });
+            </script>
+        @endif
+    @endif
+
     <div class="row g-3">
         <div class="col-lg-6">
             <form method="POST" action="{{ route('lectura-electronica.guardar') }}" id="lectura-electronica-form">

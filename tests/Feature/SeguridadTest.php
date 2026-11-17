@@ -3,6 +3,7 @@
 use App\Models\CarteraMovimiento;
 use App\Models\Customer;
 use App\Models\FuelPrice;
+use App\Models\IngresoTanque;
 use App\Models\Turno;
 use App\Models\User;
 use Database\Seeders\AdminUserSeeder;
@@ -58,12 +59,25 @@ test('el jefe de patios solo entra a la planilla, cartera - estado de cuenta y c
     }
 });
 
-test('el islero solo entra a la planilla de turnos', function () {
+test('el islero entra a la planilla de turnos y al informe de tanques', function () {
     $islero = User::factory()->create(['role' => User::ROLE_ISLERO]);
 
     $this->actingAs($islero)->get(route('turnos.create'))->assertOk();
+    $this->actingAs($islero)->get(route('control-tanques.index'))->assertOk()
+        // Registra aforos e ingresos, pero no el saldo inicial.
+        ->assertSee('GUARDAR AFOROS')
+        ->assertDontSee('Guardar saldo inicial');
+    $this->actingAs($islero)->post(route('control-tanques.aforos'), [
+        'desde' => '2026-11-01', 'hasta' => '2026-11-01',
+        'ingresos' => ['2026-11-01' => ['corriente' => '3.800', 'acpm' => '2.500']],
+    ])->assertRedirect();
+    $this->actingAs($islero)->post(route('control-tanques.saldo-inicial'), [
+        'fecha_corte' => '2026-11-01', 'galones' => ['corriente' => '100'],
+    ])->assertForbidden();
 
-    foreach (['cartera.index', 'control-tanques.index', 'compras.create', 'turnos.pendientes', 'users.index'] as $ruta) {
+    expect((float) IngresoTanque::query()->sole()->ingreso_corriente)->toBe(3800.0);
+
+    foreach (['cartera.index', 'compras.create', 'turnos.pendientes', 'users.index'] as $ruta) {
         $this->actingAs($islero)->get(route($ruta))->assertForbidden();
     }
 });

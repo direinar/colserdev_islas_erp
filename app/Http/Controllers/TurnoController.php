@@ -191,7 +191,11 @@ class TurnoController extends Controller
             'revisado_at' => now(),
         ]);
 
-        return back()->with('success', 'Turno #'.$turno->numero_turno.' del '.$turno->fecha->format('Y-m-d').' marcado como revisado.');
+        // El navegador del administrador guarda el PDF de la planilla en su carpeta de planillas
+        // (resources/js/pdf-revisado.js), en una subcarpeta con el número de la planilla.
+        return back()
+            ->with('success', 'Turno #'.$turno->numero_turno.' del '.$turno->fecha->format('Y-m-d').' marcado como revisado.')
+            ->with('pdf_revisado', ['url' => route('turnos.pdf', $turno), 'numero' => (int) $turno->numero_turno]);
     }
 
     /**
