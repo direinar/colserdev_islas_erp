@@ -70,15 +70,22 @@
 
     <h2>DETALLE DE NUMERACIÓN DE CONSIGNACIONES DE COMBUSTIBLE</h2>
     <table>
-        <tr><th>No.</th><th>VALOR</th><th>PLANILLA</th></tr>
+        <tr><th>No.</th><th>VALOR</th><th>PLANILLA / CONCEPTO</th></tr>
         <tr><td>{{ $resumen['consignacion_anterior'] }}</td><td colspan="2">Último No. del conteo anterior</td></tr>
         @foreach ($conteo->consignaciones as $consignacion)
+            @if (! $consignacion->manual && $conteo->talonario_inicio && $consignacion->numero === $conteo->talonario_inicio)
+                <tr><td colspan="3">Cambio de talonario: el anterior terminó en {{ $conteo->talonario_fin }}; el nuevo inicia en {{ $conteo->talonario_inicio }}.</td></tr>
+            @endif
             <tr>
                 <td>{{ $consignacion->numero }}</td>
                 <td class="valor">{{ $pesos($consignacion->valor) }}</td>
-                <td @class(['sin-planilla' => ! $consignacion->turno])>
-                    {{ $consignacion->turno ? 'Turno #'.$consignacion->turno->numero_turno.' — '.$consignacion->turno->fecha->format('d/m/Y') : 'No está en ninguna planilla' }}
-                </td>
+                @if ($consignacion->manual)
+                    <td>MANUAL: {{ $consignacion->concepto }}</td>
+                @else
+                    <td @class(['sin-planilla' => ! $consignacion->turno])>
+                        {{ $consignacion->turno ? 'Turno #'.$consignacion->turno->numero_turno.' — '.$consignacion->turno->fecha->format('d/m/Y') : 'No está en ninguna planilla' }}
+                    </td>
+                @endif
             </tr>
         @endforeach
         <tr class="total"><td>TOTAL CONSIGNACIONES INTERNAS</td><td class="valor">{{ $pesos($resumen['total_consignaciones']) }}</td><td></td></tr>
@@ -103,6 +110,10 @@
             <tr><td>{{ $aplicacion->destino?->nombre }}</td><td>{{ $aplicacion->tercero?->nombre }}</td><td class="valor">{{ $pesos($aplicacion->valor) }}</td></tr>
         @endforeach
         <tr class="total"><td colspan="2">TOTAL CONSIGNACIONES Y OTROS</td><td class="valor">{{ $pesos($resumen['aplicaciones']) }}</td></tr>
+        @if (round($resumen['no_consignado_anterior']) != 0)
+            <tr><td colspan="2">DIFERENCIAS NO CONSIGNADAS DE CONTEOS ANTERIORES (conteo No. {{ $conteo->anterior()?->numero }})</td><td class="valor {{ $rojo($resumen['no_consignado_anterior']) }}">{{ $pesos($resumen['no_consignado_anterior']) }}</td></tr>
+        @endif
+        <tr><td colspan="2">A CONSIGNAR (cuadre del conteo)</td><td class="valor">{{ $pesos($resumen['a_consignar']) }}</td></tr>
         <tr class="total"><td colspan="2">DIFERENCIA NO CONSIGNADA</td><td class="valor {{ $rojo($resumen['no_consignado']) }}">{{ $pesos($resumen['no_consignado']) }}</td></tr>
     </table>
 

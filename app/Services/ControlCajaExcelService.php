@@ -39,7 +39,7 @@ class ControlCajaExcelService
             $encabezados[] = 'CONCEPTO No. '.$numero;
             $encabezados[] = 'VALOR No. '.$numero;
         }
-        array_push($encabezados, 'FALTANTES', 'SOBRANTES', 'ISLERO', 'RECAUDOS Y ANTICIPOS', 'TOTAL', 'RECIBIDO S/PLANILLA', 'RECIBIDO S/LECTURA');
+        array_push($encabezados, 'FALTANTES', 'SOBRANTES', 'ISLERO', 'RECAUDOS Y ANTICIPOS', 'TOTAL RECIBIDO SEGÚN PLANILLA', 'TOTAL VENDIDO SEGÚN TURNO', 'DIFERENCIAS');
 
         $ultima = Coordinate::stringFromColumnIndex(count($encabezados));
         $hoja->fromArray($encabezados, null, 'A4');
@@ -96,7 +96,7 @@ class ControlCajaExcelService
 
         return [...$valores,
             $dato['faltantes'], $dato['sobrantes'], $dato['islero'], $dato['recaudos'], $dato['total'],
-            $dato['recibido_planilla'], $dato['recibido_lectura'],
+            $dato['vendido_turno'], $dato['diferencia'],
         ];
     }
 }

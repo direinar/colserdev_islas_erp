@@ -1,9 +1,9 @@
 @extends('layouts.app')
 
-@section('title', 'Control de planillas')
+@section('title', 'Auditoría del administrador')
 
 @section('content')
-    <x-page-header title="Control de planillas" icon="shield-exclamation"
+    <x-page-header title="Auditoría del administrador" icon="shield-exclamation"
         subtitle="Alertas de planillas a las que se les quitaron datos, planillas incompletas y números de turno faltantes." />
 
     @if (session('success'))
@@ -26,6 +26,7 @@
                             <th>FECHA Y HORA</th>
                             <th>GUARDÓ</th>
                             <th>QUÉ SE QUITÓ</th>
+                            <th class="text-center">ESTADO</th>
                             <th class="text-center">ACCIÓN</th>
                         </tr>
                     </thead>
@@ -43,6 +44,7 @@
                                 <td class="text-nowrap">{{ $alerta->created_at->format('d/m/Y H:i') }}</td>
                                 <td>{{ $alerta->user?->name }}</td>
                                 <td>{{ $alerta->alerta }}</td>
+                                <td class="text-center"><span class="badge text-bg-danger">No atendida</span></td>
                                 <td class="text-center">
                                     <form method="POST" action="{{ route('control-planillas.atender', $alerta) }}" class="mb-0">
                                         @csrf
@@ -52,7 +54,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="5" class="text-center text-muted">No hay alertas pendientes.</td>
+                                <td colspan="6" class="text-center text-muted">No hay alertas pendientes.</td>
                             </tr>
                         @endforelse
                     </tbody>
@@ -120,12 +122,22 @@
             <div class="card-body">
                 <div class="table-responsive">
                     <table class="table table-bordered table-sm mb-0 small">
+                        <thead>
+                            <tr>
+                                <th>TURNO</th>
+                                <th>FECHA Y HORA — GUARDÓ</th>
+                                <th>QUÉ SE QUITÓ</th>
+                                <th class="text-center">ESTADO</th>
+                                <th>REVISIÓN</th>
+                            </tr>
+                        </thead>
                         <tbody>
                             @foreach ($atendidas as $alerta)
                                 <tr>
                                     <td class="text-nowrap">#{{ $alerta->numero_turno }}</td>
                                     <td class="text-nowrap">{{ $alerta->created_at->format('d/m/Y H:i') }} — {{ $alerta->user?->name }}</td>
                                     <td>{{ $alerta->alerta }}</td>
+                                    <td class="text-center"><span class="badge text-bg-success">Atendida</span></td>
                                     <td class="text-nowrap">Revisada por {{ $alerta->atendida_por }} el {{ $alerta->atendida_at->format('d/m/Y H:i') }}</td>
                                 </tr>
                             @endforeach

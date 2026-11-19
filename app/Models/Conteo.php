@@ -40,6 +40,8 @@ class Conteo extends Model
         'consignacion_anterior',
         'saldo_moneda_inicial',
         'ultima_consignacion',
+        'talonario_fin',
+        'talonario_inicio',
         'user_id',
     ];
 
@@ -50,6 +52,8 @@ class Conteo extends Model
         'numero' => 'integer',
         'consignacion_anterior' => 'integer',
         'ultima_consignacion' => 'integer',
+        'talonario_fin' => 'integer',
+        'talonario_inicio' => 'integer',
     ];
 
     public function user()
@@ -69,7 +73,8 @@ class Conteo extends Model
 
     public function consignaciones()
     {
-        return $this->hasMany(ConteoConsignacion::class)->orderBy('numero');
+        // Primero el consecutivo (por No.) y al final las filas manuales, en el orden digitado.
+        return $this->hasMany(ConteoConsignacion::class)->orderBy('manual')->orderBy('numero')->orderBy('id');
     }
 
     public function aplicaciones()

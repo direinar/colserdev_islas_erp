@@ -66,6 +66,23 @@
                                     <td></td>
                                 @endif
                             </tr>
+                            {{-- Lo que quedó sin consignar en el conteo anterior (ya incluye lo de los anteriores a él). --}}
+                            @if (round($resumen['no_consignado_anterior']) != 0)
+                                @php($conteoAnterior = $conteo->anterior())
+                                <tr class="table-warning" id="no-consignado-anterior">
+                                    <td colspan="2" class="text-end">
+                                        DIFERENCIAS NO CONSIGNADAS DE CONTEOS ANTERIORES
+                                        @if ($conteoAnterior)
+                                            <span class="small">(viene del
+                                                <a href="{{ route('conteos.seccion', [$conteoAnterior, 'aplicaciones']) }}">conteo No. {{ $conteoAnterior->numero }} — {{ $conteoAnterior->fecha->format('d/m/Y') }}</a>)</span>
+                                        @endif
+                                    </td>
+                                    <td @class(['text-end', 'text-danger' => round($resumen['no_consignado_anterior']) < 0])>{{ $pesos($resumen['no_consignado_anterior']) }}</td>
+                                    @if ($editable)
+                                        <td></td>
+                                    @endif
+                                </tr>
+                            @endif
                             <tr>
                                 <td colspan="2" class="text-end">A CONSIGNAR <span class="small">(cuadre del conteo)</span></td>
                                 <td class="text-end">{{ $pesos($resumen['a_consignar']) }}</td>
@@ -74,7 +91,7 @@
                                 @endif
                             </tr>
                             <tr class="total">
-                                <td colspan="2" class="text-end">DIFERENCIA NO CONSIGNADA <span class="small fw-normal">(a consignar − total consignaciones)</span></td>
+                                <td colspan="2" class="text-end">DIFERENCIA NO CONSIGNADA <span class="small fw-normal">(a consignar + diferencias anteriores − total consignaciones)</span></td>
                                 <td @class(['text-end', 'text-danger' => round($resumen['no_consignado']) < 0])>{{ $pesos($resumen['no_consignado']) }}</td>
                                 @if ($editable)
                                     <td></td>

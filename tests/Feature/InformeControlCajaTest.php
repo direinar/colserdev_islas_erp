@@ -6,6 +6,7 @@ use App\Models\ComprobanteVentaCuenta;
 use App\Models\Customer;
 use App\Models\Turno;
 use App\Models\User;
+use App\Services\ControlCajaService;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 
 /**
@@ -33,6 +34,9 @@ function turnosControlCaja(): void
         'tirillas_galones_acpm' => 60, 'tirillas_valor_acpm' => 642000,
         'total_venta_lecturas' => 1600000, 'traslado_faltante' => 65000, 'traslado_sobrante' => 0,
     ]);
+    // Ventas por surtidor (de donde la planilla saca el RESUMEN DE LO VENDIDO), iguales a los totales.
+    $turno->ventas()->create(['surtidor' => 'SURTIDOR 1 CTE', 'combustible' => 'CTE', 'galones' => 60, 'valor' => 984000]);
+    $turno->ventas()->create(['surtidor' => 'SURTIDOR 3 ACPM', 'combustible' => 'ACPM', 'galones' => 60, 'valor' => 642000]);
     $turno->lubricantes()->create(['cantidad' => 2, 'producto' => 'ADITIVO', 'valor_sin_iva' => 26890, 'iva' => 5110, 'total' => 32000]);
     $turno->consignaciones()->create(['consignacion_no' => 'C-1', 'valor' => 1000000, 'total' => 1000000]);
     $turno->qrPagos()->create(['concepto' => 'QR', 'valor' => 300000, 'total' => 300000]);
@@ -66,7 +70,7 @@ test('el control caja arma una fila por planilla con ventas, formas de pago y to
         ->assertOk()
         ->assertSee('Informe control caja')
         // El comprobante contable de ventas está en su propio módulo; aquí solo se enlaza.
-        ->assertSeeInOrder(['>SOBRANTES<', '>ISLERO<', '>RECAUDOS Y<', 'ANA PEREZ'], false)
+        ->assertSeeInOrder(['>SOBRANTES<', '>ISLERO<', '>RECAUDOS Y<', 'TOTAL RECIBIDO<br>SEGÚN PLANILLA', 'TOTAL VENDIDO<br>SEGÚN TURNO', 'DIFERENCIAS<br>(19) − (20)', 'ANA PEREZ'], false)
         ->assertDontSee('COMPROBANTE CONTABLE DE VENTAS')
         ->assertSee(route('informes.comprobante-ventas.index', ['desde' => '2026-09-25', 'hasta' => '2026-09-30']));
 
@@ -78,8 +82,9 @@ test('el control caja arma una fila por planilla con ventas, formas de pago y to
             'gasolina' => 984000.0, 'acpm' => 642000.0, 'canastilla' => 26890.0, 'iva' => 5110.0, 'total_ventas' => 1658000.0,
             'consignaciones' => 1000000.0, 'pagos_electronicos' => 300000.0, 'puntos' => 20000.0, 'gasolina_eds' => 15000.0,
             'descuentos' => 10000.0, 'cartera' => 250000.0, 'faltantes' => 65000.0, 'sobrantes' => 0.0, 'islero' => 'ANA PEREZ', 'recaudos' => -70000.0,
-            // Mismo total recibido que el resumen de la planilla: cuadra con la venta después del traslado.
-            'total' => 1658000.0, 'recibido_planilla' => 1658000.0, 'recibido_lectura' => 1632000.0,
+            // (19) Total recibido según planilla; (20) total vendido según el resumen de lo vendido del
+            // turno (combustible + canastilla con IVA); (21) diferencias = (19) − (20): cuadra tras el traslado.
+            'total' => 1658000.0, 'vendido_turno' => 1658000.0, 'diferencia' => 0.0,
         ])
         // Más de cuatro conceptos de varios: la cuarta casilla acumula el resto.
         ->and($turno10['varios'])->toBe([
@@ -198,4 +203,22 @@ test('el comprobante contable de ventas se exporta a Excel', function () {
         ->toMatchArray([0 => '13050501', 1 => 'CARTERA CLIENTES', 3 => '900111222', 4 => 250000, 5 => null])
         ->and($filas->first(fn (array $fila): bool => $fila[1] === 'TOTALES'))
         ->toMatchArray([4 => 2958000, 5 => 2958000]);
+});
+
+test('el comprobante de ventas cuadra en cero aunque haya sobrantes sin trasladar y avisa cuales planillas revisar', function () {
+    $admin = User::factory()->create(['role' => User::ROLE_ADMINISTRADOR]);
+    // Vendió 1.000.000 y consignó 6.490.858: sobrante de 5.490.858 sin trasladar (como la #328).
+    $turno = Turno::create(['fecha' => '2026-11-18', 'numero_turno' => 328, 'precio_corriente' => 10000, 'tirillas_galones_corriente' => 100, 'tirillas_valor_corriente' => 1000000]);
+    $turno->ventas()->create(['surtidor' => 'SURTIDOR 1 CTE', 'combustible' => 'CTE', 'galones' => 100, 'valor' => 1000000]);
+    $turno->consignaciones()->create(['consignacion_no' => '9001', 'valor' => 6490858, 'total' => 6490858]);
+
+    $comprobante = app(ControlCajaService::class)->comprobanteVentas('2026-11-01', '2026-11-30')['comprobante'];
+
+    expect($comprobante['diferencia'])->toBe(0.0)
+        ->and(collect($comprobante['lineas'])->firstWhere('concepto', 'FALTANTES/SOBRANTES'))->toMatchArray(['debito' => 0.0, 'credito' => 5490858.0])
+        ->and($comprobante['sin_trasladar'])->toBe([['numero_turno' => 328, 'fecha' => '2026-11-18', 'pendiente' => 5490858.0]]);
+
+    $this->actingAs($admin)->get(route('informes.comprobante-ventas.index', ['desde' => '2026-11-01', 'hasta' => '2026-11-30']))
+        ->assertSee('Planillas con sobrante o faltante sin trasladar')
+        ->assertSee('#328');
 });

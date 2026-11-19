@@ -105,6 +105,24 @@
         </div>
     @endif
 
+    {{-- Sobrantes o faltantes sin trasladar: ya están en FALTANTES/SOBRANTES (el comprobante cuadra),
+         pero conviene revisarlos en su planilla. --}}
+    @if (($comprobante['sin_trasladar'] ?? []) !== [])
+        <div class="alert alert-warning d-print-none" id="sin-trasladar">
+            <strong>Planillas con sobrante o faltante sin trasladar</strong> (incluidos en FALTANTES/SOBRANTES por
+            ${{ number_format(array_sum(array_column($comprobante['sin_trasladar'], 'pendiente')), 0, ',', '.') }}).
+            Revíselas y use TRASLADAR en cada una:
+            <div class="small mt-1">
+                @foreach ($comprobante['sin_trasladar'] as $planilla)
+                    <a href="{{ route('turnos.create', ['turno_busqueda' => $planilla['numero_turno']]) }}"
+                        class="me-2 text-nowrap">#{{ $planilla['numero_turno'] }}
+                        ({{ \Illuminate\Support\Carbon::parse($planilla['fecha'])->format('d/m') }}):
+                        <span @class(['text-danger' => $planilla['pendiente'] < 0])>{{ number_format($planilla['pendiente'], 0, ',', '.') }}</span></a>
+                @endforeach
+            </div>
+        </div>
+    @endif
+
     <div class="row g-3">
         <div class="col-12 col-xl-8">
             <div class="card">

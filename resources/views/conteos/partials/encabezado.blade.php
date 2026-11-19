@@ -9,6 +9,15 @@
 <style>
     .conteo-resumen .valor {
         text-align: right;
+        white-space: nowrap;
+    }
+
+    .conteo-resumen-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: .5rem;
+        padding-right: 1rem;
     }
 
     .conteo-tabla thead th {
@@ -80,14 +89,24 @@
 
 <div class="card mb-3 conteo-resumen">
     <div class="card-body py-2">
+        {{-- Cada valor en la misma línea de su texto, alineado a la derecha de su casilla. --}}
         <div class="row g-2 small">
-            <div class="col-6 col-md-3">TOTAL CIERRE<div class="valor {{ $claseValor($resumen['total_cierre']) }}">{{ $pesos($resumen['total_cierre']) }}</div></div>
-            <div class="col-6 col-md-3">CONSIGNACIONES INTERNAS<div class="valor fw-bold">{{ $pesos($resumen['total_consignaciones']) }}</div></div>
-            <div class="col-6 col-md-3">DIFERENCIA<div class="valor {{ $claseValor($resumen['diferencia']) }}">{{ $pesos($resumen['diferencia']) }}</div></div>
-            <div class="col-6 col-md-3">A CONSIGNAR<div class="valor {{ $claseValor($resumen['a_consignar']) }}">{{ $pesos($resumen['a_consignar']) }}</div></div>
-            <div class="col-6 col-md-3">CONSIGNACIONES Y OTROS<div class="valor fw-bold">{{ $pesos($resumen['aplicaciones']) }}</div></div>
-            <div class="col-6 col-md-3">NO CONSIGNADO<div class="valor {{ $claseValor($resumen['no_consignado']) }}">{{ $pesos($resumen['no_consignado']) }}</div></div>
-            <div class="col-6 col-md-3">SALDO DE MONEDA QUE PASA<div class="valor {{ $claseValor($resumen['saldo_moneda_pasa']) }}">{{ $pesos($resumen['saldo_moneda_pasa']) }}</div></div>
+            @foreach ([
+                ['TOTAL CIERRE', 'total_cierre', true],
+                ['CONSIGNACIONES INTERNAS', 'total_consignaciones', false],
+                ['DIFERENCIA', 'diferencia', true],
+                ['A CONSIGNAR', 'a_consignar', true],
+                ['CONSIGNACIONES Y OTROS', 'aplicaciones', false],
+                ['NO CONSIGNADO', 'no_consignado', true],
+                ['SALDO DE MONEDA QUE PASA', 'saldo_moneda_pasa', true],
+            ] as [$texto, $clave, $conSigno])
+                <div class="col-6 col-md-3">
+                    <div class="conteo-resumen-item">
+                        <span>{{ $texto }}</span>
+                        <span class="valor {{ $conSigno ? $claseValor($resumen[$clave]) : 'fw-bold' }}">{{ $pesos($resumen[$clave]) }}</span>
+                    </div>
+                </div>
+            @endforeach
         </div>
     </div>
 </div>

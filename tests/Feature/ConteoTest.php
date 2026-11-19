@@ -248,3 +248,126 @@ test('los isleros comparten un solo consecutivo de consignaciones y lo usan en d
         [2387, 230], [2388, 232], [2389, 231], [2390, 230], [2391, 231], [2392, null], [2393, null], [2394, 231], [2395, 232],
     ]);
 });
+
+test('con cambio de talonario el consecutivo salta los numeros que no existen', function () {
+    $admin = User::factory()->create(['role' => User::ROLE_ADMINISTRADOR]);
+    crearConteo($admin, ['consignacion_anterior' => '2497']);
+    $conteo = Conteo::query()->sole();
+    planillaConConsignaciones(1, [2498 => 100000, 2499 => 200000, 2700 => 300000, 2701 => 400000]);
+
+    guardarSeccion($admin, $conteo, 'consignaciones', ['ultima_consignacion' => '2701', 'talonario_fin' => '2499', 'talonario_inicio' => '2700'])
+        ->assertSessionHasNoErrors();
+
+    $conteo->refresh();
+    expect($conteo->consignaciones->pluck('numero')->all())->toBe([2498, 2499, 2700, 2701])
+        ->and(app(ConteoService::class)->resumen($conteo)['total_consignaciones'])->toBe(1000000.0)
+        ->and([$conteo->talonario_fin, $conteo->talonario_inicio])->toBe([2499, 2700]);
+
+    $this->actingAs($admin)->get(route('conteos.seccion', [$conteo, 'consignaciones']))
+        ->assertSee('Cambio de talonario: el anterior terminó en 2499; el nuevo inicia en 2700.');
+
+    // El talonario nuevo debe quedar dentro del conteo y después del anterior.
+    guardarSeccion($admin, $conteo, 'consignaciones', ['ultima_consignacion' => '2701', 'talonario_fin' => '2499', 'talonario_inicio' => '2499'])
+        ->assertSessionHasErrors('talonario_inicio');
+    guardarSeccion($admin, $conteo, 'consignaciones', ['ultima_consignacion' => '2701', 'talonario_fin' => '2499'])
+        ->assertSessionHasErrors('talonario_inicio');
+});
+
+test('las filas manuales de consignaciones llevan concepto, suman al total y se conservan', function () {
+    $admin = User::factory()->create(['role' => User::ROLE_ADMINISTRADOR]);
+    crearConteo($admin, ['consignacion_anterior' => '2427']);
+    $conteo = Conteo::query()->sole();
+    planillaConConsignaciones(1, [2428 => 567000]);
+
+    guardarSeccion($admin, $conteo, 'consignaciones', [
+        'ultima_consignacion' => '2428',
+        'manuales' => [
+            ['numero' => '9001', 'valor' => '50.000', 'concepto' => 'Consignación de recaudo de cartera'],
+            ['numero' => '', 'valor' => '', 'concepto' => ''],
+            ['numero' => '', 'valor' => '20.000', 'concepto' => 'Ajuste de caja'],
+        ],
+    ])->assertSessionHasNoErrors();
+
+    $conteo->refresh();
+    expect($conteo->consignaciones->map(fn ($c) => [$c->numero, (float) $c->valor, $c->manual, $c->concepto])->all())->toBe([
+        [2428, 567000.0, false, null],
+        [null, 20000.0, true, 'Ajuste de caja'],
+        [9001, 50000.0, true, 'Consignación de recaudo de cartera'],
+    ])
+        ->and(app(ConteoService::class)->resumen($conteo)['total_consignaciones'])->toBe(637000.0);
+
+    $this->actingAs($admin)->get(route('conteos.seccion', [$conteo, 'consignaciones']))
+        ->assertSee('REGISTROS MANUALES (no consecutivos)')
+        ->assertSee('value="Ajuste de caja"', false)
+        ->assertSee('+ AGREGAR FILA MANUAL');
+
+    // Concepto obligatorio en una fila con datos.
+    guardarSeccion($admin, $conteo, 'consignaciones', ['ultima_consignacion' => '2428', 'manuales' => [['numero' => '', 'valor' => '1.000', 'concepto' => '']]])
+        ->assertSessionHasErrors('manuales.0.concepto');
+
+    $this->actingAs($admin)->get(route('conteos.reporte', $conteo))->assertSee('MANUAL: Ajuste de caja');
+});
+
+test('la diferencia no consignada pasa al siguiente conteo con referencia al conteo de origen', function () {
+    $admin = User::factory()->create(['role' => User::ROLE_ADMINISTRADOR]);
+    crearConteo($admin);
+    $primero = Conteo::query()->sole();
+    guardarSeccion($admin, $primero, 'efectivo', ['billetes' => [['denominacion' => '100 MIL', 'valor' => '9.235.000']]]);
+    guardarSeccion($admin, $primero, 'consignaciones', ['ultima_consignacion' => '4560']);
+    $destino = ConteoDestino::firstOrCreate(['nombre' => 'Abono a Mayorista']);
+    $tercero = ConteoTercero::firstOrCreate(['nombre' => 'Chevron Petroleum Company'], ['tipo' => 'tercero']);
+    guardarSeccion($admin, $primero, 'aplicaciones', ['filas' => [['conteo_destino_id' => $destino->id, 'conteo_tercero_id' => $tercero->id, 'valor' => '9.200.000']]]);
+
+    expect(app(ConteoService::class)->resumen($primero)['no_consignado'])->toBe(35000.0);
+
+    crearConteo($admin, ['fecha' => '2026-10-30']);
+    $segundo = Conteo::query()->where('numero', 2)->sole();
+    guardarSeccion($admin, $segundo, 'efectivo', ['billetes' => [['denominacion' => '100 MIL', 'valor' => '1.000.000']]]);
+    guardarSeccion($admin, $segundo, 'aplicaciones', ['filas' => [['conteo_destino_id' => $destino->id, 'conteo_tercero_id' => $tercero->id, 'valor' => '1.035.000']]]);
+
+    $resumen = app(ConteoService::class)->resumen($segundo);
+    expect($resumen['no_consignado_anterior'])->toBe(35000.0)
+        // 1.000.000 a consignar + 35.000 que venían − 1.035.000 consignado.
+        ->and($resumen['no_consignado'])->toBe(0.0);
+
+    $this->actingAs($admin)->get(route('conteos.seccion', [$segundo, 'aplicaciones']))
+        ->assertSee('DIFERENCIAS NO CONSIGNADAS DE CONTEOS ANTERIORES')
+        ->assertSee(route('conteos.seccion', [$primero, 'aplicaciones']))
+        ->assertSee('conteo No. 1');
+
+    // Sin diferencia anterior la fila no aparece.
+    $this->actingAs($admin)->get(route('conteos.seccion', [$primero, 'aplicaciones']))
+        ->assertDontSee('id="no-consignado-anterior"', false);
+});
+
+test('el resumen del conteo muestra cada valor en la misma linea de su texto', function () {
+    $admin = User::factory()->create(['role' => User::ROLE_ADMINISTRADOR]);
+    crearConteo($admin);
+    $conteo = Conteo::query()->sole();
+
+    $this->actingAs($admin)->get(route('conteos.seccion', [$conteo, 'efectivo']))
+        ->assertSee('<div class="conteo-resumen-item">', false)
+        ->assertSeeInOrder(['<span>TOTAL CIERRE</span>', '<span class="valor', '<span>CONSIGNACIONES INTERNAS</span>'], false);
+});
+
+test('alerta cuando una planilla usa un No. por fuera del consecutivo, salvo el hueco del cambio de talonario', function () {
+    $admin = User::factory()->create(['role' => User::ROLE_ADMINISTRADOR]);
+    crearConteo($admin, ['consignacion_anterior' => '2497']);
+    $conteo = Conteo::query()->sole();
+    // 2550 está en el hueco entre talonarios: se usó un No. que ya no debía existir.
+    planillaConConsignaciones(1, [2498 => 100000, 2499 => 200000, 2700 => 300000]);
+    planillaConConsignaciones(2, [2550 => 45000, 2701 => 10000]);
+
+    guardarSeccion($admin, $conteo, 'consignaciones', ['ultima_consignacion' => '2700', 'talonario_fin' => '2499', 'talonario_inicio' => '2700']);
+
+    expect(app(ConteoService::class)->fueraDeConsecutivo($conteo->fresh())->pluck('consignacion_no')->all())->toBe(['2550']);
+
+    $this->actingAs($admin)->get(route('conteos.seccion', [$conteo, 'consignaciones']))
+        ->assertSee('1 consignación(es) de planillas por fuera del consecutivo')
+        ->assertSee('No. 2550');
+
+    // Agregada como registro manual con su No., deja de estar por fuera; 2701 es del próximo conteo.
+    guardarSeccion($admin, $conteo, 'consignaciones', ['ultima_consignacion' => '2700', 'talonario_fin' => '2499', 'talonario_inicio' => '2700',
+        'manuales' => [['numero' => '2550', 'valor' => '45.000', 'concepto' => 'No. del talonario anterior usado tarde']]]);
+    expect(app(ConteoService::class)->fueraDeConsecutivo($conteo->fresh()))->toBeEmpty();
+});

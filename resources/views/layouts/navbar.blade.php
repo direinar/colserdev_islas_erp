@@ -89,7 +89,7 @@
                                         </li>
                                         <li>
                                             <a class="dropdown-item" href="{{ route('control-planillas.index') }}">
-                                                Control de planillas
+                                                Auditoría del administrador
                                                 @if ($alarmasPlanillas > 0)
                                                     <span class="badge text-bg-danger">{{ $alarmasPlanillas }}</span>
                                                 @endif

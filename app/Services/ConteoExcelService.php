@@ -43,9 +43,13 @@ class ConteoExcelService
         $fila = $this->bloque($hoja, $fila, 'RETIROS ANTES DE ESTE CIERRE', ['NOMBRE', 'CONCEPTO', 'VALOR'],
             $this->movimientos($conteo, ConteoMovimiento::TIPO_RETIRO, true), [['TOTAL RETIROS', '', $resumen['retiros']]]);
 
-        $fila = $this->bloque($hoja, $fila, 'DETALLE DE NUMERACIÓN DE CONSIGNACIONES DE COMBUSTIBLE', ['No.', 'VALOR', 'PLANILLA'],
+        $fila = $this->bloque($hoja, $fila, 'DETALLE DE NUMERACIÓN DE CONSIGNACIONES DE COMBUSTIBLE', ['No.', 'VALOR', 'PLANILLA / CONCEPTO'],
             [[$resumen['consignacion_anterior'], 'Último del conteo anterior', ''],
-                ...$conteo->consignaciones->map(fn ($c) => [$c->numero, (float) $c->valor, $c->turno ? 'Turno #'.$c->turno->numero_turno : 'No está en ninguna planilla'])->all()], [
+                ...$conteo->consignaciones->map(fn ($c) => [$c->numero, (float) $c->valor, match (true) {
+                    (bool) $c->manual => 'MANUAL: '.$c->concepto,
+                    (bool) $c->turno => 'Turno #'.$c->turno->numero_turno,
+                    default => 'No está en ninguna planilla',
+                }])->all()], [
                     ['TOTAL CONSIGNACIONES INTERNAS', $resumen['total_consignaciones'], ''],
                     ['DIFERENCIA (TOTAL CIERRE - CONSIGNACIONES)', $resumen['diferencia'], ''],
                 ]);
@@ -60,6 +64,8 @@ class ConteoExcelService
         $fila = $this->bloque($hoja, $fila, 'CONSIGNACIÓN EN BANCOS Y OTRAS APLICACIONES', ['DESTINO', 'TERCERO', 'VALOR'],
             $conteo->aplicaciones->map(fn ($a) => [$a->destino?->nombre, $a->tercero?->nombre, (float) $a->valor])->all(), [
                 ['TOTAL CONSIGNACIONES Y OTROS', '', $resumen['aplicaciones']],
+                ['DIFERENCIAS NO CONSIGNADAS DE CONTEOS ANTERIORES', ($anterior = $conteo->anterior()) ? 'Conteo No. '.$anterior->numero : '', $resumen['no_consignado_anterior']],
+                ['A CONSIGNAR (cuadre del conteo)', '', $resumen['a_consignar']],
                 ['DIFERENCIA NO CONSIGNADA', '', $resumen['no_consignado']],
             ]);
 

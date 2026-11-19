@@ -64,6 +64,7 @@ class ConteoController extends Controller
             'listaConteos' => Conteo::query()->orderByDesc('numero')->get(['id', 'numero', 'fecha']),
             'destinos' => ConteoDestino::query()->orderBy('nombre')->get(),
             'terceros' => ConteoTercero::query()->orderBy('nombre')->get(),
+            'fueraDeConsecutivo' => $seccion === 'consignaciones' ? $conteos->fueraDeConsecutivo($conteo) : collect(),
         ]);
     }
 
@@ -82,6 +83,13 @@ class ConteoController extends Controller
             'consignaciones' => [
                 'ultima_consignacion' => ['required', 'integer', 'min:1'],
                 'consignacion_anterior' => ['nullable', 'integer', 'min:0'],
+                // Cambio de talonario (opcional) y filas manuales.
+                'talonario_fin' => ['nullable', 'integer', 'min:0'],
+                'talonario_inicio' => ['nullable', 'integer', 'min:1'],
+                'manuales' => ['nullable', 'array'],
+                'manuales.*.numero' => ['nullable', 'integer', 'min:0'],
+                'manuales.*.valor' => $fila,
+                'manuales.*.concepto' => ['nullable', 'string', 'max:200'],
             ],
             'aplicaciones' => [
                 'filas' => ['nullable', 'array'],

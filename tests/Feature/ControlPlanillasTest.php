@@ -48,17 +48,21 @@ test('si un guardado quita filas o baja el total de ventas queda una alerta con 
         ->and($alerta->alerta)->toContain('TOTAL VENTAS: $2.077.020 → $209.856')
         ->and(TurnoAuditoria::query()->where('numero_turno', 152)->pluck('accion')->all())->toBe(['creada', 'guardada', 'guardada']);
 
-    // Administración la ve en Control de planillas, con contador en el menú, y la marca revisada.
+    // Administración la ve en Auditoría del administrador, con contador en el menú, y la marca revisada.
     $this->actingAs($admin)->get(route('control-planillas.index'))
         ->assertOk()
         ->assertSee('ALERTAS: GUARDADOS QUE QUITARON DATOS (1)')
         ->assertSee('ROSA RIVERA')
-        ->assertSee('Control de planillas');
+        ->assertSee('Auditoría del administrador')
+        ->assertSee('<span class="badge text-bg-danger">No atendida</span>', false);
     $this->actingAs($admin)->get(route('control-planillas.historial', 152))->assertOk()->assertSee('Historial del turno #152');
 
     $this->actingAs($admin)->post(route('control-planillas.atender', $alerta))->assertRedirect(route('control-planillas.index'));
     expect($alerta->fresh()->atendida_at)->not->toBeNull()
         ->and(TurnoAuditoria::query()->pendientes()->count())->toBe(0);
+    $this->actingAs($admin)->get(route('control-planillas.index'))
+        ->assertSee('<span class="badge text-bg-success">Atendida</span>', false)
+        ->assertDontSee('No atendida');
 
     // El islero no entra al control.
     $this->actingAs($rosa)->get(route('control-planillas.index'))->assertForbidden();

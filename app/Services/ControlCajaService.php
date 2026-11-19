@@ -32,7 +32,7 @@ class ControlCajaService
     public const COLUMNAS_TOTALES = [
         'gasolina', 'acpm', 'canastilla', 'iva', 'total_ventas',
         'consignaciones', 'pagos_electronicos', 'puntos', 'gasolina_eds', 'descuentos', 'cartera',
-        'faltantes', 'sobrantes', 'recaudos', 'total', 'recibido_planilla', 'recibido_lectura',
+        'faltantes', 'sobrantes', 'recaudos', 'total', 'vendido_turno', 'diferencia',
     ];
 
     /**
@@ -153,9 +153,10 @@ class ControlCajaService
             'islero' => (string) ($turno->nombre_vendedor ?: $turno->user?->name),
             'recaudos' => $recaudos,
             'total' => $total,
-            // Total recibido en el turno (resumen de la planilla) y venta según lecturas de surtidores.
-            'recibido_planilla' => $total,
-            'recibido_lectura' => round((float) $turno->total_venta_lecturas + (float) $turno->lubricantes->sum('total'), 0),
+            // (20) Total vendido según el turno: RESUMEN DE LO VENDIDO EN ESTE TURNO de la planilla
+            // (combustible según cierres de IAPROPIADA + canastilla). (21) Diferencias = (19) - (20).
+            'vendido_turno' => $vendido = $this->cuadre->ventasIapropiada($turno),
+            'diferencia' => round($total - $vendido, 0),
         ];
     }
 
@@ -204,7 +205,6 @@ class ControlCajaService
             'credito' => round($credito, 0),
         ];
 
-        $faltantesSobrantes = $totales['faltantes'] + $totales['sobrantes'];
         $costoCombustible = $this->costoDeVentas(
             array_merge($this->kardex->gasolina()['rows'], $this->kardex->acpm()['rows']),
             $desde,
@@ -220,8 +220,6 @@ class ControlCajaService
             $linea('descuentos_ventas', 'DESCUENTOS EN VENTAS', $totales['puntos'] + $totales['descuentos'], 0, self::TERCERO_GENERAL),
             $linea('gastos_gasolina_eds', 'GASTOS DE GASOLINA EDS', $totales['gasolina_eds'], 0, self::TERCERO_GASOLINA_EDS, self::NIT_GASOLINA_EDS),
             $linea('varios', 'VARIOS', array_sum($totales['varios']), 0, self::TERCERO_GENERAL),
-            // Neto de faltantes y sobrantes: si predomina el sobrante, va al crédito.
-            $linea('faltantes_sobrantes', 'FALTANTES/SOBRANTES', max($faltantesSobrantes, 0), max(-$faltantesSobrantes, 0), self::TERCERO_GENERAL),
             ...$this->carteraPorCliente($turnos, $linea),
             $linea('ventas_combustible', 'VENTAS COMBUSTIBLE', 0, $totales['gasolina'] + $totales['acpm']),
             $linea('costo_ventas_combustible', 'COSTO DE VENTAS DE COMBUSTIBLE', $costoCombustible, 0),
@@ -232,6 +230,13 @@ class ControlCajaService
             $linea('iva_por_pagar', 'IVA POR PAGAR', 0, $totales['iva']),
         ];
 
+        // FALTANTES/SOBRANTES es la diferencia entre lo recibido y lo vendido: los trasladados en
+        // las planillas, los que aún no se trasladan y el redondeo a pesos. Se calcula como la
+        // línea que cuadra el comprobante (débitos = créditos); va después de VARIOS. Si
+        // predomina el sobrante, va al crédito.
+        $neto = array_sum(array_column($lineas, 'debito')) - array_sum(array_column($lineas, 'credito'));
+        array_splice($lineas, 4, 0, [$linea('faltantes_sobrantes', 'FALTANTES/SOBRANTES', max(-$neto, 0), max($neto, 0), self::TERCERO_GENERAL)]);
+
         $lineas = array_values(array_map(
             TerceroComprobante::aplicar(...),
             array_filter($lineas, fn (array $linea): bool => $linea['debito'] != 0 || $linea['credito'] != 0),
@@ -240,7 +245,20 @@ class ControlCajaService
         $debito = (float) array_sum(array_column($lineas, 'debito'));
         $credito = (float) array_sum(array_column($lineas, 'credito'));
 
-        return ['lineas' => $lineas, 'debito' => $debito, 'credito' => $credito, 'diferencia' => $debito - $credito];
+        return [
+            'lineas' => $lineas,
+            'debito' => $debito,
+            'credito' => $credito,
+            'diferencia' => $debito - $credito,
+            // Planillas con sobrante o faltante sin trasladar: entran a FALTANTES/SOBRANTES, pero
+            // conviene revisarlas (un sobrante grande suele ser un error de digitación).
+            'sin_trasladar' => $turnos
+                ->map(fn (Turno $turno): array => ['numero_turno' => $turno->numero_turno, 'fecha' => $turno->fecha->format('Y-m-d'), 'pendiente' => $this->cuadre->pendiente($turno)])
+                ->filter(fn (array $planilla): bool => abs($planilla['pendiente']) >= 1)
+                ->sortBy('numero_turno')
+                ->values()
+                ->all(),
+        ];
     }
 
     /**

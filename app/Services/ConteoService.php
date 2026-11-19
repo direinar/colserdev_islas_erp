@@ -3,10 +3,12 @@
 namespace App\Services;
 
 use App\Models\Conteo;
+use App\Models\ConteoConsignacion;
 use App\Models\ConteoMovimiento;
 use App\Models\TurnoConsignacion;
 use App\Models\User;
 use App\Support\NumberParser;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -20,7 +22,8 @@ use Illuminate\Validation\ValidationException;
  *     último de este conteo, con el valor de la planilla de turno que tiene cada No.
  * (8) diferencia = total cierre - (7)
  * (9) total gastos; (10) a consignar = (3) - (9)
- * (12) total consignaciones en bancos y otras aplicaciones; (13) no consignado = (10) - (12)
+ * (12) total consignaciones en bancos y otras aplicaciones;
+ * (13) no consignado = (10) + diferencias no consignadas de conteos anteriores - (12)
  * (15) saldo de moneda que viene del conteo anterior; (16) moneda de este conteo;
  * (17) retiros de moneda; (18) saldo que pasa = (15) + (16) - (17)
  */
@@ -68,6 +71,7 @@ class ConteoService
         $gastos = $this->totalMovimientos($conteo, ConteoMovimiento::TIPO_GASTO);
         $aConsignar = $billetes - $gastos;
         $aplicaciones = (float) $conteo->aplicaciones()->sum('valor');
+        $noConsignadoAnterior = $this->noConsignadoAnterior($conteo);
         $saldoMonedaAnterior = $this->saldoMonedaAnterior($conteo);
         $retirosMoneda = $this->totalMovimientos($conteo, ConteoMovimiento::TIPO_RETIRO_MONEDA);
 
@@ -84,7 +88,8 @@ class ConteoService
             'gastos' => $gastos,
             'a_consignar' => $aConsignar,
             'aplicaciones' => $aplicaciones,
-            'no_consignado' => $aConsignar - $aplicaciones,
+            'no_consignado_anterior' => $noConsignadoAnterior,
+            'no_consignado' => $aConsignar + $noConsignadoAnterior - $aplicaciones,
             'saldo_moneda_anterior' => $saldoMonedaAnterior,
             'retiros_moneda' => $retirosMoneda,
             'saldo_moneda_pasa' => $saldoMonedaAnterior + $moneda - $retirosMoneda,
@@ -103,6 +108,60 @@ class ConteoService
         $anterior = $conteo->anterior();
 
         return $anterior->ultima_consignacion ?? $this->consignacionAnterior($anterior);
+    }
+
+    /**
+     * Consignaciones de planillas de turno que se salieron del consecutivo: su No. ya debió
+     * contarse (es menor o igual al último No. de este conteo) pero no está en ningún conteo,
+     * por ejemplo un número del hueco de un cambio de talonario o uno ya superado. Los números
+     * anteriores al punto de partida del primer conteo no se revisan.
+     *
+     * @return Collection<int, TurnoConsignacion>
+     */
+    public function fueraDeConsecutivo(Conteo $conteo): Collection
+    {
+        if (! $conteo->ultima_consignacion) {
+            return collect();
+        }
+
+        $inicio = (int) Conteo::query()->orderBy('numero')->value('consignacion_anterior') + 1;
+        $contados = ConteoConsignacion::query()
+            ->whereNotNull('numero')
+            ->whereHas('conteo', fn ($query) => $query->where('numero', '<=', $conteo->numero))
+            ->pluck('numero')
+            ->flip();
+
+        return TurnoConsignacion::query()
+            ->whereHas('turno', fn ($turno) => $turno->noAnulados())
+            ->with('turno')
+            ->get()
+            ->filter(function (TurnoConsignacion $fila) use ($inicio, $conteo, $contados): bool {
+                $numero = trim((string) $fila->consignacion_no);
+
+                return ctype_digit($numero)
+                    && (int) $numero >= $inicio
+                    && (int) $numero <= $conteo->ultima_consignacion
+                    && ! $contados->has((int) $numero);
+            })
+            ->sortBy(fn (TurnoConsignacion $fila): int => (int) $fila->consignacion_no)
+            ->values();
+    }
+
+    /**
+     * Diferencia no consignada que viene del conteo anterior: lo que quedó por consignar allí,
+     * que ya incluye lo que a su vez venía de los anteriores. Se consigna en este conteo.
+     * (13) no consignado = (10) a consignar + no consignado anterior - (12) consignaciones y otros.
+     */
+    public function noConsignadoAnterior(Conteo $conteo): float
+    {
+        $pendiente = 0.0;
+
+        foreach (Conteo::query()->where('numero', '<', $conteo->numero)->orderBy('numero')->get() as $paso) {
+            $aConsignar = (float) $paso->billetes()->sum('valor') - $this->totalMovimientos($paso, ConteoMovimiento::TIPO_GASTO);
+            $pendiente = $aConsignar + $pendiente - (float) $paso->aplicaciones()->sum('valor');
+        }
+
+        return $pendiente;
     }
 
     /**
@@ -206,16 +265,20 @@ class ConteoService
 
         $desde = $this->consignacionAnterior($conteo) + 1;
         $hasta = (int) ($datos['ultima_consignacion'] ?? 0);
+        [$talonarioFin, $talonarioInicio] = $this->cambioTalonario($datos, $desde, $hasta);
 
         if ($hasta < $desde) {
             throw ValidationException::withMessages(['ultima_consignacion' => 'El último No. de consignación debe ser mayor que el último del conteo anterior ('.($desde - 1).').']);
         }
 
-        if ($hasta - $desde + 1 > self::MAXIMO_CONSIGNACIONES) {
-            throw ValidationException::withMessages(['ultima_consignacion' => 'Son más de '.self::MAXIMO_CONSIGNACIONES.' consignaciones: revise el último No. digitado.']);
-        }
+        // Con cambio de talonario los números entre el fin del anterior y el inicio del nuevo no existen.
+        $numeros = $talonarioFin === null
+            ? range($desde, $hasta)
+            : [...($talonarioFin >= $desde ? range($desde, $talonarioFin) : []), ...range($talonarioInicio, $hasta)];
 
-        $numeros = range($desde, $hasta);
+        if (count($numeros) > self::MAXIMO_CONSIGNACIONES) {
+            throw ValidationException::withMessages(['ultima_consignacion' => 'Son más de '.self::MAXIMO_CONSIGNACIONES.' consignaciones: revise el último No. digitado o el cambio de talonario.']);
+        }
         $deTurnos = TurnoConsignacion::query()
             ->whereIn('consignacion_no', array_map('strval', $numeros))
             // Una planilla anulada no aporta consignaciones al conteo.
@@ -223,6 +286,8 @@ class ConteoService
             ->get()
             ->groupBy(fn (TurnoConsignacion $fila): int => (int) $fila->consignacion_no);
 
+        // Se regenera todo: el consecutivo con los valores de las planillas y las filas manuales
+        // tal como vienen del formulario.
         $conteo->consignaciones()->delete();
 
         foreach ($numeros as $numero) {
@@ -235,7 +300,85 @@ class ConteoService
             ]);
         }
 
-        $conteo->update(['ultima_consignacion' => $hasta]);
+        foreach ($this->filasManuales($datos['manuales'] ?? []) as $fila) {
+            $conteo->consignaciones()->create($fila + ['manual' => true]);
+        }
+
+        $conteo->update([
+            'ultima_consignacion' => $hasta,
+            'talonario_fin' => $talonarioFin,
+            'talonario_inicio' => $talonarioInicio,
+        ]);
+    }
+
+    /**
+     * Cambio de talonario dentro del conteo: el consecutivo llega hasta el último No. del
+     * talonario anterior y sigue desde el primero del nuevo. Sin datos, no hay cambio.
+     *
+     * @param  array<string, mixed>  $datos
+     * @return array{0: int|null, 1: int|null}
+     */
+    private function cambioTalonario(array $datos, int $desde, int $hasta): array
+    {
+        $fin = trim((string) ($datos['talonario_fin'] ?? ''));
+        $inicio = trim((string) ($datos['talonario_inicio'] ?? ''));
+
+        if ($fin === '' && $inicio === '') {
+            return [null, null];
+        }
+
+        if ($fin === '' || $inicio === '') {
+            throw ValidationException::withMessages(['talonario_inicio' => 'Para el cambio de talonario digite el último No. del talonario anterior y el primer No. del nuevo.']);
+        }
+
+        [$fin, $inicio] = [(int) $fin, (int) $inicio];
+
+        if ($fin < $desde - 1) {
+            throw ValidationException::withMessages(['talonario_fin' => 'El último No. del talonario anterior no puede ser menor que el último del conteo anterior ('.($desde - 1).').']);
+        }
+
+        if ($inicio <= $fin) {
+            throw ValidationException::withMessages(['talonario_inicio' => 'El primer No. del talonario nuevo debe ser mayor que el último del talonario anterior ('.$fin.').']);
+        }
+
+        if ($inicio > $hasta) {
+            throw ValidationException::withMessages(['talonario_inicio' => 'El primer No. del talonario nuevo no puede ser mayor que el último No. de este conteo ('.$hasta.').']);
+        }
+
+        return [$fin, $inicio];
+    }
+
+    /**
+     * Filas manuales de consignaciones: No. opcional, valor y concepto (obligatorio si la fila
+     * tiene datos). Las filas en blanco se ignoran.
+     *
+     * @param  array<int, mixed>  $filas
+     * @return list<array{numero: int|null, valor: float, concepto: string}>
+     */
+    private function filasManuales(array $filas): array
+    {
+        $manuales = [];
+
+        foreach (array_values($filas) as $posicion => $fila) {
+            if (! is_array($fila) || $this->filaVacia($fila, ['numero', 'valor', 'concepto'])) {
+                continue;
+            }
+
+            $concepto = trim((string) ($fila['concepto'] ?? ''));
+            if ($concepto === '') {
+                throw ValidationException::withMessages(['manuales.'.$posicion.'.concepto' => 'Escriba el concepto de la fila manual '.($posicion + 1).' de consignaciones.']);
+            }
+
+            $numero = trim((string) ($fila['numero'] ?? ''));
+
+            $manuales[] = [
+                'numero' => $numero === '' ? null : (int) $numero,
+                'valor' => NumberParser::money($fila['valor'] ?? null),
+                'concepto' => $concepto,
+            ];
+        }
+
+        return $manuales;
     }
 
     /**
