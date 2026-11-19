@@ -34,7 +34,8 @@ return new class extends Migration
             $table->decimal('horas_festivas', 5, 2)->default(0);
             $table->timestamps();
 
-            $table->unique(['planilla_turno_id', 'empleado_id', 'fecha']);
+            // Nombre corto: el automático tiene 68 caracteres y MySQL admite 64.
+            $table->unique(['planilla_turno_id', 'empleado_id', 'fecha'], 'nomina_asignacion_planilla_empleado_fecha_unique');
         });
     }
 
