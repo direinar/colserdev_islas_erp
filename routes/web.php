@@ -34,12 +34,20 @@ use App\Http\Controllers\InventarioLubricanteController;
 use App\Http\Controllers\InventarioSaldoInicialController;
 use App\Http\Controllers\LecturaElectronicaController;
 use App\Http\Controllers\LubricantController;
+use App\Http\Controllers\Nomina\AcumuladoNominaController;
+use App\Http\Controllers\Nomina\CertificacionLaboralController;
+use App\Http\Controllers\Nomina\CuentaContableNominaController;
 use App\Http\Controllers\Nomina\DashboardController as NominaDashboardController;
+use App\Http\Controllers\Nomina\DotacionController;
 use App\Http\Controllers\Nomina\EmpleadoController;
 use App\Http\Controllers\Nomina\FestivoController;
+use App\Http\Controllers\Nomina\LiquidacionContratoController;
+use App\Http\Controllers\Nomina\LiquidacionNominaController;
 use App\Http\Controllers\Nomina\ParametroLiquidacionController;
 use App\Http\Controllers\Nomina\PlanillaTurnoController;
+use App\Http\Controllers\Nomina\PrestacionSocialController;
 use App\Http\Controllers\Nomina\TurnoController as NominaTurnoController;
+use App\Http\Controllers\Nomina\VacacionController;
 use App\Http\Controllers\ProveedorController;
 use App\Http\Controllers\TurnoController;
 use App\Http\Controllers\UserController;
@@ -387,6 +395,37 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::patch('planillas-turnos/{planillas_turno}/cerrar', [PlanillaTurnoController::class, 'cerrar'])->name('planillas-turnos.cerrar');
             Route::patch('planillas-turnos/{planillas_turno}/reabrir', [PlanillaTurnoController::class, 'reabrir'])->name('planillas-turnos.reabrir');
             Route::resource('planillas-turnos', PlanillaTurnoController::class)->except(['create']);
+
+            // Nómina del mes: novedades, liquidación, forma de pago, contabilización y desprendibles.
+            Route::post('nominas/{nomina}/recargos', [LiquidacionNominaController::class, 'recargos'])->name('nominas.recargos');
+            Route::post('nominas/{nomina}/empleados', [LiquidacionNominaController::class, 'sincronizar'])->name('nominas.sincronizar');
+            Route::delete('nominas/{nomina}/empleados/{fila}', [LiquidacionNominaController::class, 'quitarEmpleado'])->name('nominas.quitar-empleado');
+            Route::patch('nominas/{nomina}/aprobar', [LiquidacionNominaController::class, 'aprobar'])->name('nominas.aprobar');
+            Route::patch('nominas/{nomina}/reabrir', [LiquidacionNominaController::class, 'reabrir'])->name('nominas.reabrir');
+            Route::get('nominas/{nomina}/desprendibles', [LiquidacionNominaController::class, 'desprendibles'])->name('nominas.desprendibles');
+            Route::get('nominas/{nomina}/desprendibles/pdf', [LiquidacionNominaController::class, 'desprendiblesPdf'])->name('nominas.desprendibles.pdf');
+            Route::resource('nominas', LiquidacionNominaController::class)->only(['index', 'store', 'show', 'update', 'destroy']);
+
+            Route::get('cuentas-contables', [CuentaContableNominaController::class, 'index'])->name('cuentas-contables.index');
+            Route::put('cuentas-contables', [CuentaContableNominaController::class, 'update'])->name('cuentas-contables.update');
+
+            // Prestaciones sociales: acumulados, certificados, prima, consolidación y liquidación de contratos.
+            Route::get('acumulados', [AcumuladoNominaController::class, 'index'])->name('acumulados.index');
+            Route::get('acumulados/{empleado}/certificado', [AcumuladoNominaController::class, 'certificado'])->name('acumulados.certificado');
+            Route::get('prestaciones/prima', [PrestacionSocialController::class, 'prima'])->name('prestaciones.prima');
+            Route::get('prestaciones/consolidacion', [PrestacionSocialController::class, 'consolidacion'])->name('prestaciones.consolidacion');
+            Route::post('prestaciones/aplicar', [PrestacionSocialController::class, 'aplicar'])->name('prestaciones.aplicar');
+            Route::resource('liquidaciones-contrato', LiquidacionContratoController::class)->only(['index', 'create', 'store', 'show', 'destroy'])->parameters(['liquidaciones-contrato' => 'liquidacion']);
+
+            // Formatos: control de vacaciones, dotación y certificación laboral.
+            Route::get('vacaciones', [VacacionController::class, 'index'])->name('vacaciones.index');
+            Route::get('vacaciones/{empleado}', [VacacionController::class, 'show'])->name('vacaciones.show');
+            Route::post('vacaciones/{empleado}', [VacacionController::class, 'store'])->name('vacaciones.store');
+            Route::delete('vacaciones/{empleado}/{vacacion}', [VacacionController::class, 'destroy'])->name('vacaciones.destroy');
+            Route::get('dotaciones', [DotacionController::class, 'index'])->name('dotaciones.index');
+            Route::post('dotaciones', [DotacionController::class, 'store'])->name('dotaciones.store');
+            Route::delete('dotaciones/{dotacion}', [DotacionController::class, 'destroy'])->name('dotaciones.destroy');
+            Route::get('empleados/{empleado}/certificacion-laboral', [CertificacionLaboralController::class, 'show'])->name('empleados.certificacion');
         });
 
     // ================= MÓDULO CONTABILIDAD (en construcción) =================

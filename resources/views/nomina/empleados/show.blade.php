@@ -7,6 +7,16 @@
 
         <x-page-header :title="$empleado->nombre_completo" :subtitle="$empleado->cargo" icon="person-vcard">
             <a href="{{ route('nomina.empleados.edit', $empleado) }}" class="btn btn-light">Editar</a>
+            <div class="dropdown d-inline-block">
+                <button class="btn btn-light dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">Documentos</button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li><a class="dropdown-item" href="{{ route('nomina.empleados.certificacion', $empleado) }}"><i class="bi bi-award" aria-hidden="true"></i> Certificación laboral</a></li>
+                    <li><a class="dropdown-item" href="{{ route('nomina.vacaciones.show', $empleado) }}"><i class="bi bi-sun" aria-hidden="true"></i> Control de vacaciones</a></li>
+                    <li><a class="dropdown-item" href="{{ route('nomina.acumulados.certificado', $empleado) }}"><i class="bi bi-file-earmark-text" aria-hidden="true"></i> Certificado de ingresos</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" href="{{ route('nomina.liquidaciones-contrato.create', ['empleado' => $empleado->id]) }}"><i class="bi bi-file-earmark-person" aria-hidden="true"></i> Liquidar contrato</a></li>
+                </ul>
+            </div>
             <a href="{{ route('nomina.empleados.index') }}" class="btn btn-light">Volver</a>
         </x-page-header>
 

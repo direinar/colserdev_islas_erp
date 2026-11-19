@@ -107,6 +107,40 @@ class Empleado extends Model
         return $this->hasMany(AsignacionTurno::class);
     }
 
+    public function liquidacionesNomina(): HasMany
+    {
+        return $this->hasMany(LiquidacionNominaEmpleado::class);
+    }
+
+    public function vacaciones(): HasMany
+    {
+        return $this->hasMany(Vacacion::class);
+    }
+
+    public function dotaciones(): HasMany
+    {
+        return $this->hasMany(Dotacion::class);
+    }
+
+    public function liquidacionesContrato(): HasMany
+    {
+        return $this->hasMany(LiquidacionContrato::class);
+    }
+
+    /**
+     * Vinculados en algún día del periodo: ingresaron antes del fin y no se retiraron antes del inicio.
+     */
+    public function scopeVinculadosEntre(Builder $query, string $desde, string $hasta): Builder
+    {
+        return $query->whereDate('fecha_ingreso', '<=', $hasta)
+            ->where(fn (Builder $query) => $query->where('activo', true)->orWhereDate('fecha_retiro', '>=', $desde));
+    }
+
+    public function nombreParaNomina(): string
+    {
+        return $this->nombre_corto ?: $this->nombre_completo;
+    }
+
     public function scopeActivos(Builder $query): Builder
     {
         return $query->where('activo', true);

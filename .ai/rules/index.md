@@ -11,6 +11,7 @@ Before planning or editing, find the row whose globs match the file's path and r
 | app/DTOs/** | .ai/rules/d-t-os.md |
 | app/Livewire/** | .ai/rules/livewire.md |
 | app/Models/** | .ai/rules/models.md |
+| app/Services/Nomina/** | .ai/rules/nomina.md |
 | resources/views/planillas/turnos/partials/** | .ai/rules/partials.md |
 | resources/js/galones.js,resources/views/planillas/turnos/** | .ai/rules/planillas-turnos.md |
 | app/Services/**, app/Services/KardexInventarioService.php, app/Services/ControlTanques*.php, app/Services/RegistroEventosAplicacionService.php | .ai/rules/services.md |

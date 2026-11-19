@@ -112,11 +112,12 @@ class ParametroLiquidacion extends Model
     }
 
     /**
-     * Valor de la hora ordinaria: salario mínimo dividido entre las horas mensuales.
+     * Valor de la hora ordinaria: salario mínimo dividido entre las horas mensuales, redondeado
+     * a pesos como en la tabla de parámetros de la plantilla ($7.959 en 2026).
      */
     public function valorHoraOrdinaria(): float
     {
-        return (float) $this->salario_minimo / $this->horas_mensuales;
+        return round((float) $this->salario_minimo / $this->horas_mensuales);
     }
 
     public function valorHoraRecargoNocturno(): float

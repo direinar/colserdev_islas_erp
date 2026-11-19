@@ -65,13 +65,13 @@ test('guarda los turnos y liquida recargos nocturnos, festivos y horas por seman
         ->and($fila['horas_nocturnas'])->toBe(8.0)
         ->and($fila['horas_festivas'])->toBe(10.0)
         ->and($fila['semanas'])->toBe([0.0, 16.0, 8.0, 0.0, 0.0])
-        ->and(round($fila['valor_nocturnas']))->toBe(22284.0)
-        ->and(round($fila['valor_festivas']))->toBe(63669.0);
+        ->and(round($fila['valor_nocturnas']))->toBe(22285.0)
+        ->and(round($fila['valor_festivas']))->toBe(63672.0);
 
     $this->actingAs($this->admin)->get(route('nomina.planillas-turnos.liquidacion', $planilla))
         ->assertOk()
-        ->assertSee('$ 22.284')
-        ->assertSee('$ 63.669');
+        ->assertSee('$ 22.285')
+        ->assertSee('$ 63.672');
 });
 
 test('rechaza dias fuera del mes y empleados que no estan en la planilla', function () {

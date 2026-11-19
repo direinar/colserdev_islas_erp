@@ -446,13 +446,37 @@
                                 <a class="nav-link {{ request()->routeIs('nomina.planillas-turnos.*') ? 'active' : '' }}"
                                     href="{{ route('nomina.planillas-turnos.index') }}">Planilla de turnos</a>
                             </li>
+                            <li class="nav-item">
+                                <a class="nav-link {{ request()->routeIs('nomina.nominas.*') ? 'active' : '' }}"
+                                    href="{{ route('nomina.nominas.index') }}">Nómina del mes</a>
+                            </li>
                             <li class="nav-item dropdown">
-                                <a class="nav-link dropdown-toggle {{ request()->routeIs('nomina.parametros-liquidacion.*', 'nomina.turnos.*', 'nomina.festivos.*') ? 'active' : '' }}"
+                                <a class="nav-link dropdown-toggle {{ request()->routeIs('nomina.acumulados.*', 'nomina.prestaciones.*', 'nomina.liquidaciones-contrato.*') ? 'active' : '' }}"
+                                    href="#" data-bs-toggle="dropdown">Prestaciones</a>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="{{ route('nomina.acumulados.index') }}">Acumulados y certificados de ingresos</a></li>
+                                    <li><a class="dropdown-item" href="{{ route('nomina.prestaciones.prima') }}">Prima semestral</a></li>
+                                    <li><a class="dropdown-item" href="{{ route('nomina.prestaciones.consolidacion') }}">Consolidación anual (cesantías e intereses)</a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item" href="{{ route('nomina.liquidaciones-contrato.index') }}">Liquidación de contratos</a></li>
+                                </ul>
+                            </li>
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle {{ request()->routeIs('nomina.vacaciones.*', 'nomina.dotaciones.*') ? 'active' : '' }}"
+                                    href="#" data-bs-toggle="dropdown">Control</a>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="{{ route('nomina.vacaciones.index') }}">Vacaciones</a></li>
+                                    <li><a class="dropdown-item" href="{{ route('nomina.dotaciones.index') }}">Dotación</a></li>
+                                </ul>
+                            </li>
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle {{ request()->routeIs('nomina.parametros-liquidacion.*', 'nomina.turnos.*', 'nomina.festivos.*', 'nomina.cuentas-contables.*') ? 'active' : '' }}"
                                     href="#" data-bs-toggle="dropdown">Configuración</a>
                                 <ul class="dropdown-menu">
                                     <li><a class="dropdown-item" href="{{ route('nomina.parametros-liquidacion.index') }}">Parámetros de liquidación</a></li>
                                     <li><a class="dropdown-item" href="{{ route('nomina.turnos.index') }}">Turnos</a></li>
                                     <li><a class="dropdown-item" href="{{ route('nomina.festivos.index') }}">Festivos</a></li>
+                                    <li><a class="dropdown-item" href="{{ route('nomina.cuentas-contables.index') }}">Cuentas contables</a></li>
                                 </ul>
                             </li>
                         @endif

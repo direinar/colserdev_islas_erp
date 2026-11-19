@@ -8,8 +8,11 @@
         <a href="{{ route('nomina.empleados.index') }}" class="btn btn-outline-light btn-sm">
             <i class="bi bi-people" aria-hidden="true"></i> Empleados
         </a>
-        <a href="{{ route('nomina.planillas-turnos.index') }}" class="btn btn-light btn-sm">
+        <a href="{{ route('nomina.planillas-turnos.index') }}" class="btn btn-outline-light btn-sm">
             <i class="bi bi-calendar3" aria-hidden="true"></i> Planilla de turnos
+        </a>
+        <a href="{{ route('nomina.nominas.index') }}" class="btn btn-light btn-sm">
+            <i class="bi bi-cash-coin" aria-hidden="true"></i> Nómina del mes
         </a>
     </x-page-header>
 
@@ -39,7 +42,28 @@
                 </div>
             </a>
         </div>
-        <div class="col-12 col-xl-6">
+        <div class="col-12 col-md-6 col-xl-3">
+            <a href="{{ $ultimaNomina ? route('nomina.nominas.show', $ultimaNomina) : route('nomina.nominas.index') }}" class="text-decoration-none">
+                <div class="dashboard-kpi">
+                    <span class="dashboard-kpi-titulo">Última nómina</span>
+                    @if ($ultimaNomina)
+                        <span class="dashboard-kpi-valor">${{ number_format((float) $ultimaNomina->neto_total, 0, ',', '.') }}</span>
+                        <span class="dashboard-kpi-detalle">
+                            {{ $ultimaNomina->nombreDelMes() }} ·
+                            @if ($ultimaNomina->estaAprobada())
+                                <i class="bi bi-check-circle-fill text-success" aria-hidden="true"></i> Aprobada
+                            @else
+                                <i class="bi bi-pencil-fill estado-advertencia" aria-hidden="true"></i> En borrador
+                            @endif
+                        </span>
+                    @else
+                        <span class="dashboard-kpi-valor">Sin liquidar</span>
+                        <span class="dashboard-kpi-detalle">Cree la nómina del mes.</span>
+                    @endif
+                </div>
+            </a>
+        </div>
+        <div class="col-12 col-md-6 col-xl-3">
             <a href="{{ route('nomina.parametros-liquidacion.index') }}" class="text-decoration-none">
                 <div class="dashboard-kpi">
                     <span class="dashboard-kpi-titulo">Parámetros de liquidación vigentes</span>
