@@ -2,10 +2,15 @@
 
 namespace App\Providers;
 
+use App\Models\User;
 use App\Services\KardexInventarioService;
+use App\Services\RegistroEventosAplicacionService;
 use Carbon\CarbonImmutable;
+use Illuminate\Auth\Events\Failed;
+use Illuminate\Auth\Events\Login;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\Vite;
 use Illuminate\Support\ServiceProvider;
@@ -28,6 +33,26 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->configureDefaults();
+        $this->registrarEventosDeAcceso();
+    }
+
+    /**
+     * Ingresos e intentos fallidos de ingreso para la Auditoría del administrador.
+     */
+    protected function registrarEventosDeAcceso(): void
+    {
+        Event::listen(function (Login $evento): void {
+            if ($evento->user instanceof User) {
+                app(RegistroEventosAplicacionService::class)->registrarIngreso($evento->user);
+            }
+        });
+
+        Event::listen(function (Failed $evento): void {
+            app(RegistroEventosAplicacionService::class)->registrarIngresoFallido(
+                $evento->credentials,
+                $evento->user instanceof User ? $evento->user : null,
+            );
+        });
     }
 
     /**

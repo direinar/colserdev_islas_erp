@@ -3,6 +3,7 @@ paths:
   - 'app/Services/**'
   - app/Services/KardexInventarioService.php
   - 'app/Services/ControlTanques*.php'
+  - app/Services/RegistroEventosAplicacionService.php
 ---
 
 # Services
@@ -24,3 +25,6 @@ This is the cash count of the EDS. Only the administrador or gerente records it,
 
 ## Auditoría del administrador e Informe Gobernación y SICOM (plantillas 2026-11-19)
 Auditoría del administrador (ControlPlanillasController + AuditoriaPlanillaService + InformeAuditoriaService) es el "INFORME DE AUDITORÍA" con DESDE/HASTA e IMPRIMIR: estado de revisión (revisada / 2ª revisión / pendiente / anulada), alertas, incompletas con "qué falta" (sin diligenciar → botón Anular, vuelve con volver=auditoria), lecturas vs IAPROPIADA, saldo informe de tanques vs kardex, últimas planillas (salieron del dashboard) y diferencia de los 3 comprobantes. 2ª revisión = TurnoAuditoria accion 'reabierta' (TurnoController@reabrir la registra) sin revisar de nuevo. Informe Gobernación y SICOM (InformeGobernacionSicomService) es mensual (por defecto el mes anterior): lecturas inicial/final por manguera, compras del mes y resumen SICOM desde el kardex (inicio + compras − ventas ± ajustes vs saldo final; diferencia debe ser 0).
+
+## Fallas y eventos de la aplicación (Auditoría del administrador)
+Tabla eventos_aplicacion (EventoAplicacion). Se alimenta solo: fallas del sistema desde bootstrap/app.php ($exceptions->report → RegistroEventosAplicacionService::registrarError, agrupadas por huella clase|archivo|línea; si reaparece una resuelta se crea otra marcada reincidente), acciones POST/PUT/PATCH/DELETE de controladores App\ (middleware RegistrarEventoAplicacion en el grupo web; las sensibles —destroy, anular, reabrir, importar, saldo-inicial, users.*, fuel-prices.*— y los 401/403/404/405 quedan como advertencia pendiente, el resto 'registrado'), e ingresos/intentos fallidos (listeners Login/Failed en AppServiceProvider; nunca guardar la contraseña). Registrar nunca debe romper la respuesta: todo va en try/catch. Semáforo (EventoAplicacion::semaforo y scopeSemaforo deben coincidir): rojo = pendiente crítico, amarillo = pendiente no crítico o en_revision, verde = resuelto/registrado, gris = descartado. Cerrar (resuelto/descartado) exige observación y cada gestión queda en detalle['gestiones']. Los errores de validación se detectan con '_flash.new' de la sesión (no session()->has('errors'), que arrastra los de la solicitud anterior). Los 'registrado' de más de 180 días se podan con model:prune (routes/console.php).

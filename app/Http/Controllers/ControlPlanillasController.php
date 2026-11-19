@@ -3,9 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Concerns\ResuelveRangoFechas;
+use App\Models\EventoAplicacion;
 use App\Models\TurnoAuditoria;
 use App\Services\AuditoriaPlanillaService;
 use App\Services\InformeAuditoriaService;
+use App\Services\RegistroEventosAplicacionService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -20,7 +22,7 @@ class ControlPlanillasController extends Controller
 {
     use ResuelveRangoFechas;
 
-    public function index(Request $request, AuditoriaPlanillaService $auditoria, InformeAuditoriaService $informe): View
+    public function index(Request $request, AuditoriaPlanillaService $auditoria, InformeAuditoriaService $informe, RegistroEventosAplicacionService $eventos): View
     {
         [$desde, $hasta] = $this->rango($request);
 
@@ -37,6 +39,8 @@ class ControlPlanillasController extends Controller
             'inventarios' => $informe->inventarios($desde, $hasta),
             'ultimas' => $informe->ultimasPlanillas($desde, $hasta),
             'comprobantes' => $informe->comprobantes($desde, $hasta),
+            'semaforoEventos' => $eventos->semaforo($desde, $hasta),
+            'porGestionar' => EventoAplicacion::query()->porGestionar()->count(),
         ]);
     }
 

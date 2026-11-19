@@ -87,7 +87,7 @@
                             {{-- Alarma de planillas borradas o incompletas para administración y gerencia:
                                  alertas sin revisar + números de turno que faltan. Va en una sola línea: este
                                  archivo usa la forma corta y mezclarla con la de bloque rompe la compilación. --}}
-                            @php($alarmasPlanillas = $user->isAdministrador() ? \App\Models\TurnoAuditoria::query()->pendientes()->count() + count(app(\App\Services\AuditoriaPlanillaService::class)->numerosFaltantes()) : 0)
+                            @php($alarmasPlanillas = $user->isAdministrador() ? \App\Models\TurnoAuditoria::query()->pendientes()->count() + count(app(\App\Services\AuditoriaPlanillaService::class)->numerosFaltantes()) + \App\Models\EventoAplicacion::query()->semaforo('rojo')->count() : 0)
                             <li class="nav-item dropdown">
                                 <a class="nav-link dropdown-toggle {{ request()->is('turnos*') || request()->is('lectura-electronica*') || request()->is('control-planillas*') ? 'active' : '' }}"
                                     href="#" data-bs-toggle="dropdown">

@@ -14,6 +14,7 @@ use App\Http\Controllers\ControlPlanillasController;
 use App\Http\Controllers\ControlTanqueController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\EventoAplicacionController;
 use App\Http\Controllers\FuelPriceController;
 use App\Http\Controllers\InformeAnticipoBimestralController;
 use App\Http\Controllers\InformeCierreController;
@@ -116,6 +117,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         Route::post('/control-planillas/{auditoria}/atender', [ControlPlanillasController::class, 'atender'])
             ->name('control-planillas.atender');
+
+        // Fallas y eventos de la aplicación (semáforo y gestión).
+        Route::get('/control-planillas/eventos', [EventoAplicacionController::class, 'index'])
+            ->name('control-planillas.eventos.index');
+
+        Route::patch('/control-planillas/eventos/{evento}', [EventoAplicacionController::class, 'gestionar'])
+            ->name('control-planillas.eventos.gestionar');
+
+        Route::patch('/control-planillas/eventos', [EventoAplicacionController::class, 'gestionarVarios'])
+            ->name('control-planillas.eventos.gestionar-varios');
     });
 
     // El jefe de patios, además de la planilla de turnos, accede a Cartera - Estado de cuenta y a Control de tanques.

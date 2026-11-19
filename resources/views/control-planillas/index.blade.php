@@ -25,15 +25,23 @@
         ->count();
     $descuadrados = collect($comprobantes)->filter(fn (array $comprobante): bool => $comprobante['diferencia'] != 0.0)->count();
 
+    $rutaEventos = fn (string $vista): string => route('control-planillas.eventos.index', $rango + ['vista' => $vista]);
+
+    // Semáforo: verde sin novedad; con novedad, rojo (crítico) o amarillo (por revisar).
     $resumen = [
-        ['#alertas', 'Alertas sin atender', $alertas->count()],
-        ['#control-planillas', 'Pendientes de revisión', $revision['conteos']['pendiente']],
-        ['#control-planillas', '2ª revisión', $revision['conteos']['segunda_revision']],
-        ['#incompletas', 'Planillas incompletas', $incompletas->count()],
-        ['#lecturas', 'Días con diferencia en lecturas', $conDiferenciaLectura],
-        ['#inventarios', 'Días con diferencia en inventario', $conDiferenciaInventario],
-        ['#comprobantes', 'Comprobantes descuadrados', $descuadrados],
+        [$rutaEventos('rojo'), 'Fallas críticas de la aplicación', $semaforoEventos['rojo'], 'rojo', 'bug'],
+        [$rutaEventos('amarillo'), 'Advertencias de la aplicación', $semaforoEventos['amarillo'], 'amarillo', 'exclamation-triangle'],
+        ['#alertas', 'Alertas sin atender', $alertas->count(), 'rojo', 'bell'],
+        ['#control-planillas', 'Pendientes de revisión', $revision['conteos']['pendiente'], 'amarillo', 'hourglass-split'],
+        ['#control-planillas', '2ª revisión', $revision['conteos']['segunda_revision'], 'rojo', 'arrow-repeat'],
+        ['#incompletas', 'Planillas incompletas', $incompletas->count(), 'amarillo', 'file-earmark-x'],
+        ['#lecturas', 'Días con diferencia en lecturas', $conDiferenciaLectura, 'amarillo', 'speedometer2'],
+        ['#inventarios', 'Días con diferencia en inventario', $conDiferenciaInventario, 'amarillo', 'droplet-half'],
+        ['#comprobantes', 'Comprobantes descuadrados', $descuadrados, 'rojo', 'journal-x'],
     ];
+
+    $novedades = collect($resumen)->filter(fn (array $item): bool => $item[2] > 0);
+    $estadoGeneral = $novedades->contains(fn (array $item): bool => $item[3] === 'rojo') ? 'rojo' : ($novedades->isNotEmpty() ? 'amarillo' : 'verde');
 @endphp
 
 @section('content')
@@ -41,22 +49,30 @@
 
     <style>
         .auditoria-resumen a {
-            display: block;
+            display: flex;
+            align-items: center;
+            gap: .6rem;
             height: 100%;
-            padding: .5rem .75rem;
+            padding: .6rem .75rem;
             border: 1px solid var(--bs-border-color);
-            border-left-width: 4px;
-            border-radius: .375rem;
+            border-top: 4px solid var(--sem);
+            border-radius: .6rem;
             background: #fff;
             color: inherit;
             text-decoration: none;
+            transition: transform .12s ease, box-shadow .12s ease;
         }
 
-        .auditoria-resumen a.con-novedad { border-left-color: #dc3545; }
-        .auditoria-resumen a.sin-novedad { border-left-color: #198754; }
-        .auditoria-resumen .valor { font-size: 1.35rem; font-weight: 700; line-height: 1.1; }
-        .auditoria-resumen a.con-novedad .valor { color: #dc3545; }
-        .auditoria-resumen .etiqueta { font-size: .78rem; color: #6c757d; }
+        .auditoria-resumen a:hover { transform: translateY(-2px); box-shadow: 0 .35rem .9rem rgba(0, 0, 0, .08); }
+        .auditoria-resumen .icono { width: 2.2rem; height: 2.2rem; border-radius: 50%; display: grid; place-items: center;
+            background: var(--sem-suave); color: var(--sem); flex-shrink: 0; }
+        .auditoria-resumen .valor { font-size: 1.35rem; font-weight: 800; line-height: 1.1; color: var(--sem); }
+        .auditoria-resumen .etiqueta { font-size: .76rem; color: #6c757d; line-height: 1.2; }
+
+        .auditoria-general { display: flex; align-items: center; gap: .9rem; padding: .75rem 1rem; border-radius: .75rem;
+            background: var(--sem-suave); border: 1px solid var(--sem); margin-bottom: .75rem; }
+        .auditoria-general > .bi { font-size: 1.6rem; color: var(--sem); }
+        .auditoria-general strong { color: var(--sem); }
 
         .filtro-estado.activo { outline: 3px solid rgba(13, 110, 253, .45); }
         .auditoria-tabla td.num, .auditoria-tabla th.num { text-align: right; white-space: nowrap; }
@@ -72,17 +88,39 @@
         @include('informes.partials.filtro-rango', ['ruta' => 'control-planillas.index'])
     </x-page-header>
 
+    @include('control-planillas.partials.pestanas', ['activa' => 'informe'])
+
     @if (session('success'))
         <div class="alert alert-success d-print-none">{{ session('success') }}</div>
     @endif
+    @if ($errors->any())
+        <div class="alert alert-danger d-print-none">{{ $errors->first() }}</div>
+    @endif
+
+    {{-- Semáforo general del periodo --}}
+    <div class="auditoria-general semaforo-{{ $estadoGeneral }}" id="estado-general">
+        <i class="bi bi-{{ ['rojo' => 'x-octagon-fill', 'amarillo' => 'exclamation-triangle-fill', 'verde' => 'check-circle-fill'][$estadoGeneral] }}" aria-hidden="true"></i>
+        <div>
+            @if ($estadoGeneral === 'verde')
+                <strong>Todo en orden.</strong> No hay novedades pendientes en el periodo.
+            @else
+                <strong>{{ $estadoGeneral === 'rojo' ? 'Atención: hay novedades críticas.' : 'Hay novedades por revisar.' }}</strong>
+                {{ $novedades->map(fn (array $item): string => $item[2].' '.mb_strtolower($item[1]))->implode(' · ') }}.
+                <span class="d-print-none">Toque cada indicador para ir a gestionarlo.</span>
+            @endif
+        </div>
+    </div>
 
     {{-- Resumen: cada recuadro lleva a su bloque. --}}
     <div class="row g-2 mb-3 auditoria-resumen">
-        @foreach ($resumen as [$ancla, $etiqueta, $valor])
-            <div class="col-6 col-md-3 col-xl">
-                <a href="{{ $ancla }}" class="{{ $valor > 0 ? 'con-novedad' : 'sin-novedad' }}">
-                    <div class="valor">{{ $valor }}</div>
-                    <div class="etiqueta">{{ $etiqueta }}</div>
+        @foreach ($resumen as [$ancla, $etiqueta, $valor, $color, $icono])
+            <div class="col-6 col-md-4 col-xl">
+                <a href="{{ $ancla }}" class="semaforo-{{ $valor > 0 ? $color : 'verde' }}">
+                    <span class="icono"><i class="bi bi-{{ $icono }}" aria-hidden="true"></i></span>
+                    <span>
+                        <span class="valor d-block">{{ $valor }}</span>
+                        <span class="etiqueta d-block">{{ $etiqueta }}</span>
+                    </span>
                 </a>
             </div>
         @endforeach
@@ -111,6 +149,7 @@
                             <th>REGISTRÓ</th>
                             <th class="text-center">ESTADO</th>
                             <th>DETALLE</th>
+                            <th class="text-end d-print-none">GESTIÓN</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -121,14 +160,31 @@
                                 <td>{{ $planilla['turno']->user?->name ?? $planilla['turno']->nombre_vendedor }}</td>
                                 <td class="text-center"><span class="badge {{ $estados[$planilla['estado']][1] }}">{{ $estados[$planilla['estado']][0] }}</span></td>
                                 <td class="small">{{ $planilla['detalle'] }}</td>
+                                <td class="text-end text-nowrap d-print-none">
+                                    <a href="{{ route('turnos.create', ['turno_busqueda' => $planilla['turno']->numero_turno]) }}" class="btn btn-sm btn-outline-primary" title="Abrir la planilla">
+                                        <i class="bi bi-box-arrow-up-right" aria-hidden="true"></i> Abrir
+                                    </a>
+                                    @if (in_array($planilla['estado'], ['pendiente', 'segunda_revision'], true))
+                                        <form method="POST" action="{{ route('turnos.revisar', $planilla['turno']) }}" class="d-inline" data-sin-aviso
+                                            onsubmit="return confirm('¿Marcar el turno #{{ $planilla['turno']->numero_turno }} como REVISADO?')">
+                                            @csrf
+                                            <button type="submit" class="btn btn-sm btn-success">
+                                                <i class="bi bi-check2-circle" aria-hidden="true"></i> Revisada
+                                            </button>
+                                        </form>
+                                    @endif
+                                    <a href="{{ route('control-planillas.historial', $planilla['turno']->numero_turno) }}" class="btn btn-sm btn-outline-secondary" title="Historial de la planilla">
+                                        <i class="bi bi-clock-history" aria-hidden="true"></i><span class="visually-hidden">Historial</span>
+                                    </a>
+                                </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="5" class="text-center text-muted">No hay planillas en el periodo.</td>
+                                <td colspan="6" class="text-center text-muted">No hay planillas en el periodo.</td>
                             </tr>
                         @endforelse
                         <tr id="revision-sin-filas" hidden>
-                            <td colspan="5" class="text-center text-muted">No hay planillas con los estados seleccionados.</td>
+                            <td colspan="6" class="text-center text-muted">No hay planillas con los estados seleccionados.</td>
                         </tr>
                     </tbody>
                 </table>
