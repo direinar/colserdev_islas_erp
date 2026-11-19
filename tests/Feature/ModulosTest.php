@@ -21,17 +21,23 @@ test('administracion ve el selector con los tres modulos y cada uno muestra su m
     $this->actingAs($admin)->get(route('contabilidad.index'))->assertOk()->assertSee('Módulo en construcción');
 });
 
-test('el contador entra solo a Nomina y Contabilidad', function () {
+test('gerente y super administrador tambien entran a Nomina y Contabilidad', function (string $rol) {
+    $usuario = User::factory()->create(['role' => $rol]);
+
+    $this->actingAs($usuario)->get(route('nomina.dashboard'))->assertOk()
+        ->assertSeeInOrder(['OPERACIONES', 'NÓMINA', 'CONTABILIDAD']);
+    $this->actingAs($usuario)->get(route('contabilidad.index'))->assertOk();
+})->with([User::ROLE_GERENTE, User::ROLE_SUPERADMIN]);
+
+test('el contador por ahora no entra a ningun modulo y ve un aviso', function () {
     $contador = User::factory()->create(['role' => User::ROLE_CONTADOR]);
 
-    $this->actingAs($contador)->get(route('dashboard'))->assertRedirect(route('nomina.dashboard'));
-    $this->actingAs($contador)->get(route('nomina.dashboard'))->assertOk()
-        ->assertSeeInOrder(['NÓMINA', 'CONTABILIDAD'])
-        ->assertDontSee('OPERACIONES');
-    $this->actingAs($contador)->get(route('nomina.empleados.index'))->assertOk();
-    $this->actingAs($contador)->get(route('contabilidad.index'))->assertOk();
+    expect($contador->modulos())->toBe([]);
+    $this->actingAs($contador)->get(route('dashboard'))->assertOk()
+        ->assertSee('Su usuario no tiene módulos asignados')
+        ->assertDontSee('selector-modulos', false);
 
-    foreach (['turnos.create', 'conteos.index', 'informes.control-caja.index', 'users.index'] as $ruta) {
+    foreach (['nomina.dashboard', 'nomina.empleados.index', 'contabilidad.index', 'turnos.create', 'conteos.index', 'users.index'] as $ruta) {
         $this->actingAs($contador)->get(route($ruta))->assertForbidden();
     }
 });

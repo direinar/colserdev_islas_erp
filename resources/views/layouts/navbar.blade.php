@@ -50,7 +50,7 @@
                              Forma corta en una línea: este archivo no usa la forma de bloque. --}}
                         @php($modulosUsuario = $user->modulos())
                         @php($modulo = request()->is('nomina*') ? 'nomina' : (request()->is('contabilidad*') ? 'contabilidad' : 'operaciones'))
-                        @php($modulo = in_array($modulo, $modulosUsuario, true) ? $modulo : ($modulosUsuario[0] ?? 'operaciones'))
+                        @php($modulo = in_array($modulo, $modulosUsuario, true) ? $modulo : ($modulosUsuario[0] ?? null))
 
                         {{-- SELECTOR DE MÓDULO: solo los módulos a los que entra el usuario. --}}
                         @if (count($modulosUsuario) > 1)

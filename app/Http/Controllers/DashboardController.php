@@ -15,7 +15,12 @@ class DashboardController extends Controller
 
     public function index(Request $request, DashboardService $dashboard): View|RedirectResponse
     {
-        // El contador solo trabaja en Nómina (y Contabilidad): entra al dashboard de nómina.
+        // Un usuario sin ningún módulo (p. ej. el rol contador, aún sin definir) ve un aviso.
+        if ($request->user()->modulos() === []) {
+            return view('sin-modulos');
+        }
+
+        // Sin Operaciones pero con otro módulo: entra al dashboard de nómina.
         if (! $request->user()->canAccessModulo(User::MODULO_OPERACIONES)) {
             return redirect()->route('nomina.dashboard');
         }

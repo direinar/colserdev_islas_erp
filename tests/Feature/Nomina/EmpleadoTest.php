@@ -30,9 +30,9 @@ test('los invitados no entran al modulo de empleados', function () {
 });
 
 test('crea un empleado con el sueldo digitado con separadores de miles', function () {
-    $contador = User::factory()->create(['role' => User::ROLE_CONTADOR]);
+    $gerente = User::factory()->create(['role' => User::ROLE_GERENTE]);
 
-    $this->actingAs($contador)->post(route('nomina.empleados.store'), datosEmpleado())
+    $this->actingAs($gerente)->post(route('nomina.empleados.store'), datosEmpleado())
         ->assertRedirect()
         ->assertSessionHas('success');
 

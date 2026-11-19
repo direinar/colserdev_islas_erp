@@ -28,7 +28,7 @@ class User extends Authenticatable
     /** Desarrollador del sistema. */
     public const ROLE_SUPERADMIN = 'superadmin';
 
-    /** Entra solo a Nómina y Contabilidad (no a Operaciones de la EDS). */
+    /** Rol reservado: por ahora sin acceso a ningún módulo (pendiente de definir). */
     public const ROLE_CONTADOR = 'contador';
 
     public const MODULO_OPERACIONES = 'operaciones';
@@ -79,13 +79,14 @@ class User extends Authenticatable
     }
 
     /**
-     * Roles que entran a Nómina y a Contabilidad: administración y el contador.
+     * Roles que entran a Nómina y a Contabilidad: solo administrador y gerente (y el super
+     * administrador, cuenta técnica de soporte). El contador por ahora no entra a ningún módulo.
      *
      * @return list<string>
      */
     public static function rolesNomina(): array
     {
-        return [...self::rolesAdministrativos(), self::ROLE_CONTADOR];
+        return self::rolesAdministrativos();
     }
 
     /**
