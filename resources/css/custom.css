@@ -81,6 +81,38 @@ body {
     border-radius: 6px;
 }
 
+/* Selector de módulo: OPERACIONES | NÓMINA | CONTABILIDAD. */
+.selector-modulos {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 2px;
+    padding: 3px;
+    border: 1px solid var(--border);
+    border-radius: .85rem;
+    background: #f7f7f8;
+}
+
+.selector-modulo {
+    padding: .3rem .75rem;
+    border-radius: .65rem;
+    font-size: .75rem;
+    font-weight: 700;
+    letter-spacing: .04em;
+    color: var(--ink);
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.selector-modulo:hover {
+    background: rgba(225, 16, 0, 0.08);
+    color: var(--mint-mid);
+}
+
+.selector-modulo.activo {
+    background: var(--mint-mid);
+    color: #fff;
+}
+
 /* Cards and surfaces */
 .pastel-card,
 .card {

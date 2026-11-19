@@ -45,6 +45,33 @@
 
                         @php($user = auth()->user())
 
+                        {{-- Módulo actual según la URL (/nomina, /contabilidad; lo demás es Operaciones). Si el
+                             usuario no entra a ese módulo (p. ej. el contador en Mi perfil), se usa el primero suyo.
+                             Forma corta en una línea: este archivo no usa la forma de bloque. --}}
+                        @php($modulosUsuario = $user->modulos())
+                        @php($modulo = request()->is('nomina*') ? 'nomina' : (request()->is('contabilidad*') ? 'contabilidad' : 'operaciones'))
+                        @php($modulo = in_array($modulo, $modulosUsuario, true) ? $modulo : ($modulosUsuario[0] ?? 'operaciones'))
+
+                        {{-- SELECTOR DE MÓDULO: solo los módulos a los que entra el usuario. --}}
+                        @if (count($modulosUsuario) > 1)
+                            <li class="nav-item me-lg-2 mb-2 mb-lg-0">
+                                <div class="selector-modulos" role="group" aria-label="Módulos">
+                                    @foreach ([
+                                        'operaciones' => ['OPERACIONES', route('dashboard')],
+                                        'nomina' => ['NÓMINA', route('nomina.dashboard')],
+                                        'contabilidad' => ['CONTABILIDAD', route('contabilidad.index')],
+                                    ] as $clave => [$nombre, $url])
+                                        @if (in_array($clave, $modulosUsuario, true))
+                                            <a href="{{ $url }}" @class(['selector-modulo', 'activo' => $modulo === $clave])
+                                                @if ($modulo === $clave) aria-current="page" @endif>{{ $nombre }}</a>
+                                        @endif
+                                    @endforeach
+                                </div>
+                            </li>
+                        @endif
+
+                        @if ($modulo === 'operaciones')
+
                         {{-- Dashboard --}}
                         @if ($user->canAccessDashboard())
                             <li class="nav-item">
@@ -394,6 +421,41 @@
                                         </li>
                                     @endif
                                 </ul>
+                            </li>
+                        @endif
+
+                        @endif {{-- fin módulo Operaciones --}}
+
+                        {{-- ================= MÓDULO NÓMINA ================= --}}
+                        @if ($modulo === 'nomina')
+                            <li class="nav-item">
+                                <a class="nav-link {{ request()->routeIs('nomina.dashboard') ? 'active' : '' }}"
+                                    href="{{ route('nomina.dashboard') }}">Dashboard</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {{ request()->routeIs('nomina.empleados.*') ? 'active' : '' }}"
+                                    href="{{ route('nomina.empleados.index') }}">Empleados</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {{ request()->routeIs('nomina.planillas-turnos.*') ? 'active' : '' }}"
+                                    href="{{ route('nomina.planillas-turnos.index') }}">Planilla de turnos</a>
+                            </li>
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle {{ request()->routeIs('nomina.parametros-liquidacion.*', 'nomina.turnos.*', 'nomina.festivos.*') ? 'active' : '' }}"
+                                    href="#" data-bs-toggle="dropdown">Configuración</a>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="{{ route('nomina.parametros-liquidacion.index') }}">Parámetros de liquidación</a></li>
+                                    <li><a class="dropdown-item" href="{{ route('nomina.turnos.index') }}">Turnos</a></li>
+                                    <li><a class="dropdown-item" href="{{ route('nomina.festivos.index') }}">Festivos</a></li>
+                                </ul>
+                            </li>
+                        @endif
+
+                        {{-- ================= MÓDULO CONTABILIDAD (en construcción) ================= --}}
+                        @if ($modulo === 'contabilidad')
+                            <li class="nav-item">
+                                <a class="nav-link {{ request()->routeIs('contabilidad.index') ? 'active' : '' }}"
+                                    href="{{ route('contabilidad.index') }}">Inicio</a>
                             </li>
                         @endif
 

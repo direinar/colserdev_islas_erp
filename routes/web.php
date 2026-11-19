@@ -7,6 +7,7 @@ use App\Http\Controllers\CarteraSaldoInicialController;
 use App\Http\Controllers\CompraController;
 use App\Http\Controllers\CompraLubricanteController;
 use App\Http\Controllers\ComprobanteContableCompraController;
+use App\Http\Controllers\ContabilidadController;
 use App\Http\Controllers\ConteoCatalogoController;
 use App\Http\Controllers\ConteoController;
 use App\Http\Controllers\ControlPlanillasController;
@@ -31,6 +32,12 @@ use App\Http\Controllers\InventarioLubricanteController;
 use App\Http\Controllers\InventarioSaldoInicialController;
 use App\Http\Controllers\LecturaElectronicaController;
 use App\Http\Controllers\LubricantController;
+use App\Http\Controllers\Nomina\DashboardController as NominaDashboardController;
+use App\Http\Controllers\Nomina\EmpleadoController;
+use App\Http\Controllers\Nomina\FestivoController;
+use App\Http\Controllers\Nomina\ParametroLiquidacionController;
+use App\Http\Controllers\Nomina\PlanillaTurnoController;
+use App\Http\Controllers\Nomina\TurnoController as NominaTurnoController;
 use App\Http\Controllers\ProveedorController;
 use App\Http\Controllers\TurnoController;
 use App\Http\Controllers\UserController;
@@ -44,7 +51,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
-    Route::middleware('role:'.implode(',', User::roles()))->group(function () {
+    Route::middleware('role:'.implode(',', User::rolesOperaciones()))->group(function () {
         Route::get('/turnos/create', [TurnoController::class, 'create'])
             ->name('turnos.create');
 
@@ -341,6 +348,36 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         Route::resource('users', UserController::class);
     });
+
+    // ================= MÓDULO NÓMINA =================
+    // Administración y contador. Tablas nomina_*; App\Models\Nomina\Turno es el turno de trabajo
+    // de los empleados, distinto de la planilla de turno de la EDS (App\Models\Turno).
+    Route::middleware('role:'.implode(',', User::rolesNomina()))
+        ->prefix('nomina')
+        ->name('nomina.')
+        ->group(function () {
+            Route::get('/', [NominaDashboardController::class, 'index'])->name('dashboard');
+
+            Route::resource('empleados', EmpleadoController::class);
+            Route::resource('parametros-liquidacion', ParametroLiquidacionController::class);
+            Route::resource('turnos', NominaTurnoController::class)->except('show');
+            Route::post('festivos/generar', [FestivoController::class, 'generar'])->name('festivos.generar');
+            Route::resource('festivos', FestivoController::class)->only(['index', 'store', 'destroy']);
+
+            // Planilla de turnos: programación (versión 1) y liquidación de recargos (versión 2).
+            Route::get('planillas-turnos/{planillas_turno}/liquidacion', [PlanillaTurnoController::class, 'liquidacion'])->name('planillas-turnos.liquidacion');
+            Route::patch('planillas-turnos/{planillas_turno}/cerrar', [PlanillaTurnoController::class, 'cerrar'])->name('planillas-turnos.cerrar');
+            Route::patch('planillas-turnos/{planillas_turno}/reabrir', [PlanillaTurnoController::class, 'reabrir'])->name('planillas-turnos.reabrir');
+            Route::resource('planillas-turnos', PlanillaTurnoController::class)->except(['create']);
+        });
+
+    // ================= MÓDULO CONTABILIDAD (en construcción) =================
+    Route::middleware('role:'.implode(',', User::rolesNomina()))
+        ->prefix('contabilidad')
+        ->name('contabilidad.')
+        ->group(function () {
+            Route::get('/', [ContabilidadController::class, 'index'])->name('index');
+        });
 });
 
 require __DIR__.'/settings.php';

@@ -19,5 +19,7 @@ class DatabaseSeeder extends Seeder
         $this->call(CustomerSeeder::class);
         $this->call(ProveedorSeeder::class);
         $this->call(TurnoVentasSeeder::class);
+        // Módulo de Nómina: parámetros de liquidación, turnos de trabajo y festivos (no duplica).
+        $this->call(InsumosNominaSeeder::class);
     }
 }

@@ -28,6 +28,15 @@ class User extends Authenticatable
     /** Desarrollador del sistema. */
     public const ROLE_SUPERADMIN = 'superadmin';
 
+    /** Entra solo a Nómina y Contabilidad (no a Operaciones de la EDS). */
+    public const ROLE_CONTADOR = 'contador';
+
+    public const MODULO_OPERACIONES = 'operaciones';
+
+    public const MODULO_NOMINA = 'nomina';
+
+    public const MODULO_CONTABILIDAD = 'contabilidad';
+
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable, TwoFactorAuthenticatable;
 
@@ -55,7 +64,47 @@ class User extends Authenticatable
             self::ROLE_ADMINISTRADOR,
             self::ROLE_JEFE_PATIOS,
             self::ROLE_ISLERO,
+            self::ROLE_CONTADOR,
         ];
+    }
+
+    /**
+     * Roles que entran al módulo de Operaciones (la EDS: planillas, inventarios, informes…).
+     *
+     * @return list<string>
+     */
+    public static function rolesOperaciones(): array
+    {
+        return [...self::rolesAdministrativos(), self::ROLE_JEFE_PATIOS, self::ROLE_ISLERO];
+    }
+
+    /**
+     * Roles que entran a Nómina y a Contabilidad: administración y el contador.
+     *
+     * @return list<string>
+     */
+    public static function rolesNomina(): array
+    {
+        return [...self::rolesAdministrativos(), self::ROLE_CONTADOR];
+    }
+
+    /**
+     * Módulos a los que entra el usuario, en el orden del selector.
+     *
+     * @return list<string>
+     */
+    public function modulos(): array
+    {
+        return array_values(array_filter([
+            $this->hasAnyRole(self::rolesOperaciones()) ? self::MODULO_OPERACIONES : null,
+            $this->hasAnyRole(self::rolesNomina()) ? self::MODULO_NOMINA : null,
+            $this->hasAnyRole(self::rolesNomina()) ? self::MODULO_CONTABILIDAD : null,
+        ]));
+    }
+
+    public function canAccessModulo(string $modulo): bool
+    {
+        return in_array($modulo, $this->modulos(), true);
     }
 
     /**
@@ -106,6 +155,7 @@ class User extends Authenticatable
             self::ROLE_ADMINISTRADOR => 'Administrador',
             self::ROLE_JEFE_PATIOS => 'Jefe de patios',
             self::ROLE_ISLERO => 'Islero',
+            self::ROLE_CONTADOR => 'Contador',
             default => ucfirst(str_replace('_', ' ', $role)),
         };
     }
@@ -153,7 +203,7 @@ class User extends Authenticatable
 
     public function canAccessTurnos(): bool
     {
-        return $this->hasAnyRole(self::roles());
+        return $this->hasAnyRole(self::rolesOperaciones());
     }
 
     /**
