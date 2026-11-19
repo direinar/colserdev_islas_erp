@@ -202,13 +202,20 @@ class TurnoController extends Controller
      * El administrador devuelve una planilla revisada a PENDIENTE DE REVISIÓN
      * para hacerle correcciones o adiciones.
      */
-    public function reabrir(Request $request, Turno $turno): RedirectResponse
+    public function reabrir(Request $request, Turno $turno, AuditoriaPlanillaService $auditoria): RedirectResponse
     {
+        $estabaRevisada = (bool) $turno->revisado;
+
         $turno->update([
             'revisado' => false,
             'revisado_por' => null,
             'revisado_at' => null,
         ]);
+
+        // Queda para 2ª revisión en Auditoría del administrador.
+        if ($estabaRevisada) {
+            $auditoria->registrarReapertura($turno, $request->user());
+        }
 
         return redirect()->route('turnos.create', ['turno_busqueda' => $turno->numero_turno])
             ->with('success', 'Turno #'.$turno->numero_turno.' devuelto a PENDIENTE DE REVISIÓN. Ya se puede corregir.');
@@ -229,6 +236,11 @@ class TurnoController extends Controller
         $carteraSync->eliminarDeCartera($turno);
         // Queda en el historial de la planilla quién la anuló y con qué datos.
         $auditoria->registrarAnulacion($turno, $request->user());
+
+        // Desde Auditoría del administrador (planilla guardada sin diligenciar) se vuelve allí.
+        if ($request->input('volver') === 'auditoria') {
+            return back()->with('success', 'Turno #'.$turno->numero_turno.' ANULADO.');
+        }
 
         return redirect()->route('turnos.create', ['turno_busqueda' => $turno->numero_turno])
             ->with('success', 'Turno #'.$turno->numero_turno.' ANULADO: quedó bloqueado, nadie lo puede modificar y ya no se tiene en cuenta en informes, cartera, conteo ni control de tanques.');

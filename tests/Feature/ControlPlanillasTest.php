@@ -2,6 +2,9 @@
 
 use App\Models\Conteo;
 use App\Models\FuelPrice;
+use App\Models\InventarioSaldoInicial;
+use App\Models\LecturaElectronica;
+use App\Models\TanqueSaldoInicial;
 use App\Models\Turno;
 use App\Models\TurnoAuditoria;
 use App\Models\User;
@@ -68,23 +71,117 @@ test('si un guardado quita filas o baja el total de ventas queda una alerta con 
     $this->actingAs($rosa)->get(route('control-planillas.index'))->assertForbidden();
 });
 
-test('el control lista las planillas incompletas y los numeros de turno que faltan', function () {
+test('el control lista las planillas incompletas con lo que les falta y los numeros de turno que faltan', function () {
     $admin = User::factory()->create(['role' => User::ROLE_ADMINISTRADOR]);
     guardarControl($admin, 1, [['SURTIDOR 1 CTE', '10']], [['5001', '163.950']]);
-    // Sin ventas.
+    // Guardada sin diligenciar.
     guardarControl($admin, 2, []);
     // Con ventas pero sin dinero recibido.
     guardarControl($admin, 4, [['SURTIDOR 2 CTE', '5']]);
+    // Con dinero recibido pero sin ventas.
+    guardarControl($admin, 5, [], [['5002', '10.000']]);
 
-    $pantalla = $this->actingAs($admin)->get(route('control-planillas.index'))->assertOk();
+    $pantalla = $this->actingAs($admin)->get(route('control-planillas.index', ['desde' => '2026-11-01', 'hasta' => '2026-11-30']))->assertOk();
 
-    expect($pantalla->viewData('incompletas')->map(fn ($f) => [$f['turno']->numero_turno, $f['motivo']])->all())->toBe([
-        [4, 'Tiene ventas pero ningún dinero recibido (consignaciones, pagos, cartera…)'],
-        [2, 'Sin ventas (combustible ni canastilla)'],
+    expect($pantalla->viewData('incompletas')->map(fn ($f) => [$f['turno']->numero_turno, $f['motivo'], $f['sin_diligenciar']])->all())->toBe([
+        [5, 'Falta ventas del turno (combustible ni canastilla)', false],
+        [4, 'Falta medios de pago (consignaciones, pagos electrónicos, cartera…)', false],
+        [2, 'Planilla guardada sin diligenciar: anúlela', true],
     ])
         ->and($pantalla->viewData('faltantes'))->toBe([3]);
 
-    $pantalla->assertSee('NÚMEROS DE TURNO FALTANTES (1)');
+    $pantalla->assertSee('NÚMEROS DE TURNO FALTANTES (1)')
+        ->assertSee('Anular planilla')
+        ->assertSee('Completar');
+
+    // Fuera del periodo no aparecen.
+    expect($this->actingAs($admin)->get(route('control-planillas.index', ['desde' => '2026-10-01', 'hasta' => '2026-10-31']))
+        ->viewData('incompletas'))->toBeEmpty();
+});
+
+test('la auditoria muestra el estado de revision del periodo y la planilla reabierta queda en 2a revision', function () {
+    $admin = User::factory()->create(['role' => User::ROLE_ADMINISTRADOR, 'name' => 'GERMAN ADMIN']);
+    $periodo = ['desde' => '2026-11-01', 'hasta' => '2026-11-30'];
+    foreach ([20, 21, 22] as $numero) {
+        guardarControl($admin, $numero, [['SURTIDOR 1 CTE', '10']], [[(string) (6000 + $numero), '163.950']])->assertSessionHasNoErrors();
+    }
+    guardarControl($admin, 23, []);
+    $turno = fn (int $numero): Turno => Turno::query()->where('numero_turno', $numero)->sole();
+
+    $this->actingAs($admin)->post(route('turnos.revisar', $turno(20)));
+    $this->actingAs($admin)->post(route('turnos.reabrir', $turno(20)));
+    $this->actingAs($admin)->post(route('turnos.revisar', $turno(21)));
+
+    // La planilla guardada sin diligenciar se anula desde la auditoría y se vuelve a ella.
+    $auditoria = route('control-planillas.index', $periodo);
+    $this->actingAs($admin)->from($auditoria)
+        ->post(route('turnos.anular', $turno(23)), ['motivo_anulacion' => 'Planilla guardada sin diligenciar', 'volver' => 'auditoria'])
+        ->assertRedirect($auditoria)
+        ->assertSessionHas('success', 'Turno #23 ANULADO.');
+
+    $pantalla = $this->actingAs($admin)->get($auditoria)->assertOk()
+        ->assertSee('CONTROL PLANILLAS — ESTADO DE REVISIÓN DEL PERIODO (4)')
+        ->assertSee('2ª REVISIÓN: 1')
+        ->assertSee('Devuelta a pendiente por GERMAN ADMIN')
+        ->assertSee('Anulada por GERMAN ADMIN');
+    $revision = $pantalla->viewData('revision');
+
+    expect($revision['conteos'])->toBe(['revisada' => 1, 'segunda_revision' => 1, 'pendiente' => 1, 'anulada' => 1])
+        ->and($revision['planillas']->mapWithKeys(fn ($p) => [$p['turno']->numero_turno => $p['estado']])->all())
+        ->toBe([20 => 'segunda_revision', 21 => 'revisada', 22 => 'pendiente', 23 => 'anulada'])
+        ->and($pantalla->viewData('incompletas'))->toBeEmpty()
+        ->and(TurnoAuditoria::query()->where('numero_turno', 20)->pluck('accion')->last())->toBe('reabierta');
+
+    // Al revisarla de nuevo sale de 2ª revisión.
+    $this->actingAs($admin)->post(route('turnos.revisar', $turno(20)));
+    expect($this->actingAs($admin)->get($auditoria)->viewData('revision')['conteos'])
+        ->toBe(['revisada' => 2, 'segunda_revision' => 0, 'pendiente' => 1, 'anulada' => 1]);
+});
+
+test('la auditoria cruza lecturas con IAPROPIADA, tanques con inventario, ultimas planillas y comprobantes', function () {
+    $admin = User::factory()->create(['role' => User::ROLE_ADMINISTRADOR]);
+    $periodo = ['desde' => '2026-11-01', 'hasta' => '2026-11-04'];
+    $turnoDelDia = fn (string $fecha, int $numero, float $corriente, float $acpm): Turno => Turno::create([
+        'fecha' => $fecha, 'numero_turno' => $numero, 'precio_corriente' => 16000, 'precio_acpm' => 10000,
+        'tirillas_galones_corriente' => $corriente, 'tirillas_valor_corriente' => $corriente * 16000,
+        'tirillas_galones_acpm' => $acpm, 'tirillas_valor_acpm' => $acpm * 10000,
+    ]);
+    $turnoDelDia('2026-11-03', 30, 10, 5);
+    $turnoDelDia('2026-11-04', 31, 2, 0);
+
+    // Lectura completa del 3: 10,5 galones de PLUS 01 y 5 de ACPM 03.
+    foreach (LecturaElectronica::MANGUERAS as $manguera => $combustible) {
+        $galones = ['PLUS 01' => 10.5, 'ACPM 03' => 5.0][$manguera] ?? 0.0;
+        LecturaElectronica::create(['fecha' => '2026-11-03', 'manguera' => $manguera, 'combustible' => $combustible,
+            'lectura_inicial' => 100, 'lectura_final' => 100 + $galones, 'galones' => $galones]);
+    }
+
+    // El tanque arranca con 1.000 galones y el inventario con 990: difieren en 10.
+    TanqueSaldoInicial::create(['combustible' => 'corriente', 'fecha_corte' => '2026-11-01', 'galones' => 1000]);
+    InventarioSaldoInicial::create(['inventario' => 'gasolina', 'referencia' => '', 'fecha_corte' => '2026-11-01', 'unidades' => 990, 'costo_unitario' => 10000]);
+
+    $pantalla = $this->actingAs($admin)->get(route('control-planillas.index', $periodo))->assertOk()
+        ->assertSee('LECTURAS ELECTRÓNICAS')
+        ->assertSee('Sin lectura completa')
+        ->assertSee('INVENTARIOS — UNIDADES (GALONES)')
+        ->assertSee('ESTADO DE ÚLTIMAS PLANILLAS DEL PERIODO')
+        ->assertSee('COMPROBANTES DESCUADRADOS');
+
+    expect($pantalla->viewData('lecturas')['filas'])->toBe([
+        ['fecha' => '2026-11-03', 'lectura' => 218000.0, 'iapropiada' => 210000.0, 'diferencia' => 8000.0, 'completa' => true],
+        ['fecha' => '2026-11-04', 'lectura' => null, 'iapropiada' => 32000.0, 'diferencia' => null, 'completa' => false],
+    ]);
+
+    $inventarios = collect($pantalla->viewData('inventarios'))->keyBy('fecha');
+    expect($inventarios['2026-11-03']['corriente'])->toBe(['tanques' => 990.0, 'inventario' => 980.0, 'diferencia' => 10.0])
+        ->and($inventarios['2026-11-04']['corriente'])->toBe(['tanques' => 988.0, 'inventario' => 978.0, 'diferencia' => 10.0])
+        // Sin movimientos ni saldo inicial el inventario de ACPM aún no existe.
+        ->and($inventarios['2026-11-01']['acpm']['diferencia'])->toBeNull()
+        ->and($pantalla->viewData('ultimas')->pluck('numero_turno')->all())->toBe([31, 30])
+        ->and(array_column($pantalla->viewData('comprobantes'), 'diferencia'))->toBe([0.0, 0.0, 0.0]);
+
+    // Las últimas planillas ya no están en el dashboard.
+    $this->actingAs($admin)->get(route('dashboard', $periodo))->assertOk()->assertDontSee('Últimas planillas del periodo');
 });
 
 test('consignaciones sin imprimir ni Excel y con TOTAL a la derecha; sin Limpiar y con Anular solo para administracion', function () {

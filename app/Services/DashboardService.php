@@ -40,8 +40,7 @@ class DashboardService
      *     agrupacion: string,
      *     periodos: list<array{etiqueta: string, gasolina: float, acpm: float, canastilla: float, galones_corriente: float, galones_acpm: float}>,
      *     formas_pago: list<array{etiqueta: string, valor: float}>,
-     *     productos: list<array{producto: string, cantidad: float, total: float}>,
-     *     ultimos: Collection<int, Turno>
+     *     productos: list<array{producto: string, cantidad: float, total: float}>
      * }
      */
     public function resumen(string $desde, string $hasta, User $usuario): array
@@ -84,7 +83,6 @@ class DashboardService
                 ->values()
                 ->all(),
             'productos' => $this->productosMasVendidos($turnos->pluck('id')),
-            'ultimos' => $turnos->sortByDesc('numero_turno')->take(8)->values(),
         ];
     }
 

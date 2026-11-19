@@ -415,6 +415,12 @@
                                             </a>
                                         </li>
                                         <li>
+                                            <a class="dropdown-item"
+                                                href="{{ route('informes.gobernacion-sicom.index') }}">
+                                                Informe Gobernación y SICOM
+                                            </a>
+                                        </li>
+                                        <li>
                                             <a class="dropdown-item" href="{{ route('informes.cierre.index') }}">
                                                 Informes de gestión
                                             </a>

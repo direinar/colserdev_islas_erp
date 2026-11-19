@@ -1,6 +1,6 @@
 {{--
     Filtro de periodo de los informes (dentro de <x-page-header>): desde/hasta, imprimir y Excel.
-    Parámetros: $ruta (nombre de la ruta del informe), $rutaExportar, $desde, $hasta y, opcional,
+    Parámetros: $ruta (nombre de la ruta del informe), $rutaExportar (opcional: sin ella no hay botón Excel), $desde, $hasta y, opcional,
     $filtrosExtra (otros filtros que se conservan al cambiar las fechas y al exportar).
 --}}
 @php($filtrosExtra = $filtrosExtra ?? [])
@@ -22,6 +22,8 @@
 <button type="button" class="btn btn-outline-light btn-sm" onclick="window.print()">
     <i class="bi bi-printer" aria-hidden="true"></i> IMPRIMIR
 </button>
+@isset($rutaExportar)
 <a href="{{ route($rutaExportar, $filtrosExtra + ['desde' => $desde, 'hasta' => $hasta]) }}" class="btn btn-outline-light btn-sm">
     <i class="bi bi-file-earmark-excel" aria-hidden="true"></i> EXCEL
 </a>
+@endisset

@@ -22,6 +22,7 @@ use App\Http\Controllers\InformeComprobanteComprasController;
 use App\Http\Controllers\InformeComprobanteRecaudosController;
 use App\Http\Controllers\InformeComprobanteVentasController;
 use App\Http\Controllers\InformeControlCajaController;
+use App\Http\Controllers\InformeGobernacionSicomController;
 use App\Http\Controllers\InformeMargenMayoristaController;
 use App\Http\Controllers\InformeRecaudosCarteraController;
 use App\Http\Controllers\InformeSaldosController;
@@ -184,6 +185,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         Route::get('/informes/recaudos-cartera/exportar', [InformeRecaudosCarteraController::class, 'exportar'])
             ->name('informes.recaudos-cartera.exportar');
+
+        Route::get('/informes/gobernacion-sicom', [InformeGobernacionSicomController::class, 'index'])
+            ->name('informes.gobernacion-sicom.index');
+
+        Route::get('/informes/gobernacion-sicom/exportar', [InformeGobernacionSicomController::class, 'exportar'])
+            ->name('informes.gobernacion-sicom.exportar');
 
         Route::get('/informes/saldos', [InformeSaldosController::class, 'index'])
             ->name('informes.saldos.index');

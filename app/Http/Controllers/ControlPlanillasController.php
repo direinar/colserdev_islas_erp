@@ -2,26 +2,41 @@
 
 namespace App\Http\Controllers;
 
+use App\Concerns\ResuelveRangoFechas;
 use App\Models\TurnoAuditoria;
 use App\Services\AuditoriaPlanillaService;
+use App\Services\InformeAuditoriaService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 /**
- * Control de planillas borradas o incompletas (administración y gerencia): alertas de guardados
- * que quitaron datos, planillas sin ventas o sin dinero recibido y números de turno faltantes.
+ * Auditoría del administrador (informe de auditoría del periodo): alertas de guardados que
+ * quitaron datos, estado de revisión, planillas incompletas, números de turno faltantes,
+ * lectura electrónica contra IAPROPIADA, informe de tanques contra inventario, últimas
+ * planillas y comprobantes contables descuadrados.
  */
 class ControlPlanillasController extends Controller
 {
-    public function index(AuditoriaPlanillaService $auditoria): View
+    use ResuelveRangoFechas;
+
+    public function index(Request $request, AuditoriaPlanillaService $auditoria, InformeAuditoriaService $informe): View
     {
+        [$desde, $hasta] = $this->rango($request);
+
         return view('control-planillas.index', [
+            'desde' => $desde,
+            'hasta' => $hasta,
             'alertas' => TurnoAuditoria::query()->pendientes()->with(['user', 'turno'])->latest()->get(),
             'atendidas' => TurnoAuditoria::query()->whereNotNull('alerta')->whereNotNull('atendida_at')
                 ->with(['user', 'turno'])->latest('atendida_at')->limit(30)->get(),
-            'incompletas' => $auditoria->incompletas(),
+            'revision' => $auditoria->estadoRevision($desde, $hasta),
+            'incompletas' => $auditoria->incompletas($desde, $hasta),
             'faltantes' => $auditoria->numerosFaltantes(),
+            'lecturas' => $informe->lecturas($desde, $hasta),
+            'inventarios' => $informe->inventarios($desde, $hasta),
+            'ultimas' => $informe->ultimasPlanillas($desde, $hasta),
+            'comprobantes' => $informe->comprobantes($desde, $hasta),
         ]);
     }
 

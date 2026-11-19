@@ -78,7 +78,8 @@ test('el dashboard resume las planillas de turnos del rango', function () {
             ['etiqueta' => 'Pagos electrónicos', 'valor' => 38000.0],
         ])
         ->and($resumen['productos'])->toBe([['producto' => 'UREA', 'cantidad' => 2.0, 'total' => 8000.0]])
-        ->and($resumen['ultimos']->pluck('numero_turno')->all())->toBe([2, 1]);
+        // Las últimas planillas pasaron a Auditoría del administrador.
+        ->and($resumen)->not->toHaveKey('ultimos');
 
     // Galones vendidos por día: corriente, ACPM y la línea verde del total.
     $this->actingAs($admin)

@@ -17,6 +17,11 @@ class TurnoAuditoria extends Model
 
     public const ACCION_ANULADA = 'anulada';
 
+    /**
+     * El administrador devolvió una planilla revisada a PENDIENTE DE REVISIÓN (2ª revisión).
+     */
+    public const ACCION_REABIERTA = 'reabierta';
+
     protected $table = 'turno_auditorias';
 
     protected $fillable = [

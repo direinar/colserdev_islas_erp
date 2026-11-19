@@ -84,6 +84,69 @@ class AuditoriaPlanillaService
     }
 
     /**
+     * La planilla revisada vuelve a PENDIENTE DE REVISIÓN: queda marcada para 2ª revisión.
+     */
+    public function registrarReapertura(Turno $turno, User $usuario): TurnoAuditoria
+    {
+        return TurnoAuditoria::create([
+            'turno_id' => $turno->id,
+            'numero_turno' => $turno->numero_turno,
+            'accion' => TurnoAuditoria::ACCION_REABIERTA,
+            'resumen' => $this->resumen($turno),
+            'user_id' => $usuario->id,
+        ]);
+    }
+
+    /**
+     * Estado de revisión de las planillas del periodo: revisada, 2ª revisión (revisada y
+     * devuelta a pendiente para corregirla), pendiente de revisión o anulada.
+     *
+     * @return array{
+     *     conteos: array{revisada: int, segunda_revision: int, pendiente: int, anulada: int},
+     *     planillas: Collection<int, array{turno: Turno, estado: string, detalle: string}>
+     * }
+     */
+    public function estadoRevision(string $desde, string $hasta): array
+    {
+        $turnos = Turno::query()
+            ->with('user')
+            ->whereDate('fecha', '>=', $desde)
+            ->whereDate('fecha', '<=', $hasta)
+            ->orderBy('numero_turno')
+            ->get();
+
+        $reaperturas = TurnoAuditoria::query()
+            ->where('accion', TurnoAuditoria::ACCION_REABIERTA)
+            ->whereIn('turno_id', $turnos->pluck('id'))
+            ->with('user')
+            ->latest('id')
+            ->get()
+            ->unique('turno_id')
+            ->keyBy('turno_id');
+
+        $planillas = $turnos->map(function (Turno $turno) use ($reaperturas): array {
+            $reapertura = $reaperturas->get($turno->id);
+
+            return match (true) {
+                (bool) $turno->anulada => ['turno' => $turno, 'estado' => 'anulada',
+                    'detalle' => trim('Anulada por '.$turno->anulada_por.($turno->anulada_at ? ' el '.$turno->anulada_at->format('d/m/Y') : '').'. '.$turno->motivo_anulacion)],
+                (bool) $turno->revisado => ['turno' => $turno, 'estado' => 'revisada',
+                    'detalle' => 'Revisada por '.$turno->revisado_por.($turno->revisado_at ? ' el '.$turno->revisado_at->format('d/m/Y') : '')],
+                $reapertura !== null => ['turno' => $turno, 'estado' => 'segunda_revision',
+                    'detalle' => 'Devuelta a pendiente por '.$reapertura->user?->name.' el '.$reapertura->created_at->format('d/m/Y H:i')],
+                default => ['turno' => $turno, 'estado' => 'pendiente', 'detalle' => ''],
+            };
+        });
+
+        $conteos = ['revisada' => 0, 'segunda_revision' => 0, 'pendiente' => 0, 'anulada' => 0];
+        foreach ($planillas as $planilla) {
+            $conteos[$planilla['estado']]++;
+        }
+
+        return ['conteos' => $conteos, 'planillas' => $planillas];
+    }
+
+    /**
      * Qué se quitó frente al guardado anterior: secciones con menos filas y total de ventas menor.
      *
      * @param  array<string, mixed>  $antes
@@ -114,30 +177,34 @@ class AuditoriaPlanillaService
     }
 
     /**
-     * Planillas no anuladas sin ventas o con ventas pero sin dinero recibido.
+     * Planillas no anuladas del periodo a las que les falta algo: guardadas sin diligenciar
+     * (ni ventas ni dinero recibido: se anulan), sin ventas del turno o sin medios de pago.
      *
-     * @return Collection<int, array{turno: Turno, motivo: string}>
+     * @return Collection<int, array{turno: Turno, motivo: string, sin_diligenciar: bool}>
      */
-    public function incompletas(): Collection
+    public function incompletas(?string $desde = null, ?string $hasta = null): Collection
     {
         $cuadre = app(CuadreTurnoService::class);
 
         return Turno::query()
             ->noAnulados()
+            ->when($desde, fn ($consulta) => $consulta->whereDate('fecha', '>=', $desde))
+            ->when($hasta, fn ($consulta) => $consulta->whereDate('fecha', '<=', $hasta))
             ->with(['user', ...CuadreTurnoService::RELACIONES_RECIBIDO, ...CuadreTurnoService::RELACIONES_VENTAS])
             ->orderByDesc('numero_turno')
             ->get()
             ->map(function (Turno $turno) use ($cuadre): ?array {
-                $ventas = $cuadre->ventasIapropiada($turno);
-                $recibido = $cuadre->totalRecibido($turno) - (float) $turno->traslado_sobrante - (float) $turno->traslado_faltante;
+                $sinVentas = round($cuadre->ventasIapropiada($turno)) == 0.0;
+                $sinRecibido = round($cuadre->totalRecibido($turno) - (float) $turno->traslado_sobrante - (float) $turno->traslado_faltante) == 0.0;
 
                 $motivo = match (true) {
-                    round($ventas) == 0.0 => 'Sin ventas (combustible ni canastilla)',
-                    round($recibido) == 0.0 => 'Tiene ventas pero ningún dinero recibido (consignaciones, pagos, cartera…)',
+                    $sinVentas && $sinRecibido => 'Planilla guardada sin diligenciar: anúlela',
+                    $sinVentas => 'Falta ventas del turno (combustible ni canastilla)',
+                    $sinRecibido => 'Falta medios de pago (consignaciones, pagos electrónicos, cartera…)',
                     default => null,
                 };
 
-                return $motivo ? ['turno' => $turno, 'motivo' => $motivo] : null;
+                return $motivo ? ['turno' => $turno, 'motivo' => $motivo, 'sin_diligenciar' => $sinVentas && $sinRecibido] : null;
             })
             ->filter()
             ->values();

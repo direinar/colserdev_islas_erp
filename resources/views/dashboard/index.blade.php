@@ -211,57 +211,6 @@
                     </div>
                 </section>
             </div>
-
-            <div class="col-12">
-                <section class="card border-0 shadow-sm">
-                    <div class="card-header bg-white border-bottom">
-                        <h2 class="h6 mb-0">Últimas planillas del periodo</h2>
-                    </div>
-                    <div class="table-responsive">
-                        <table class="table table-hover align-middle mb-0">
-                            <thead>
-                                <tr>
-                                    <th scope="col">Turno</th>
-                                    <th scope="col">Fecha</th>
-                                    <th scope="col">Vendedor</th>
-                                    <th scope="col" class="text-end">Ventas</th>
-                                    <th scope="col">Cuadre</th>
-                                    <th scope="col">Revisión</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach ($ultimos as $turno)
-                                    @php($pendiente = $turno->sobrante_pendiente === null ? null : (float) $turno->sobrante_pendiente)
-                                    <tr>
-                                        <td>
-                                            <a href="{{ route('turnos.create', ['fecha' => $turno->fecha->format('Y-m-d'), 'numero_turno' => $turno->numero_turno]) }}">#{{ $turno->numero_turno }}</a>
-                                        </td>
-                                        <td>{{ $turno->fecha->format('d/m/Y') }}</td>
-                                        <td>{{ $turno->nombre_vendedor }}</td>
-                                        <td class="text-end">{{ $pesos((float) $turno->tirillas_valor_corriente + (float) $turno->tirillas_valor_acpm + (float) $turno->canastilla_total) }}</td>
-                                        <td>
-                                            @if ($pendiente === null)
-                                                <span class="estado"><i class="bi bi-dash-circle estado-neutro" aria-hidden="true"></i> Sin calcular</span>
-                                            @elseif (abs($pendiente) < 1)
-                                                <span class="estado"><i class="bi bi-check-circle-fill estado-bien" aria-hidden="true"></i> Cuadrada</span>
-                                            @else
-                                                <span class="estado"><i class="bi bi-exclamation-triangle-fill estado-critico" aria-hidden="true"></i> {{ $pendiente < 0 ? 'Faltante' : 'Sobrante' }} {{ $pesos(abs($pendiente)) }}</span>
-                                            @endif
-                                        </td>
-                                        <td>
-                                            @if ($turno->revisado)
-                                                <span class="estado"><i class="bi bi-patch-check-fill estado-bien" aria-hidden="true"></i> Revisada</span>
-                                            @else
-                                                <span class="estado"><i class="bi bi-hourglass-split estado-advertencia" aria-hidden="true"></i> Pendiente</span>
-                                            @endif
-                                        </td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
-                </section>
-            </div>
         </div>
 
         <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
