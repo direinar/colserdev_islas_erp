@@ -158,7 +158,8 @@ class ConteoService
 
         foreach (Conteo::query()->where('numero', '<', $conteo->numero)->orderBy('numero')->get() as $paso) {
             $aConsignar = (float) $paso->billetes()->sum('valor') - $this->totalMovimientos($paso, ConteoMovimiento::TIPO_GASTO);
-            $pendiente = $aConsignar + $pendiente - (float) $paso->aplicaciones()->sum('valor');
+            // Solo pasa lo que quedó sin consignar; un exceso consignado (negativo) no pasa.
+            $pendiente = max(0.0, $aConsignar + $pendiente - (float) $paso->aplicaciones()->sum('valor'));
         }
 
         return $pendiente;

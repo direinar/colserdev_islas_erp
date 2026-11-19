@@ -371,3 +371,24 @@ test('alerta cuando una planilla usa un No. por fuera del consecutivo, salvo el 
         'manuales' => [['numero' => '2550', 'valor' => '45.000', 'concepto' => 'No. del talonario anterior usado tarde']]]);
     expect(app(ConteoService::class)->fueraDeConsecutivo($conteo->fresh()))->toBeEmpty();
 });
+
+test('un exceso consignado (no consignado negativo) no pasa al siguiente conteo', function () {
+    $admin = User::factory()->create(['role' => User::ROLE_ADMINISTRADOR]);
+    crearConteo($admin);
+    $primero = Conteo::query()->sole();
+    $destino = ConteoDestino::firstOrCreate(['nombre' => 'Abono a Mayorista']);
+    $tercero = ConteoTercero::firstOrCreate(['nombre' => 'Chevron Petroleum Company'], ['tipo' => 'tercero']);
+    guardarSeccion($admin, $primero, 'efectivo', ['billetes' => [['denominacion' => '100 MIL', 'valor' => '1.000.000']]]);
+    guardarSeccion($admin, $primero, 'consignaciones', ['ultima_consignacion' => '4560']);
+    // Se consignaron 998.000 de más.
+    guardarSeccion($admin, $primero, 'aplicaciones', ['filas' => [['conteo_destino_id' => $destino->id, 'conteo_tercero_id' => $tercero->id, 'valor' => '1.998.000']]]);
+
+    expect(app(ConteoService::class)->resumen($primero)['no_consignado'])->toBe(-998000.0);
+
+    crearConteo($admin, ['fecha' => '2026-10-30']);
+    $segundo = Conteo::query()->where('numero', 2)->sole();
+
+    expect(app(ConteoService::class)->resumen($segundo)['no_consignado_anterior'])->toBe(0.0);
+    $this->actingAs($admin)->get(route('conteos.seccion', [$segundo, 'aplicaciones']))
+        ->assertDontSee('id="no-consignado-anterior"', false);
+});
