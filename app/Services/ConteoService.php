@@ -388,15 +388,21 @@ class ConteoService
     private function guardarAplicaciones(Conteo $conteo, array $filas): void
     {
         $conteo->aplicaciones()->delete();
+        $comprobante = app(ComprobanteConteoService::class);
 
         foreach ($filas as $fila) {
             if (! is_array($fila) || $this->filaVacia($fila, ['conteo_destino_id', 'conteo_tercero_id', 'valor'])) {
                 continue;
             }
 
+            $destino = ($fila['conteo_destino_id'] ?? null) ?: null;
+            $tercero = ($fila['conteo_tercero_id'] ?? null) ?: null;
+
             $conteo->aplicaciones()->create([
-                'conteo_destino_id' => $fila['conteo_destino_id'] ?: null,
-                'conteo_tercero_id' => $fila['conteo_tercero_id'] ?: null,
+                'conteo_destino_id' => $destino,
+                'conteo_tercero_id' => $tercero,
+                // Cuenta del comprobante contable: la elegida o la última usada con el mismo destino y tercero.
+                'conteo_cuenta_id' => ($fila['conteo_cuenta_id'] ?? null) ?: $comprobante->cuentaSugerida($destino ? (int) $destino : null, $tercero ? (int) $tercero : null, $conteo->id),
                 'valor' => NumberParser::money($fila['valor'] ?? null),
             ]);
         }

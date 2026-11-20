@@ -80,7 +80,7 @@
     </div>
 @endif
 
-@unless ($editable)
+@unless ($editable || $seccion === 'comprobante')
     <div class="alert alert-warning">
         <i class="bi bi-lock-fill" aria-hidden="true"></i> Este conteo ya tiene conteos posteriores: solo se puede
         consultar. Los siguientes toman de él el último No. de consignación y el saldo de moneda.

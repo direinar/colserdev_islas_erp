@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Conteo;
 use App\Models\ConteoDestino;
 use App\Models\ConteoTercero;
+use App\Services\ComprobanteConteoService;
 use App\Services\ConteoExcelService;
 use App\Services\ConteoService;
 use App\Support\DescargaExcel;
@@ -50,11 +51,11 @@ class ConteoController extends Controller
             ->with('success', 'Conteo No. '.$conteo->numero.' creado. Digite el cuadre de efectivo.');
     }
 
-    public function seccion(Conteo $conteo, string $seccion, ConteoService $conteos): View
+    public function seccion(Conteo $conteo, string $seccion, ConteoService $conteos, ComprobanteConteoService $comprobantes): View
     {
         abort_unless(array_key_exists($seccion, Conteo::SECCIONES), 404);
 
-        $conteo->load(['billetes', 'movimientos', 'consignaciones.turno', 'aplicaciones']);
+        $conteo->load(['billetes', 'movimientos', 'consignaciones.turno', 'aplicaciones.cuenta', 'aplicaciones.destino', 'aplicaciones.tercero']);
 
         return view('conteos.secciones.'.$seccion, [
             'conteo' => $conteo,
@@ -65,12 +66,27 @@ class ConteoController extends Controller
             'destinos' => ConteoDestino::query()->orderBy('nombre')->get(),
             'terceros' => ConteoTercero::query()->orderBy('nombre')->get(),
             'fueraDeConsecutivo' => $seccion === 'consignaciones' ? $conteos->fueraDeConsecutivo($conteo) : collect(),
+            'cuentas' => in_array($seccion, ['aplicaciones', 'comprobante'], true) ? $comprobantes->cuentas() : collect(),
+            'comprobante' => $seccion === 'comprobante' ? $comprobantes->comprobante($conteo) : null,
         ]);
     }
 
-    public function guardar(Request $request, Conteo $conteo, string $seccion, ConteoService $conteos): RedirectResponse
+    public function guardar(Request $request, Conteo $conteo, string $seccion, ConteoService $conteos, ComprobanteConteoService $comprobantes): RedirectResponse
     {
         abort_unless(array_key_exists($seccion, Conteo::SECCIONES), 404);
+
+        // Las cuentas del comprobante se asignan en cualquier conteo: no cambian sus valores
+        // ni lo que arrastra el siguiente conteo.
+        if ($seccion === 'comprobante') {
+            $validated = $request->validate([
+                'cuentas' => ['required', 'array'],
+                'cuentas.*' => ['nullable', 'integer', 'exists:conteo_cuentas,id'],
+            ]);
+            $comprobantes->asignarCuentas($conteo, $validated['cuentas']);
+
+            return redirect()->route('conteos.seccion', [$conteo, $seccion])
+                ->with('success', 'Cuentas del comprobante contable del conteo No. '.$conteo->numero.' guardadas.');
+        }
 
         $fila = ['nullable', 'string', 'max:30'];
         $reglas = match ($seccion) {
@@ -95,6 +111,7 @@ class ConteoController extends Controller
                 'filas' => ['nullable', 'array'],
                 'filas.*.conteo_destino_id' => ['nullable', 'integer', 'exists:conteo_destinos,id'],
                 'filas.*.conteo_tercero_id' => ['nullable', 'integer', 'exists:conteo_terceros,id'],
+                'filas.*.conteo_cuenta_id' => ['nullable', 'integer', 'exists:conteo_cuentas,id'],
                 'filas.*.valor' => $fila,
             ],
             default => [

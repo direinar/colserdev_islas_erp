@@ -16,7 +16,7 @@
         <div class="card">
             <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
                 <strong>CONSIGNACIÓN EN BANCOS Y OTRAS APLICACIONES</strong>
-                <a href="{{ route('conteos.catalogos') }}" class="btn btn-sm btn-outline-secondary">Destinos, bancos y terceros</a>
+                <a href="{{ route('conteos.catalogos') }}" class="btn btn-sm btn-outline-secondary">Destinos, terceros y cuentas</a>
             </div>
             <div class="card-body">
                 <div class="table-responsive">
@@ -25,6 +25,7 @@
                             <tr>
                                 <th>DESTINO</th>
                                 <th>BANCO / TERCERO</th>
+                                <th>CUENTA CONTABLE <span class="small fw-normal">(comprobante)</span></th>
                                 <th>VALOR</th>
                                 @if ($editable)
                                     <th class="text-center" style="width: 70px;">ACCIÓN</th>
@@ -50,6 +51,14 @@
                                             @endforeach
                                         </select>
                                     </td>
+                                    <td>
+                                        <select name="filas[{{ $i }}][conteo_cuenta_id]" class="form-select form-select-sm" @disabled(! $editable) aria-label="Cuenta contable">
+                                            <option value="">Automática (la última usada)</option>
+                                            @foreach ($cuentas as $cuenta)
+                                                <option value="{{ $cuenta->id }}" @selected($fila?->conteo_cuenta_id === $cuenta->id)>{{ $cuenta->etiqueta() }}</option>
+                                            @endforeach
+                                        </select>
+                                    </td>
                                     <td><input type="text" name="filas[{{ $i }}][valor]" class="form-control form-control-sm text-end"
                                             inputmode="decimal" value="{{ $fila ? $pesosInput($fila->valor) : '' }}" @disabled(! $editable)></td>
                                     @if ($editable)
@@ -60,7 +69,7 @@
                         </tbody>
                         <tfoot>
                             <tr class="total">
-                                <td colspan="2" class="text-end">TOTAL CONSIGNACIONES Y OTROS</td>
+                                <td colspan="3" class="text-end">TOTAL CONSIGNACIONES Y OTROS</td>
                                 <td class="text-end">{{ $pesos($resumen['aplicaciones']) }}</td>
                                 @if ($editable)
                                     <td></td>
@@ -70,7 +79,7 @@
                             @if (round($resumen['no_consignado_anterior']) != 0)
                                 @php($conteoAnterior = $conteo->anterior())
                                 <tr class="table-warning" id="no-consignado-anterior">
-                                    <td colspan="2" class="text-end">
+                                    <td colspan="3" class="text-end">
                                         DIFERENCIAS NO CONSIGNADAS DE CONTEOS ANTERIORES
                                         @if ($conteoAnterior)
                                             <span class="small">(viene del
@@ -84,14 +93,14 @@
                                 </tr>
                             @endif
                             <tr>
-                                <td colspan="2" class="text-end">A CONSIGNAR <span class="small">(cuadre del conteo)</span></td>
+                                <td colspan="3" class="text-end">A CONSIGNAR <span class="small">(cuadre del conteo)</span></td>
                                 <td class="text-end">{{ $pesos($resumen['a_consignar']) }}</td>
                                 @if ($editable)
                                     <td></td>
                                 @endif
                             </tr>
                             <tr class="total">
-                                <td colspan="2" class="text-end">DIFERENCIA NO CONSIGNADA <span class="small fw-normal">(a consignar + diferencias anteriores − total consignaciones)</span></td>
+                                <td colspan="3" class="text-end">DIFERENCIA NO CONSIGNADA <span class="small fw-normal">(a consignar + diferencias anteriores − total consignaciones)</span></td>
                                 <td @class(['text-end', 'text-danger' => round($resumen['no_consignado']) < 0])>{{ $pesos($resumen['no_consignado']) }}</td>
                                 @if ($editable)
                                     <td></td>

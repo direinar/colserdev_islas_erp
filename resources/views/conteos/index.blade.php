@@ -4,8 +4,11 @@
 
 @section('content')
     <x-page-header title="Conteo" icon="cash-stack" subtitle="Cuadre del efectivo de la EDS: billetes, moneda, consignaciones, gastos y saldo de moneda.">
+        <a href="{{ route('conteos.comprobante.index') }}" class="btn btn-outline-light btn-sm">
+            <i class="bi bi-journal-text" aria-hidden="true"></i> Comprobante contable
+        </a>
         <a href="{{ route('conteos.catalogos') }}" class="btn btn-outline-light btn-sm">
-            <i class="bi bi-bank" aria-hidden="true"></i> Destinos, bancos y terceros
+            <i class="bi bi-bank" aria-hidden="true"></i> Destinos, terceros y cuentas
         </a>
     </x-page-header>
 

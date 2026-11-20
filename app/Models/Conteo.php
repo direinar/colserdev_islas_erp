@@ -31,6 +31,7 @@ class Conteo extends Model
         'gastos' => 'Cuadre del conteo',
         'aplicaciones' => 'Consignación en bancos',
         'moneda' => 'Control de moneda',
+        'comprobante' => 'Comprobante contable',
     ];
 
     protected $fillable = [

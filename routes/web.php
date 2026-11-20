@@ -7,6 +7,7 @@ use App\Http\Controllers\CarteraSaldoInicialController;
 use App\Http\Controllers\CompraController;
 use App\Http\Controllers\CompraLubricanteController;
 use App\Http\Controllers\ComprobanteContableCompraController;
+use App\Http\Controllers\ComprobanteConteoController;
 use App\Http\Controllers\ContabilidadController;
 use App\Http\Controllers\ConteoCatalogoController;
 use App\Http\Controllers\ConteoController;
@@ -97,6 +98,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/conteos/catalogos/terceros', [ConteoCatalogoController::class, 'guardarTercero'])->name('conteos.terceros.store');
         Route::put('/conteos/catalogos/terceros/{tercero}', [ConteoCatalogoController::class, 'guardarTercero'])->name('conteos.terceros.update');
         Route::delete('/conteos/catalogos/terceros/{tercero}', [ConteoCatalogoController::class, 'eliminarTercero'])->name('conteos.terceros.destroy');
+        Route::post('/conteos/catalogos/cuentas', [ConteoCatalogoController::class, 'guardarCuenta'])->name('conteos.cuentas.store');
+        Route::put('/conteos/catalogos/cuentas/{cuenta}', [ConteoCatalogoController::class, 'guardarCuenta'])->name('conteos.cuentas.update');
+        Route::delete('/conteos/catalogos/cuentas/{cuenta}', [ConteoCatalogoController::class, 'eliminarCuenta'])->name('conteos.cuentas.destroy');
+        // Comprobante contable de conteo (DESDE / HASTA). Antes de /conteos/{conteo}/{seccion}.
+        Route::get('/conteos/comprobante', [ComprobanteConteoController::class, 'index'])->name('conteos.comprobante.index');
+        Route::get('/conteos/comprobante/exportar', [ComprobanteConteoController::class, 'exportar'])->name('conteos.comprobante.exportar');
         Route::get('/conteos/{conteo}/reporte', [ConteoController::class, 'reporte'])->name('conteos.reporte');
         Route::get('/conteos/{conteo}/pdf', [ConteoController::class, 'pdf'])->name('conteos.pdf');
         Route::get('/conteos/{conteo}/exportar', [ConteoController::class, 'exportar'])->name('conteos.exportar');

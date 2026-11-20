@@ -11,7 +11,7 @@ class ConteoAplicacion extends Model
 {
     protected $table = 'conteo_aplicaciones';
 
-    protected $fillable = ['conteo_id', 'conteo_destino_id', 'conteo_tercero_id', 'valor'];
+    protected $fillable = ['conteo_id', 'conteo_destino_id', 'conteo_tercero_id', 'conteo_cuenta_id', 'valor'];
 
     protected $casts = ['valor' => 'decimal:2'];
 
@@ -23,6 +23,14 @@ class ConteoAplicacion extends Model
     public function destino()
     {
         return $this->belongsTo(ConteoDestino::class, 'conteo_destino_id');
+    }
+
+    /**
+     * Cuenta contable de la línea en el comprobante del conteo.
+     */
+    public function cuenta()
+    {
+        return $this->belongsTo(ConteoCuenta::class, 'conteo_cuenta_id');
     }
 
     public function tercero()

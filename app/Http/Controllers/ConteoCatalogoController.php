@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ConteoCuenta;
 use App\Models\ConteoDestino;
 use App\Models\ConteoTercero;
 use Illuminate\Http\RedirectResponse;
@@ -20,6 +21,7 @@ class ConteoCatalogoController extends Controller
         return view('conteos.catalogos', [
             'destinos' => ConteoDestino::query()->withCount('aplicaciones')->orderBy('nombre')->get(),
             'terceros' => ConteoTercero::query()->withCount('aplicaciones')->orderBy('nombre')->get(),
+            'cuentas' => ConteoCuenta::query()->withCount('aplicaciones')->orderBy('cuenta')->orderBy('concepto')->get(),
         ]);
     }
 
@@ -66,5 +68,39 @@ class ConteoCatalogoController extends Controller
         $tercero->delete();
 
         return redirect()->route('conteos.catalogos')->with('success', 'Banco o tercero eliminado.');
+    }
+
+    /**
+     * Tabla de cuentas, conceptos, terceros y NIT del comprobante contable del conteo.
+     */
+    public function guardarCuenta(Request $request, ?ConteoCuenta $cuenta = null): RedirectResponse
+    {
+        $validated = $request->validate([
+            'cuenta' => ['required', 'string', 'max:20', 'regex:/^[0-9]+$/'],
+            'concepto' => ['required', 'string', 'max:150', Rule::unique('conteo_cuentas', 'concepto')->where('cuenta', $request->input('cuenta'))->ignore($cuenta)],
+            'tercero' => ['nullable', 'string', 'max:120'],
+            'nit' => ['nullable', 'string', 'max:30'],
+        ], [
+            'cuenta.regex' => 'La cuenta contable solo lleva números.',
+            'concepto.unique' => 'Esa cuenta ya tiene ese concepto en la tabla.',
+        ]);
+        $validated['concepto'] = mb_strtoupper(trim($validated['concepto']));
+        $validated['tercero'] = filled($validated['tercero'] ?? null) ? mb_strtoupper(trim($validated['tercero'])) : null;
+
+        $cuenta ? $cuenta->update($validated) : ConteoCuenta::create($validated);
+
+        return redirect()->to(route('conteos.catalogos').'#cuentas')->with('success', 'Cuenta contable guardada.');
+    }
+
+    public function eliminarCuenta(ConteoCuenta $cuenta): RedirectResponse
+    {
+        if ($cuenta->aplicaciones()->exists()) {
+            return redirect()->to(route('conteos.catalogos').'#cuentas')
+                ->withErrors(['catalogo' => 'La cuenta '.$cuenta->cuenta.' ('.$cuenta->concepto.') ya se usó en un comprobante y no se puede eliminar.']);
+        }
+
+        $cuenta->delete();
+
+        return redirect()->to(route('conteos.catalogos').'#cuentas')->with('success', 'Cuenta contable eliminada.');
     }
 }

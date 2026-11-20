@@ -309,8 +309,13 @@
                                         <hr class="dropdown-divider">
                                     </li>
                                     <li>
+                                        <a class="dropdown-item" href="{{ route('conteos.comprobante.index') }}">
+                                            Comprobante contable de conteo
+                                        </a>
+                                    </li>
+                                    <li>
                                         <a class="dropdown-item" href="{{ route('conteos.catalogos') }}">
-                                            Destinos, bancos y terceros
+                                            Destinos, terceros y cuentas contables
                                         </a>
                                     </li>
                                 </ul>
