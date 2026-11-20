@@ -123,7 +123,7 @@
                         <th colspan="2" class="cc-planilla cc-grupo">PLANILLA</th>
                         <th colspan="5" class="cc-ventas cc-grupo cc-inicio">VENTAS</th>
                         <th colspan="{{ 6 + 2 * count($casillas) + 5 }}" class="cc-pagos cc-grupo cc-inicio">FORMAS DE PAGO</th>
-                        <th colspan="2" class="cc-resultados cc-grupo cc-inicio">RESULTADOS</th>
+                        <th colspan="2" class="cc-resultados cc-grupo">RESULTADOS</th>
                     </tr>
                     <tr>
                         <th class="cc-planilla">FECHA</th>
@@ -148,7 +148,7 @@
                         <th class="cc-pagos">ISLERO</th>
                         <th class="cc-pagos">RECAUDOS Y<br>ANTICIPOS</th>
                         <th class="cc-pagos">TOTAL RECIBIDO<br>SEGÚN PLANILLA</th>
-                        <th class="cc-resultados cc-inicio">TOTAL VENDIDO<br>SEGÚN TURNO</th>
+                        <th class="cc-resultados">TOTAL VENDIDO<br>SEGÚN TURNO</th>
                         <th class="cc-resultados">DIFERENCIAS<br>(19) − (20)</th>
                     </tr>
                     <tr class="cc-ref">
@@ -190,7 +190,7 @@
                             <td>{{ $fila['islero'] }}</td>
                             <td class="num {{ $rojo($fila['recaudos']) }}">{{ $pesos($fila['recaudos']) }}</td>
                             <td class="num cc-total {{ $rojo($fila['total']) }}">{{ $pesosSiempre($fila['total']) }}</td>
-                            <td class="num cc-inicio">{{ $pesosSiempre($fila['vendido_turno']) }}</td>
+                            <td class="num">{{ $pesosSiempre($fila['vendido_turno']) }}</td>
                             <td class="num {{ $rojo($fila['diferencia']) }}">{{ $pesosSiempre($fila['diferencia']) }}</td>
                         </tr>
                     @empty
@@ -216,7 +216,7 @@
                         @foreach (['recaudos', 'total'] as $columna)
                             <td class="num {{ $rojo($totales[$columna]) }}">{{ $pesosSiempre($totales[$columna]) }}</td>
                         @endforeach
-                        <td class="num cc-inicio">{{ $pesosSiempre($totales['vendido_turno']) }}</td>
+                        <td class="num">{{ $pesosSiempre($totales['vendido_turno']) }}</td>
                         <td class="num {{ $rojo($totales['diferencia']) }}">{{ $pesosSiempre($totales['diferencia']) }}</td>
                     </tr>
                 </tfoot>
