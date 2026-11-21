@@ -81,11 +81,9 @@
                         <p class="small text-muted mt-2 mb-0">Los totales se actualizan al GUARDAR.</p>
                     </div>
                 </div>
-            </div>
 
-            {{-- Retiros antes de este cierre: antes era otra pestaña; su total suma al TOTAL CIERRE. --}}
-            <div class="col-12">
-                <div class="card" id="retiros">
+                {{-- Retiros antes de este cierre, debajo del cuadre (antes era otra pestaña); su total suma al TOTAL CIERRE. --}}
+                <div class="card mt-3" id="retiros">
                     <div class="card-header fw-bold">RETIROS ANTES DE ESTE CIERRE</div>
                     <div class="card-body">
                         <p class="small text-muted mb-2">Dinero que se retiró antes de este conteo. Su total se suma al TOTAL CIERRE.</p>
@@ -95,22 +93,18 @@
                             'totalEtiqueta' => 'TOTAL RETIROS',
                             'total' => $resumen['retiros'],
                         ])
-                        <div class="row justify-content-end mt-3">
-                            <div class="col-lg-6">
-                                <table class="table table-bordered table-sm mb-0 conteo-tabla">
-                                    <tbody>
-                                        <tr>
-                                            <th>RETIROS <span class="small fw-normal">(retiros antes de este cierre)</span></th>
-                                            <td class="text-end">{{ number_format($resumen['retiros'], 0, ',', '.') }}</td>
-                                        </tr>
-                                        <tr class="total">
-                                            <th>TOTAL CIERRE</th>
-                                            <td class="text-end">{{ number_format($resumen['total_cierre'], 0, ',', '.') }}</td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
+                        <table class="table table-bordered table-sm mb-0 mt-3 conteo-tabla">
+                            <tbody>
+                                <tr>
+                                    <th>RETIROS <span class="small fw-normal">(retiros antes de este cierre)</span></th>
+                                    <td class="text-end">{{ number_format($resumen['retiros'], 0, ',', '.') }}</td>
+                                </tr>
+                                <tr class="total">
+                                    <th>TOTAL CIERRE</th>
+                                    <td class="text-end">{{ number_format($resumen['total_cierre'], 0, ',', '.') }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
