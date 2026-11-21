@@ -50,10 +50,16 @@
                                     </th>
                                     <td class="text-end">{{ number_format($resumen['no_consignado_anterior'], 0, ',', '.') }}</td>
                                 </tr>
+                                @php($totalAConsignar = $resumen['a_consignar'] + $resumen['no_consignado_anterior'])
+                                <tr class="total" id="total-a-consignar">
+                                    <th>TOTAL A CONSIGNAR</th>
+                                    <td @class(['text-end', 'text-danger' => round($totalAConsignar) < 0])>{{ number_format($totalAConsignar, 0, ',', '.') }}</td>
+                                </tr>
                             </tbody>
                         </table>
                         <p class="small text-muted mt-2 mb-0">Sub total = total billetes − total gastos. VR. sin consignar conteos anteriores =
-                            diferencia no consignada del conteo anterior. Se actualiza al GUARDAR.</p>
+                            diferencia no consignada del conteo anterior. Total a consignar = sub total + VR. sin consignar conteos anteriores.
+                            Se actualiza al GUARDAR.</p>
                     </div>
                 </div>
             </div>
