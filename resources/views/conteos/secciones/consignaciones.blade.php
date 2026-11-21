@@ -61,20 +61,20 @@
                         <i class="bi bi-journal-arrow-down" aria-hidden="true"></i> CAMBIO DE TALONARIO
                         <span class="fw-normal text-muted">(solo si en este conteo se empezó un talonario nuevo)</span>
                     </div>
-                    <div class="row g-3 align-items-end">
-                        <div class="col-sm-6 col-lg-3">
+                    <div class="d-flex flex-wrap align-items-center gap-4">
+                        <div class="d-flex align-items-center gap-2">
                             <label class="form-label small mb-0" for="talonario-fin">ÚLTIMO No. DEL TALONARIO ANTERIOR</label>
-                            <input type="number" name="talonario_fin" id="talonario-fin" min="0" class="form-control"
+                            <input type="number" name="talonario_fin" id="talonario-fin" min="0" class="form-control conteo-numero"
                                 value="{{ old('talonario_fin', $conteo->talonario_fin) }}" @disabled(! $editable)
-                                placeholder="Ej.: 2499">
+                                placeholder="2499" title="Ejemplo: 2499">
                         </div>
-                        <div class="col-sm-6 col-lg-3">
+                        <div class="d-flex align-items-center gap-2">
                             <label class="form-label small mb-0" for="talonario-inicio">PRIMER No. DEL TALONARIO NUEVO</label>
-                            <input type="number" name="talonario_inicio" id="talonario-inicio" min="1" class="form-control"
+                            <input type="number" name="talonario_inicio" id="talonario-inicio" min="1" class="form-control conteo-numero"
                                 value="{{ old('talonario_inicio', $conteo->talonario_inicio) }}" @disabled(! $editable)
-                                placeholder="Ej.: 2700">
+                                placeholder="2700" title="Ejemplo: 2700">
                         </div>
-                        <div class="col-lg-6 small text-muted">
+                        <div class="small text-muted flex-grow-1" style="min-width: 16rem;">
                             Si el talonario anterior terminó justo en el último No. del conteo anterior, digite ese número
                             como último del talonario anterior.
                         </div>
