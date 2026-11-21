@@ -58,6 +58,92 @@
         .le-negativo {
             color: #ff0000;
         }
+
+        /* Avisos de guardado grandes: que el usuario no se vaya sin saber si guardó. */
+        .le-aviso {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem 1.25rem;
+            border-radius: .75rem;
+            font-size: 1.15rem;
+            margin-bottom: 1rem;
+        }
+
+        .le-aviso > .bi {
+            font-size: 2.4rem;
+            flex-shrink: 0;
+        }
+
+        .le-aviso strong {
+            display: block;
+            font-size: 1.35rem;
+        }
+
+        .le-aviso-ok {
+            background: #d1e7dd;
+            border: 2px solid #198754;
+            color: #0f5132;
+        }
+
+        .le-aviso-error {
+            background: #f8d7da;
+            border: 2px solid #dc3545;
+            color: #842029;
+        }
+
+        .le-sin-guardar {
+            position: fixed;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 1050;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: center;
+            gap: .75rem 1.25rem;
+            padding: .9rem 1rem;
+            background: #fff3cd;
+            border-top: 4px solid #e0a800;
+            box-shadow: 0 -.5rem 1.25rem rgba(0, 0, 0, .18);
+            color: #664d03;
+            font-size: 1.1rem;
+            font-weight: 600;
+            animation: le-parpadeo 1.6s ease-in-out infinite;
+        }
+
+        .le-sin-guardar[hidden] {
+            display: none;
+        }
+
+        .le-sin-guardar .bi {
+            font-size: 1.8rem;
+        }
+
+        .le-sin-guardar .btn {
+            font-size: 1.1rem;
+            font-weight: 800;
+            padding: .55rem 1.6rem;
+        }
+
+        @keyframes le-parpadeo {
+            50% { background: #ffe69c; }
+        }
+
+        body.con-lectura-sin-guardar main {
+            padding-bottom: 6rem;
+        }
+
+        .le-guardar-grande {
+            font-size: 1.15rem;
+            font-weight: 800;
+            padding: .7rem 1.5rem;
+        }
+
+        @media print {
+            .le-sin-guardar { display: none !important; }
+        }
     </style>
 
     <x-page-header title="Lectura electrónica" icon="speedometer2"
@@ -75,14 +161,24 @@
     </x-page-header>
 
     @if (session('success'))
-        <div class="alert alert-success">{{ session('success') }}</div>
+        <div class="le-aviso le-aviso-ok" id="lectura-guardada" role="status">
+            <i class="bi bi-check-circle-fill" aria-hidden="true"></i>
+            <div>
+                <strong>LECTURAS DEL {{ Carbon::parse($fecha)->format('d/m/Y') }} GUARDADAS</strong>
+                {{ session('success') }} Ya quedaron en el sistema ({{ now()->format('h:i a') }}).
+            </div>
+        </div>
     @endif
 
     @if ($errors->any())
-        <div class="alert alert-danger">
-            @foreach ($errors->all() as $error)
-                <div>{{ $error }}</div>
-            @endforeach
+        <div class="le-aviso le-aviso-error" role="alert">
+            <i class="bi bi-x-octagon-fill" aria-hidden="true"></i>
+            <div>
+                <strong>LAS LECTURAS NO SE GUARDARON</strong>
+                @foreach ($errors->all() as $error)
+                    <div>{{ $error }}</div>
+                @endforeach
+            </div>
         </div>
     @endif
 
@@ -104,7 +200,7 @@
             <script>
                 document.addEventListener('DOMContentLoaded', function() {
                     Swal.fire({
-                        title: 'Diferencia mayor a ${{ $pesos(\App\Services\LecturaElectronicaService::UMBRAL_ALERTA) }}',
+                        title: 'Lecturas guardadas, pero con diferencia mayor a ${{ $pesos(\App\Services\LecturaElectronicaService::UMBRAL_ALERTA) }}',
                         text: @json($textoAlertas),
                         icon: 'warning',
                         confirmButtonText: 'Entendido',
@@ -112,11 +208,26 @@
                 });
             </script>
         @endif
+    @elseif (session('success'))
+        {{-- Confirmación grande del guardado. --}}
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                Swal.fire({
+                    title: 'Lecturas guardadas',
+                    html: '<p style="font-size:1.15rem">Las lecturas del {{ Carbon::parse($fecha)->format('d/m/Y') }} quedaron guardadas en el sistema.</p>',
+                    icon: 'success',
+                    confirmButtonText: 'Entendido',
+                    timer: 4000,
+                    timerProgressBar: true,
+                });
+            });
+        </script>
     @endif
 
     <div class="row g-3">
         <div class="col-lg-6">
-            <form method="POST" action="{{ route('lectura-electronica.guardar') }}" id="lectura-electronica-form">
+            <form method="POST" action="{{ route('lectura-electronica.guardar') }}" id="lectura-electronica-form"
+                @if (session('success')) data-guardado-ok="1" @endif>
                 @csrf
                 <input type="hidden" name="fecha" value="{{ $fecha }}">
 
@@ -161,6 +272,12 @@
                                 @endforeach
                             </tbody>
                         </table>
+                    </div>
+                    <div class="card-footer d-flex flex-wrap justify-content-between align-items-center gap-2">
+                        <span class="small text-muted">Lo digitado se guarda en el sistema solo al pulsar GUARDAR.</span>
+                        <button type="submit" class="btn btn-success le-guardar-grande">
+                            <i class="bi bi-save" aria-hidden="true"></i> GUARDAR LECTURAS
+                        </button>
                     </div>
                 </div>
             </form>
@@ -261,6 +378,15 @@
                 </div>
             </div>
         </div>
+    </div>
+
+    {{-- Barra fija mientras haya lecturas digitadas sin guardar (resources/js/lectura-autosave.js). --}}
+    <div class="le-sin-guardar d-print-none" id="lectura-sin-guardar" role="alert" hidden>
+        <i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i>
+        <span id="lectura-sin-guardar-texto">Hay lecturas SIN GUARDAR: pulse GUARDAR antes de salir o apagar el equipo.</span>
+        <button type="submit" form="lectura-electronica-form" class="btn btn-success">
+            <i class="bi bi-save" aria-hidden="true"></i> GUARDAR AHORA
+        </button>
     </div>
 
     <script>

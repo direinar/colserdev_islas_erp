@@ -143,3 +143,23 @@ test('alerta cuando la diferencia con IAPROPIADA supera $3.000, solo con todas l
     guardarLectura($admin, '2026-10-25', array_merge($ceros, ['PLUS 01' => '10', 'ACPM 03' => '5.3']), $ceros);
     $this->actingAs($admin)->get(route('lectura-electronica.index', ['fecha' => '2026-10-25']))->assertViewHas('alertas', []);
 });
+
+test('al guardar muestra un aviso grande y la pantalla trae el autoguardado de lo digitado sin guardar', function () {
+    $islero = User::factory()->create(['role' => User::ROLE_ISLERO]);
+
+    // Antes de guardar: barra de "sin guardar" (oculta hasta que se digite) y botón GUARDAR grande, sin aviso de guardado.
+    $this->actingAs($islero)->get(route('lectura-electronica.index', ['fecha' => '2026-11-18']))
+        ->assertOk()
+        ->assertSee('id="lectura-sin-guardar"', false)
+        ->assertSee('GUARDAR LECTURAS')
+        ->assertDontSee('data-guardado-ok', false)
+        ->assertDontSee('id="lectura-guardada"', false);
+
+    guardarLectura($islero, '2026-11-18', ['PLUS 01' => '1,100.000'], ['PLUS 01' => '1,000.000']);
+
+    // Después de guardar: aviso grande y la marca que borra el borrador local de esa fecha.
+    $this->actingAs($islero)->get(route('lectura-electronica.index', ['fecha' => '2026-11-18']))
+        ->assertSee('LECTURAS DEL 18/11/2026 GUARDADAS')
+        ->assertSee('data-guardado-ok="1"', false)
+        ->assertSee("title: 'Lecturas guardadas'", false);
+});

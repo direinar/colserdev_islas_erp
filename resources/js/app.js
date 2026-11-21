@@ -5,6 +5,7 @@ import './money-format';
 import './galones';
 import './lubricantes';
 import './turno-autosave';
+import './lectura-autosave';
 import './aviso-sin-guardar';
 import './pdf-revisado';
 import './pwa';
