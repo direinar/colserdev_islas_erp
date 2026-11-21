@@ -45,7 +45,7 @@ class ConteoExcelService
 
         $fila = $this->bloque($hoja, $fila, 'DETALLE DE NUMERACIÓN DE CONSIGNACIONES DE COMBUSTIBLE', ['No.', 'VALOR', 'PLANILLA / CONCEPTO'],
             [[$resumen['consignacion_anterior'], 'Último del conteo anterior', ''],
-                ...$conteo->consignaciones->map(fn ($c) => [$c->numero, (float) $c->valor, match (true) {
+                ...$conteo->consignaciones->map(fn ($c) => [$c->numeroVisible(), (float) $c->valor, match (true) {
                     (bool) $c->manual => 'MANUAL: '.$c->concepto,
                     (bool) $c->turno => 'Turno #'.$c->turno->numero_turno,
                     default => 'No está en ninguna planilla',

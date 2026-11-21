@@ -12,7 +12,7 @@
         $sinPlanilla = $consecutivo->whereNull('turno_id')->count();
         // Tras un error de validación se muestran las filas manuales digitadas.
         $filasManuales = old('manuales', $manuales->map(fn ($m) => [
-            'numero' => $m->numero,
+            'numero' => $m->numeroVisible(),
             'valor' => $m->valor !== null ? $pesos($m->valor) : '',
             'concepto' => $m->concepto,
         ])->all());
@@ -167,8 +167,8 @@
                         @if ($editable)
                             @foreach ($filasManuales ?: [['numero' => '', 'valor' => '', 'concepto' => '']] as $i => $fila)
                                 <tr class="fila-manual">
-                                    <td><input type="number" min="0" name="manuales[{{ $i }}][numero]" class="form-control form-control-sm"
-                                            value="{{ $fila['numero'] ?? '' }}" placeholder="No. (opcional)"></td>
+                                    <td><input type="text" maxlength="40" name="manuales[{{ $i }}][numero]" class="form-control form-control-sm text-uppercase"
+                                            value="{{ $fila['numero'] ?? '' }}" placeholder="Concepto"></td>
                                     <td><input type="text" inputmode="numeric" name="manuales[{{ $i }}][valor]"
                                             class="form-control form-control-sm text-end" value="{{ $fila['valor'] ?? '' }}"></td>
                                     <td><input type="text" maxlength="200" name="manuales[{{ $i }}][concepto]" class="form-control form-control-sm"
@@ -179,7 +179,7 @@
                         @else
                             @forelse ($manuales as $manual)
                                 <tr>
-                                    <td>{{ $manual->numero }}</td>
+                                    <td>{{ $manual->numeroVisible() }}</td>
                                     <td class="text-end">{{ $pesos($manual->valor) }}</td>
                                     <td>{{ $manual->concepto }}</td>
                                 </tr>

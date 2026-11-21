@@ -358,7 +358,7 @@ class ConteoService
      * tiene datos). Las filas en blanco se ignoran.
      *
      * @param  array<int, mixed>  $filas
-     * @return list<array{numero: int|null, valor: float, concepto: string}>
+     * @return list<array{numero: int|null, referencia: string|null, valor: float, concepto: string}>
      */
     private function filasManuales(array $filas): array
     {
@@ -376,8 +376,10 @@ class ConteoService
 
             $numero = trim((string) ($fila['numero'] ?? ''));
 
+            // El No. puede ser alfanumérico; si son solo dígitos también cuenta para el consecutivo.
             $manuales[] = [
-                'numero' => $numero === '' ? null : (int) $numero,
+                'numero' => ctype_digit($numero) ? (int) $numero : null,
+                'referencia' => $numero === '' ? null : mb_strtoupper($numero),
                 'valor' => NumberParser::money($fila['valor'] ?? null),
                 'concepto' => $concepto,
             ];

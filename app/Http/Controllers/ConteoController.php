@@ -113,7 +113,7 @@ class ConteoController extends Controller
                 'talonario_fin' => ['nullable', 'integer', 'min:0'],
                 'talonario_inicio' => ['nullable', 'integer', 'min:1'],
                 'manuales' => ['nullable', 'array'],
-                'manuales.*.numero' => ['nullable', 'integer', 'min:0'],
+                'manuales.*.numero' => ['nullable', 'string', 'max:40'],
                 'manuales.*.valor' => $fila,
                 'manuales.*.concepto' => ['nullable', 'string', 'max:200'],
             ],

@@ -77,7 +77,7 @@
                 <tr><td colspan="3">Cambio de talonario: el anterior terminó en {{ $conteo->talonario_fin }}; el nuevo inicia en {{ $conteo->talonario_inicio }}.</td></tr>
             @endif
             <tr>
-                <td>{{ $consignacion->numero }}</td>
+                <td>{{ $consignacion->numeroVisible() }}</td>
                 <td class="valor">{{ $pesos($consignacion->valor) }}</td>
                 @if ($consignacion->manual)
                     <td>MANUAL: {{ $consignacion->concepto }}</td>

@@ -13,14 +13,23 @@ class ConteoConsignacion extends Model
 
     /**
      * manual: fila digitada a mano (No. opcional, valor y concepto), fuera del consecutivo.
+     * referencia: No. alfanumérico de la fila manual tal como se digitó (numero queda solo si son dígitos).
      */
-    protected $fillable = ['conteo_id', 'numero', 'valor', 'turno_id', 'manual', 'concepto'];
+    protected $fillable = ['conteo_id', 'numero', 'referencia', 'valor', 'turno_id', 'manual', 'concepto'];
 
     protected $casts = ['valor' => 'decimal:2', 'numero' => 'integer', 'manual' => 'boolean'];
 
     public function conteo()
     {
         return $this->belongsTo(Conteo::class);
+    }
+
+    /**
+     * No. que se muestra: el digitado en las filas manuales, o el del consecutivo.
+     */
+    public function numeroVisible(): string
+    {
+        return $this->manual ? (string) ($this->referencia ?? $this->numero) : (string) $this->numero;
     }
 
     public function turno()

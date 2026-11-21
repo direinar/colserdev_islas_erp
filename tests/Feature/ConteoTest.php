@@ -291,20 +291,24 @@ test('las filas manuales de consignaciones llevan concepto, suman al total y se 
             ['numero' => '9001', 'valor' => '50.000', 'concepto' => 'Consignación de recaudo de cartera'],
             ['numero' => '', 'valor' => '', 'concepto' => ''],
             ['numero' => '', 'valor' => '20.000', 'concepto' => 'Ajuste de caja'],
+            // El No. de un registro manual puede ser alfanumérico.
+            ['numero' => 'rc-15a', 'valor' => '10.000', 'concepto' => 'Recibo de caja'],
         ],
     ])->assertSessionHasNoErrors();
 
     $conteo->refresh();
-    expect($conteo->consignaciones->map(fn ($c) => [$c->numero, (float) $c->valor, $c->manual, $c->concepto])->all())->toBe([
-        [2428, 567000.0, false, null],
-        [null, 20000.0, true, 'Ajuste de caja'],
-        [9001, 50000.0, true, 'Consignación de recaudo de cartera'],
+    expect($conteo->consignaciones->map(fn ($c) => [$c->numeroVisible(), (float) $c->valor, $c->manual, $c->concepto])->all())->toBe([
+        ['2428', 567000.0, false, null],
+        ['', 20000.0, true, 'Ajuste de caja'],
+        ['RC-15A', 10000.0, true, 'Recibo de caja'],
+        ['9001', 50000.0, true, 'Consignación de recaudo de cartera'],
     ])
-        ->and(app(ConteoService::class)->resumen($conteo)['total_consignaciones'])->toBe(637000.0);
+        ->and(app(ConteoService::class)->resumen($conteo)['total_consignaciones'])->toBe(647000.0);
 
     $this->actingAs($admin)->get(route('conteos.seccion', [$conteo, 'consignaciones']))
         ->assertSee('REGISTROS MANUALES (no consecutivos)')
         ->assertSee('value="Ajuste de caja"', false)
+        ->assertSee('value="RC-15A"', false)
         ->assertSee('+ AGREGAR FILA MANUAL');
 
     // Concepto obligatorio en una fila con datos.
