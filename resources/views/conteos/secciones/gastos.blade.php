@@ -39,9 +39,21 @@
                                     <th>A CONSIGNAR</th>
                                     <td @class(['text-end', 'text-danger' => round($resumen['a_consignar']) < 0])>{{ number_format($resumen['a_consignar'], 0, ',', '.') }}</td>
                                 </tr>
+                                {{-- DIFERENCIA NO CONSIGNADA del conteo anterior (ya trae la de los anteriores a él). --}}
+                                @php($conteoAnterior = $conteo->anterior())
+                                <tr id="vr-sin-consignar-anteriores">
+                                    <th>
+                                        VR. SIN CONSIGNAR CONTEOS ANTERIORES
+                                        @if ($conteoAnterior)
+                                            <span class="small fw-normal">(<a href="{{ route('conteos.seccion', [$conteoAnterior, 'gastos']) }}#aplicaciones">conteo No. {{ $conteoAnterior->numero }}</a>)</span>
+                                        @endif
+                                    </th>
+                                    <td class="text-end">{{ number_format($resumen['no_consignado_anterior'], 0, ',', '.') }}</td>
+                                </tr>
                             </tbody>
                         </table>
-                        <p class="small text-muted mt-2 mb-0">A consignar = total billetes − total gastos. Se actualiza al GUARDAR.</p>
+                        <p class="small text-muted mt-2 mb-0">A consignar = total billetes − total gastos. VR. sin consignar conteos anteriores =
+                            diferencia no consignada del conteo anterior. Se actualiza al GUARDAR.</p>
                     </div>
                 </div>
             </div>
