@@ -28,21 +28,28 @@
                     <strong>último No.</strong> de este conteo y el sistema genera los intermedios y trae el valor de cada uno
                     de las planillas de turno (CONSIGNACIONES). El último No. de este conteo es el punto de partida del próximo.</p>
 
-                <div class="row g-3 align-items-end">
-                    <div class="col-sm-6 col-lg-3">
-                        <label class="form-label fw-semibold" for="consignacion-anterior">ÚLTIMO No. DEL CONTEO ANTERIOR</label>
+                {{-- Cada No. al frente de su título, en un campo del ancho de 4 dígitos. --}}
+                <style>
+                    .conteo-numero { width: calc(4ch + 1.6rem); text-align: right; font-variant-numeric: tabular-nums; }
+                    .conteo-numero::-webkit-outer-spin-button,
+                    .conteo-numero::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+                    .conteo-numero[type="number"] { -moz-appearance: textfield; appearance: textfield; }
+                </style>
+                <div class="d-flex flex-wrap align-items-center gap-4">
+                    <div class="d-flex align-items-center gap-2">
+                        <label class="form-label fw-semibold mb-0" for="consignacion-anterior">ÚLTIMO No. DEL CONTEO ANTERIOR</label>
                         @if ($conteo->esPrimero())
                             {{-- Primer conteo: el punto de partida se digita (como un saldo inicial). --}}
                             <input type="number" name="consignacion_anterior" id="consignacion-anterior" min="0"
-                                class="form-control" value="{{ $resumen['consignacion_anterior'] }}" @disabled(! $editable)>
+                                class="form-control conteo-numero" value="{{ $resumen['consignacion_anterior'] }}" @disabled(! $editable)>
                         @else
-                            <input type="text" id="consignacion-anterior" class="form-control" readonly
+                            <input type="text" id="consignacion-anterior" class="form-control conteo-numero" readonly
                                 value="{{ $resumen['consignacion_anterior'] }}">
                         @endif
                     </div>
-                    <div class="col-sm-6 col-lg-3">
-                        <label class="form-label fw-semibold" for="ultima-consignacion">ÚLTIMO No. DE ESTE CONTEO</label>
-                        <input type="number" name="ultima_consignacion" id="ultima-consignacion" min="1" class="form-control"
+                    <div class="d-flex align-items-center gap-2">
+                        <label class="form-label fw-semibold mb-0" for="ultima-consignacion">ÚLTIMO No. DE ESTE CONTEO</label>
+                        <input type="number" name="ultima_consignacion" id="ultima-consignacion" min="1" class="form-control conteo-numero"
                             value="{{ old('ultima_consignacion', $conteo->ultima_consignacion) }}" @disabled(! $editable) required>
                     </div>
                 </div>
