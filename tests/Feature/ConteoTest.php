@@ -108,7 +108,7 @@ test('el conteo cuadra efectivo, consignaciones internas, gastos, consignaciones
     $chevron = ConteoTercero::query()->where('nombre', 'Chevron Petroleum Company')->sole();
     $davivienda = ConteoTercero::query()->where('nombre', 'DAVIVIENDA CTA CTE')->sole();
 
-    guardarSeccion($admin, $conteo, 'aplicaciones', ['filas' => [
+    guardarSeccion($admin, $conteo, 'gastos', ['aplicaciones' => [
         ['conteo_destino_id' => $mayorista->id, 'conteo_tercero_id' => $chevron->id, 'valor' => '25.000.000'],
         ['conteo_destino_id' => $cuentaByH->id, 'conteo_tercero_id' => $davivienda->id, 'valor' => '733.000'],
     ]])->assertSessionHasNoErrors();
@@ -155,6 +155,13 @@ test('el conteo cuadra efectivo, consignaciones internas, gastos, consignaciones
         ->assertSeeInOrder(['CUADRE DE EFECTIVO', 'SUB TOTAL', 'RETIROS ANTES DE ESTE CIERRE', 'Carlos', 'TOTAL RETIROS', 'TOTAL CIERRE', '31.042.800'])
         ->assertDontSee('Retiros antes del cierre</a>', false);
     $this->actingAs($admin)->get(route('conteos.seccion', [$conteo, 'retiros']))->assertRedirect(route('conteos.seccion', [$conteo, 'efectivo']));
+
+    // La consignación en bancos va en el cuadre del conteo, debajo de gastos y retiros; ya no tiene pestaña.
+    $this->actingAs($admin)->get(route('conteos.seccion', [$conteo, 'gastos']))
+        ->assertSeeInOrder(['GASTOS Y RETIROS EN ESTE CONTEO', 'CUADRE DE ESTE CONTEO', 'CONSIGNACIÓN EN BANCOS Y OTRAS APLICACIONES', 'TOTAL CONSIGNACIONES Y OTROS'])
+        ->assertSee('name="aplicaciones[0][conteo_destino_id]"', false)
+        ->assertDontSee('Consignación en bancos</a>', false);
+    $this->actingAs($admin)->get(route('conteos.seccion', [$conteo, 'aplicaciones']))->assertRedirect(route('conteos.seccion', [$conteo, 'gastos']).'#aplicaciones');
 
     // Imprimir, Excel y PDF.
     $this->actingAs($admin)->get(route('conteos.reporte', $conteo))->assertOk()->assertSee('C O N T E O')->assertSee('31.042.800');
@@ -216,7 +223,7 @@ test('destinos, bancos y terceros se administran y no se eliminan si ya se usaro
 
     $usado = ConteoTercero::query()->where('nombre', 'Chevron Petroleum Company')->sole();
     crearConteo($admin);
-    guardarSeccion($admin, Conteo::query()->sole(), 'aplicaciones', ['filas' => [['conteo_destino_id' => '', 'conteo_tercero_id' => $usado->id, 'valor' => '1.000']]]);
+    guardarSeccion($admin, Conteo::query()->sole(), 'gastos', ['aplicaciones' => [['conteo_destino_id' => '', 'conteo_tercero_id' => $usado->id, 'valor' => '1.000']]]);
 
     $this->actingAs($admin)->delete(route('conteos.terceros.destroy', $usado))->assertSessionHasErrors('catalogo');
     $this->actingAs($admin)->delete(route('conteos.terceros.destroy', ConteoTercero::query()->where('nombre', 'BANCO DE BOGOTA')->sole()))->assertSessionHasNoErrors();
@@ -326,27 +333,27 @@ test('la diferencia no consignada pasa al siguiente conteo con referencia al con
     guardarSeccion($admin, $primero, 'consignaciones', ['ultima_consignacion' => '4560']);
     $destino = ConteoDestino::firstOrCreate(['nombre' => 'Abono a Mayorista']);
     $tercero = ConteoTercero::firstOrCreate(['nombre' => 'Chevron Petroleum Company'], ['tipo' => 'tercero']);
-    guardarSeccion($admin, $primero, 'aplicaciones', ['filas' => [['conteo_destino_id' => $destino->id, 'conteo_tercero_id' => $tercero->id, 'valor' => '9.200.000']]]);
+    guardarSeccion($admin, $primero, 'gastos', ['aplicaciones' => [['conteo_destino_id' => $destino->id, 'conteo_tercero_id' => $tercero->id, 'valor' => '9.200.000']]]);
 
     expect(app(ConteoService::class)->resumen($primero)['no_consignado'])->toBe(35000.0);
 
     crearConteo($admin, ['fecha' => '2026-10-30']);
     $segundo = Conteo::query()->where('numero', 2)->sole();
     guardarSeccion($admin, $segundo, 'efectivo', ['billetes' => [['denominacion' => '100 MIL', 'valor' => '1.000.000']]]);
-    guardarSeccion($admin, $segundo, 'aplicaciones', ['filas' => [['conteo_destino_id' => $destino->id, 'conteo_tercero_id' => $tercero->id, 'valor' => '1.035.000']]]);
+    guardarSeccion($admin, $segundo, 'gastos', ['aplicaciones' => [['conteo_destino_id' => $destino->id, 'conteo_tercero_id' => $tercero->id, 'valor' => '1.035.000']]]);
 
     $resumen = app(ConteoService::class)->resumen($segundo);
     expect($resumen['no_consignado_anterior'])->toBe(35000.0)
         // 1.000.000 a consignar + 35.000 que venían − 1.035.000 consignado.
         ->and($resumen['no_consignado'])->toBe(0.0);
 
-    $this->actingAs($admin)->get(route('conteos.seccion', [$segundo, 'aplicaciones']))
+    $this->actingAs($admin)->get(route('conteos.seccion', [$segundo, 'gastos']))
         ->assertSee('DIFERENCIAS NO CONSIGNADAS DE CONTEOS ANTERIORES')
-        ->assertSee(route('conteos.seccion', [$primero, 'aplicaciones']))
+        ->assertSee(route('conteos.seccion', [$primero, 'gastos']).'#aplicaciones')
         ->assertSee('conteo No. 1');
 
     // Sin diferencia anterior la fila no aparece.
-    $this->actingAs($admin)->get(route('conteos.seccion', [$primero, 'aplicaciones']))
+    $this->actingAs($admin)->get(route('conteos.seccion', [$primero, 'gastos']))
         ->assertDontSee('id="no-consignado-anterior"', false);
 });
 
@@ -391,7 +398,7 @@ test('un exceso consignado (no consignado negativo) no pasa al siguiente conteo'
     guardarSeccion($admin, $primero, 'efectivo', ['billetes' => [['denominacion' => '100 MIL', 'valor' => '1.000.000']]]);
     guardarSeccion($admin, $primero, 'consignaciones', ['ultima_consignacion' => '4560']);
     // Se consignaron 998.000 de más.
-    guardarSeccion($admin, $primero, 'aplicaciones', ['filas' => [['conteo_destino_id' => $destino->id, 'conteo_tercero_id' => $tercero->id, 'valor' => '1.998.000']]]);
+    guardarSeccion($admin, $primero, 'gastos', ['aplicaciones' => [['conteo_destino_id' => $destino->id, 'conteo_tercero_id' => $tercero->id, 'valor' => '1.998.000']]]);
 
     expect(app(ConteoService::class)->resumen($primero)['no_consignado'])->toBe(-998000.0);
 
@@ -399,6 +406,6 @@ test('un exceso consignado (no consignado negativo) no pasa al siguiente conteo'
     $segundo = Conteo::query()->where('numero', 2)->sole();
 
     expect(app(ConteoService::class)->resumen($segundo)['no_consignado_anterior'])->toBe(0.0);
-    $this->actingAs($admin)->get(route('conteos.seccion', [$segundo, 'aplicaciones']))
+    $this->actingAs($admin)->get(route('conteos.seccion', [$segundo, 'gastos']))
         ->assertDontSee('id="no-consignado-anterior"', false);
 });

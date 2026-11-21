@@ -53,9 +53,13 @@ class ConteoController extends Controller
 
     public function seccion(Conteo $conteo, string $seccion, ConteoService $conteos, ComprobanteConteoService $comprobantes): View|RedirectResponse
     {
-        // Los retiros antes del cierre ahora están en el cuadre de efectivo (enlaces anteriores).
+        // Pestañas que se unieron a otras (enlaces anteriores): los retiros antes del cierre van en
+        // el cuadre de efectivo y la consignación en bancos en el cuadre del conteo.
         if ($seccion === 'retiros') {
             return redirect()->route('conteos.seccion', [$conteo, 'efectivo']);
+        }
+        if ($seccion === 'aplicaciones') {
+            return redirect()->to(route('conteos.seccion', [$conteo, 'gastos']).'#aplicaciones');
         }
 
         abort_unless(array_key_exists($seccion, Conteo::SECCIONES), 404);
@@ -71,7 +75,7 @@ class ConteoController extends Controller
             'destinos' => ConteoDestino::query()->orderBy('nombre')->get(),
             'terceros' => ConteoTercero::query()->orderBy('nombre')->get(),
             'fueraDeConsecutivo' => $seccion === 'consignaciones' ? $conteos->fueraDeConsecutivo($conteo) : collect(),
-            'cuentas' => in_array($seccion, ['aplicaciones', 'comprobante'], true) ? $comprobantes->cuentas() : collect(),
+            'cuentas' => in_array($seccion, ['gastos', 'comprobante'], true) ? $comprobantes->cuentas() : collect(),
             'comprobante' => $seccion === 'comprobante' ? $comprobantes->comprobante($conteo) : null,
         ]);
     }
@@ -117,12 +121,16 @@ class ConteoController extends Controller
                 'manuales.*.valor' => $fila,
                 'manuales.*.concepto' => ['nullable', 'string', 'max:200'],
             ],
-            'aplicaciones' => [
+            // Cuadre del conteo: gastos y retiros (filas) y consignación en bancos y otras aplicaciones.
+            'gastos' => [
                 'filas' => ['nullable', 'array'],
-                'filas.*.conteo_destino_id' => ['nullable', 'integer', 'exists:conteo_destinos,id'],
-                'filas.*.conteo_tercero_id' => ['nullable', 'integer', 'exists:conteo_terceros,id'],
-                'filas.*.conteo_cuenta_id' => ['nullable', 'integer', 'exists:conteo_cuentas,id'],
+                'filas.*.concepto' => ['nullable', 'string', 'max:200'],
                 'filas.*.valor' => $fila,
+                'aplicaciones' => ['nullable', 'array'],
+                'aplicaciones.*.conteo_destino_id' => ['nullable', 'integer', 'exists:conteo_destinos,id'],
+                'aplicaciones.*.conteo_tercero_id' => ['nullable', 'integer', 'exists:conteo_terceros,id'],
+                'aplicaciones.*.conteo_cuenta_id' => ['nullable', 'integer', 'exists:conteo_cuentas,id'],
+                'aplicaciones.*.valor' => $fila,
             ],
             default => [
                 'filas' => ['nullable', 'array'],

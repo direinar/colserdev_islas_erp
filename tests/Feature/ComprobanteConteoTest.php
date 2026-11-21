@@ -31,7 +31,7 @@ function aplicacionesDelEjemplo(object $test, array $cuentas = []): array
 test('el comprobante del conteo debita cada consignacion con su cuenta y acredita caja por el total, como la plantilla', function () {
     $this->actingAs($this->admin)->post(route('conteos.store'), ['fecha' => '2026-11-17', 'consignacion_anterior' => '100', 'saldo_moneda_inicial' => '0']);
     $conteo = Conteo::query()->sole();
-    $this->actingAs($this->admin)->post(route('conteos.guardar', [$conteo, 'aplicaciones']), ['filas' => aplicacionesDelEjemplo($this)])
+    $this->actingAs($this->admin)->post(route('conteos.guardar', [$conteo, 'gastos']), ['aplicaciones' => aplicacionesDelEjemplo($this)])
         ->assertSessionHasNoErrors();
 
     // Sin cuentas todavía: se avisa.
@@ -65,11 +65,11 @@ test('el siguiente conteo propone la ultima cuenta usada y el anterior sigue ace
     $this->actingAs($this->admin)->post(route('conteos.store'), ['fecha' => '2026-11-08', 'consignacion_anterior' => '100', 'saldo_moneda_inicial' => '0']);
     $primero = Conteo::query()->sole();
     $cuentas = [($this->cuenta)('23050501'), ($this->cuenta)('210512'), ($this->cuenta)('530520')];
-    $this->actingAs($this->admin)->post(route('conteos.guardar', [$primero, 'aplicaciones']), ['filas' => aplicacionesDelEjemplo($this, $cuentas)]);
+    $this->actingAs($this->admin)->post(route('conteos.guardar', [$primero, 'gastos']), ['aplicaciones' => aplicacionesDelEjemplo($this, $cuentas)]);
 
     $this->actingAs($this->admin)->post(route('conteos.store'), ['fecha' => '2026-11-17']);
     $segundo = Conteo::query()->where('numero', 2)->sole();
-    $this->actingAs($this->admin)->post(route('conteos.guardar', [$segundo, 'aplicaciones']), ['filas' => aplicacionesDelEjemplo($this)])
+    $this->actingAs($this->admin)->post(route('conteos.guardar', [$segundo, 'gastos']), ['aplicaciones' => aplicacionesDelEjemplo($this)])
         ->assertSessionHasNoErrors();
 
     expect($segundo->aplicaciones()->orderBy('id')->pluck('conteo_cuenta_id')->all())->toBe($cuentas);
@@ -108,7 +108,7 @@ test('la tabla de cuentas se amplia y no se elimina una cuenta ya usada', functi
     $this->actingAs($this->admin)->post(route('conteos.cuentas.store'), ['cuenta' => '210518', 'concepto' => 'CUOTA CREDITO VEHICULO'])->assertSessionHasErrors('concepto');
 
     $this->actingAs($this->admin)->post(route('conteos.store'), ['fecha' => '2026-11-17', 'consignacion_anterior' => '100', 'saldo_moneda_inicial' => '0']);
-    $this->actingAs($this->admin)->post(route('conteos.guardar', [Conteo::query()->sole(), 'aplicaciones']), ['filas' => aplicacionesDelEjemplo($this, [($this->cuenta)('23050501')])]);
+    $this->actingAs($this->admin)->post(route('conteos.guardar', [Conteo::query()->sole(), 'gastos']), ['aplicaciones' => aplicacionesDelEjemplo($this, [($this->cuenta)('23050501')])]);
 
     $this->actingAs($this->admin)->delete(route('conteos.cuentas.destroy', ($this->cuenta)('23050501')))->assertSessionHasErrors('catalogo');
     $this->actingAs($this->admin)->delete(route('conteos.cuentas.destroy', ($this->cuenta)('210518')))->assertSessionHasNoErrors();

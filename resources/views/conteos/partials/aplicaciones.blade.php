@@ -1,19 +1,11 @@
-@extends('layouts.app')
-
-@section('title', 'Conteo - Consignación en bancos')
-
-@section('content')
-    @include('conteos.partials.encabezado')
-
+{{-- Consignación en bancos y otras aplicaciones del conteo (dentro del Cuadre del conteo). --}}
     @php
         $pesos = fn ($valor): string => number_format((float) $valor, 0, ',', '.');
         $pesosInput = fn ($valor): string => (float) $valor != 0 ? number_format((float) $valor, 0, ',', '.') : '';
         $filas = $conteo->aplicaciones->isEmpty() ? collect([null]) : $conteo->aplicaciones->values();
     @endphp
 
-    <form method="POST" action="{{ route('conteos.guardar', [$conteo, 'aplicaciones']) }}">
-        @csrf
-        <div class="card">
+        <div class="card" id="aplicaciones">
             <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
                 <strong>CONSIGNACIÓN EN BANCOS Y OTRAS APLICACIONES</strong>
                 <a href="{{ route('conteos.catalogos') }}" class="btn btn-sm btn-outline-secondary">Destinos, terceros y cuentas</a>
@@ -36,7 +28,7 @@
                             @foreach ($filas as $i => $fila)
                                 <tr>
                                     <td>
-                                        <select name="filas[{{ $i }}][conteo_destino_id]" class="form-select form-select-sm" @disabled(! $editable)>
+                                        <select name="aplicaciones[{{ $i }}][conteo_destino_id]" class="form-select form-select-sm" @disabled(! $editable)>
                                             <option value="">Seleccione destino</option>
                                             @foreach ($destinos as $destino)
                                                 <option value="{{ $destino->id }}" @selected($fila?->conteo_destino_id === $destino->id)>{{ $destino->nombre }}</option>
@@ -44,7 +36,7 @@
                                         </select>
                                     </td>
                                     <td>
-                                        <select name="filas[{{ $i }}][conteo_tercero_id]" class="form-select form-select-sm" @disabled(! $editable)>
+                                        <select name="aplicaciones[{{ $i }}][conteo_tercero_id]" class="form-select form-select-sm" @disabled(! $editable)>
                                             <option value="">Seleccione banco o tercero</option>
                                             @foreach ($terceros as $tercero)
                                                 <option value="{{ $tercero->id }}" @selected($fila?->conteo_tercero_id === $tercero->id)>{{ $tercero->nombre }}</option>
@@ -52,14 +44,14 @@
                                         </select>
                                     </td>
                                     <td>
-                                        <select name="filas[{{ $i }}][conteo_cuenta_id]" class="form-select form-select-sm" @disabled(! $editable) aria-label="Cuenta contable">
+                                        <select name="aplicaciones[{{ $i }}][conteo_cuenta_id]" class="form-select form-select-sm" @disabled(! $editable) aria-label="Cuenta contable">
                                             <option value="">Automática (la última usada)</option>
                                             @foreach ($cuentas as $cuenta)
                                                 <option value="{{ $cuenta->id }}" @selected($fila?->conteo_cuenta_id === $cuenta->id)>{{ $cuenta->etiqueta() }}</option>
                                             @endforeach
                                         </select>
                                     </td>
-                                    <td><input type="text" name="filas[{{ $i }}][valor]" class="form-control form-control-sm text-end"
+                                    <td><input type="text" name="aplicaciones[{{ $i }}][valor]" class="form-control form-control-sm text-end"
                                             inputmode="decimal" value="{{ $fila ? $pesosInput($fila->valor) : '' }}" @disabled(! $editable)></td>
                                     @if ($editable)
                                         <td class="text-center"><button type="button" class="btn btn-sm btn-danger quitar-aplicacion" aria-label="Quitar fila">×</button></td>
@@ -83,7 +75,7 @@
                                         DIFERENCIAS NO CONSIGNADAS DE CONTEOS ANTERIORES
                                         @if ($conteoAnterior)
                                             <span class="small">(viene del
-                                                <a href="{{ route('conteos.seccion', [$conteoAnterior, 'aplicaciones']) }}">conteo No. {{ $conteoAnterior->numero }} — {{ $conteoAnterior->fecha->format('d/m/Y') }}</a>)</span>
+                                                <a href="{{ route('conteos.seccion', [$conteoAnterior, 'gastos']).'#aplicaciones' }}">conteo No. {{ $conteoAnterior->numero }} — {{ $conteoAnterior->fecha->format('d/m/Y') }}</a>)</span>
                                         @endif
                                     </td>
                                     <td @class(['text-end', 'text-danger' => round($resumen['no_consignado_anterior']) < 0])>{{ $pesos($resumen['no_consignado_anterior']) }}</td>
@@ -115,13 +107,6 @@
             </div>
         </div>
 
-        @if ($editable)
-            <div class="text-end mt-3">
-                <button type="submit" class="btn btn-primary"><i class="bi bi-save" aria-hidden="true"></i> GUARDAR</button>
-            </div>
-        @endif
-    </form>
-
     @if ($editable)
         <script>
             (function() {
@@ -131,7 +116,7 @@
                 document.getElementById('agregar-aplicacion').addEventListener('click', function() {
                     const nueva = cuerpo.querySelector('tr').cloneNode(true);
                     nueva.querySelectorAll('input, select').forEach(campo => {
-                        campo.name = campo.name.replace(/filas\[\d+\]/, 'filas[' + siguiente + ']');
+                        campo.name = campo.name.replace(/aplicaciones\[\d+\]/, 'aplicaciones[' + siguiente + ']');
                         campo.value = '';
                         delete campo.dataset.decInit;
                     });
@@ -152,4 +137,3 @@
             })();
         </script>
     @endif
-@endsection

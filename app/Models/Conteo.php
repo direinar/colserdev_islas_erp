@@ -21,7 +21,8 @@ class Conteo extends Model
 
     /**
      * Submódulos: una tabla de la plantilla cada uno. Los retiros antes del cierre van en el
-     * mismo submódulo del cuadre de efectivo (suman al TOTAL CIERRE).
+     * mismo submódulo del cuadre de efectivo (suman al TOTAL CIERRE) y la consignación en bancos
+     * y otras aplicaciones en el del cuadre del conteo.
      *
      * @var array<string, string>
      */
@@ -29,7 +30,6 @@ class Conteo extends Model
         'efectivo' => 'Cuadre de efectivo',
         'consignaciones' => 'Consignaciones internas',
         'gastos' => 'Cuadre del conteo',
-        'aplicaciones' => 'Consignación en bancos',
         'moneda' => 'Control de moneda',
         'comprobante' => 'Comprobante contable',
     ];

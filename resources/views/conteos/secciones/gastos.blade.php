@@ -45,6 +45,11 @@
                     </div>
                 </div>
             </div>
+
+            {{-- Consignación en bancos y otras aplicaciones: antes era otra pestaña. --}}
+            <div class="col-12">
+                @include('conteos.partials.aplicaciones')
+            </div>
         </div>
 
         @if ($editable)

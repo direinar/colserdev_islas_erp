@@ -201,11 +201,27 @@ class ConteoService
             match ($seccion) {
                 'efectivo' => $this->guardarEfectivo($conteo, $datos),
                 'consignaciones' => $this->guardarConsignaciones($conteo, $datos),
-                'gastos' => $this->guardarMovimientos($conteo, ConteoMovimiento::TIPO_GASTO, $datos['filas'] ?? []),
-                'aplicaciones' => $this->guardarAplicaciones($conteo, $datos['filas'] ?? []),
+                'gastos' => $this->guardarCuadre($conteo, $datos),
                 'moneda' => $this->guardarMoneda($conteo, $datos),
             };
         });
+    }
+
+    /**
+     * Cuadre del conteo: gastos y retiros (filas) y, en la misma pantalla, la consignación en
+     * bancos y otras aplicaciones. Cada parte se guarda solo si viene en los datos.
+     *
+     * @param  array<string, mixed>  $datos
+     */
+    private function guardarCuadre(Conteo $conteo, array $datos): void
+    {
+        if (array_key_exists('filas', $datos)) {
+            $this->guardarMovimientos($conteo, ConteoMovimiento::TIPO_GASTO, (array) ($datos['filas'] ?? []));
+        }
+
+        if (array_key_exists('aplicaciones', $datos)) {
+            $this->guardarAplicaciones($conteo, (array) ($datos['aplicaciones'] ?? []));
+        }
     }
 
     /**

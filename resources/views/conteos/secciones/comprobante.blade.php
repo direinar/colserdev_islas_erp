@@ -27,7 +27,7 @@
                 @if ($comprobante['lineas'] === [])
                     <div class="text-center text-muted py-4">
                         Este conteo no tiene consignaciones en bancos ni otras aplicaciones.
-                        <a href="{{ route('conteos.seccion', [$conteo, 'aplicaciones']) }}">Regístrelas en «Consignación en bancos»</a>.
+                        <a href="{{ route('conteos.seccion', [$conteo, 'gastos']) }}#aplicaciones">Regístrelas en «Cuadre del conteo» → Consignación en bancos</a>.
                     </div>
                 @else
                     <div class="d-flex flex-wrap gap-2 mb-2">
