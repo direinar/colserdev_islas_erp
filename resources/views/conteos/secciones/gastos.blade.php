@@ -10,7 +10,7 @@
         <div class="row g-3">
             <div class="col-lg-7">
                 <div class="card">
-                    <div class="card-header fw-bold">GASTOS</div>
+                    <div class="card-header fw-bold">GASTOS Y RETIROS EN ESTE CONTEO</div>
                     <div class="card-body">
                         @include('conteos.partials.filas', [
                             'filas' => $conteo->movimientos->where('tipo', \App\Models\ConteoMovimiento::TIPO_GASTO),
