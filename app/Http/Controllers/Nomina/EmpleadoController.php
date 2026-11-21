@@ -124,6 +124,7 @@ class EmpleadoController extends Controller
             'eps' => ['nullable', 'string', 'max:255'],
             'fondo_pension' => ['nullable', 'string', 'max:255'],
             'fondo_cesantias' => ['nullable', 'string', 'max:255'],
+            'arl' => ['nullable', 'string', 'max:255'],
             'forma_pago' => ['required', Rule::in(array_keys(Empleado::formasPago()))],
             'banco' => ['nullable', 'required_if:forma_pago,transferencia', 'string', 'max:255'],
             'tipo_cuenta' => ['nullable', 'required_if:forma_pago,transferencia', Rule::in(array_keys(Empleado::tiposCuenta()))],

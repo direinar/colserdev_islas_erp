@@ -84,6 +84,8 @@
                             <dd class="col-sm-7">{{ $empleado->fondo_pension ?: '—' }}</dd>
                             <dt class="col-sm-5">Fondo de cesantías</dt>
                             <dd class="col-sm-7">{{ $empleado->fondo_cesantias ?: '—' }}</dd>
+                            <dt class="col-sm-5">ARL</dt>
+                            <dd class="col-sm-7">{{ $empleado->arl ?: '—' }}</dd>
                         </dl>
                     </div>
                 </div>

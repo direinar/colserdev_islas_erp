@@ -34,6 +34,7 @@ class Empleado extends Model
         'eps',
         'fondo_pension',
         'fondo_cesantias',
+        'arl',
         'forma_pago',
         'banco',
         'tipo_cuenta',

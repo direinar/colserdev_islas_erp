@@ -44,6 +44,18 @@ test('crea un empleado con el sueldo digitado con separadores de miles', functio
         ->and($empleado->aplica_recargos)->toBeTrue();
 });
 
+test('la seguridad social del empleado incluye la ARL', function () {
+    $admin = User::factory()->create(['role' => User::ROLE_ADMINISTRADOR]);
+
+    $this->actingAs($admin)->post(route('nomina.empleados.store'), datosEmpleado(['eps' => 'Nueva EPS', 'arl' => 'Positiva']))
+        ->assertSessionHasNoErrors();
+    $empleado = Empleado::sole();
+
+    expect($empleado->arl)->toBe('Positiva');
+    $this->actingAs($admin)->get(route('nomina.empleados.show', $empleado))->assertSeeInOrder(['Seguridad social', 'ARL', 'Positiva']);
+    $this->actingAs($admin)->get(route('nomina.empleados.edit', $empleado))->assertSee('name="arl"', false)->assertSee('value="Positiva"', false);
+});
+
 test('exige vencimiento al contrato fijo y cuenta bancaria al pago por transferencia', function () {
     $admin = User::factory()->create(['role' => User::ROLE_ADMINISTRADOR]);
 

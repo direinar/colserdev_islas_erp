@@ -101,17 +101,21 @@
 <div class="card mb-3">
     <div class="card-header fw-semibold">Seguridad social</div>
     <div class="card-body row">
-        <div class="col-md-4 mb-3">
+        <div class="col-md-6 col-lg-3 mb-3">
             <label for="campo-eps" class="form-label">EPS</label>
             <input id="campo-eps" type="text" name="eps" class="form-control" value="{{ old('eps', $empleado?->eps) }}">
         </div>
-        <div class="col-md-4 mb-3">
+        <div class="col-md-6 col-lg-3 mb-3">
             <label for="campo-fondo_pension" class="form-label">Fondo de pensiones</label>
             <input id="campo-fondo_pension" type="text" name="fondo_pension" class="form-control" value="{{ old('fondo_pension', $empleado?->fondo_pension) }}">
         </div>
-        <div class="col-md-4 mb-3">
+        <div class="col-md-6 col-lg-3 mb-3">
             <label for="campo-fondo_cesantias" class="form-label">Fondo de cesantías</label>
             <input id="campo-fondo_cesantias" type="text" name="fondo_cesantias" class="form-control" value="{{ old('fondo_cesantias', $empleado?->fondo_cesantias) }}">
+        </div>
+        <div class="col-md-6 col-lg-3 mb-3">
+            <label for="campo-arl" class="form-label">ARL</label>
+            <input id="campo-arl" type="text" name="arl" class="form-control" value="{{ old('arl', $empleado?->arl) }}">
         </div>
     </div>
 </div>
