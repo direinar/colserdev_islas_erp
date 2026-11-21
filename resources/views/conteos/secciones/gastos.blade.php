@@ -23,7 +23,7 @@
             </div>
             <div class="col-lg-5">
                 <div class="card">
-                    <div class="card-header fw-bold">GASTOS Y RETIROS EN ESTE CONTEO</div>
+                    <div class="card-header fw-bold">CUADRE DE ESTE CONTEO</div>
                     <div class="card-body">
                         <table class="table table-bordered table-sm mb-0 conteo-tabla">
                             <tbody>
