@@ -351,8 +351,8 @@ test('la diferencia no consignada pasa al siguiente conteo con referencia al con
         ->assertSee('DIFERENCIAS NO CONSIGNADAS DE CONTEOS ANTERIORES')
         ->assertSee(route('conteos.seccion', [$primero, 'gastos']).'#aplicaciones')
         ->assertSee('conteo No. 1')
-        // En el cuadre de este conteo, después de A CONSIGNAR: la diferencia no consignada del conteo anterior.
-        ->assertSeeInOrder(['CUADRE DE ESTE CONTEO', 'A CONSIGNAR', '1.000.000', 'VR. SIN CONSIGNAR CONTEOS ANTERIORES', 'conteo No. 1', '35.000']);
+        // En el cuadre de este conteo, después del SUB TOTAL (a consignar): la diferencia no consignada del conteo anterior.
+        ->assertSeeInOrder(['CUADRE DE ESTE CONTEO', 'SUB TOTAL', '1.000.000', 'VR. SIN CONSIGNAR CONTEOS ANTERIORES', 'conteo No. 1', '35.000']);
 
     // Sin diferencia anterior la fila no aparece.
     $this->actingAs($admin)->get(route('conteos.seccion', [$primero, 'gastos']))

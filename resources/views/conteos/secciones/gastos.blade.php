@@ -36,7 +36,7 @@
                                     <td class="text-end">{{ number_format($resumen['gastos'], 0, ',', '.') }}</td>
                                 </tr>
                                 <tr class="total">
-                                    <th>A CONSIGNAR</th>
+                                    <th>SUB TOTAL</th>
                                     <td @class(['text-end', 'text-danger' => round($resumen['a_consignar']) < 0])>{{ number_format($resumen['a_consignar'], 0, ',', '.') }}</td>
                                 </tr>
                                 {{-- DIFERENCIA NO CONSIGNADA del conteo anterior (ya trae la de los anteriores a él). --}}
@@ -52,7 +52,7 @@
                                 </tr>
                             </tbody>
                         </table>
-                        <p class="small text-muted mt-2 mb-0">A consignar = total billetes − total gastos. VR. sin consignar conteos anteriores =
+                        <p class="small text-muted mt-2 mb-0">Sub total = total billetes − total gastos. VR. sin consignar conteos anteriores =
                             diferencia no consignada del conteo anterior. Se actualiza al GUARDAR.</p>
                     </div>
                 </div>
