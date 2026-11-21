@@ -20,13 +20,13 @@ class Conteo extends Model
     public const DENOMINACIONES = ['100 MIL', '50 MIL', '20 MIL', '10 MIL', '5 MIL', 'DOS MIL', 'UN MIL', 'FAJOS'];
 
     /**
-     * Submódulos: una tabla de la plantilla cada uno.
+     * Submódulos: una tabla de la plantilla cada uno. Los retiros antes del cierre van en el
+     * mismo submódulo del cuadre de efectivo (suman al TOTAL CIERRE).
      *
      * @var array<string, string>
      */
     public const SECCIONES = [
         'efectivo' => 'Cuadre de efectivo',
-        'retiros' => 'Retiros antes del cierre',
         'consignaciones' => 'Consignaciones internas',
         'gastos' => 'Cuadre del conteo',
         'aplicaciones' => 'Consignación en bancos',

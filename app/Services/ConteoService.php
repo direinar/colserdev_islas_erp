@@ -200,7 +200,6 @@ class ConteoService
         DB::transaction(function () use ($conteo, $seccion, $datos): void {
             match ($seccion) {
                 'efectivo' => $this->guardarEfectivo($conteo, $datos),
-                'retiros' => $this->guardarMovimientos($conteo, ConteoMovimiento::TIPO_RETIRO, $datos['filas'] ?? []),
                 'consignaciones' => $this->guardarConsignaciones($conteo, $datos),
                 'gastos' => $this->guardarMovimientos($conteo, ConteoMovimiento::TIPO_GASTO, $datos['filas'] ?? []),
                 'aplicaciones' => $this->guardarAplicaciones($conteo, $datos['filas'] ?? []),
@@ -228,6 +227,11 @@ class ConteoService
         }
 
         $conteo->update(['moneda' => NumberParser::money($datos['moneda'] ?? null)]);
+
+        // Retiros antes de este cierre: se digitan en la misma pantalla del cuadre de efectivo.
+        if (array_key_exists('filas', $datos)) {
+            $this->guardarMovimientos($conteo, ConteoMovimiento::TIPO_RETIRO, (array) ($datos['filas'] ?? []));
+        }
     }
 
     /**

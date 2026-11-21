@@ -51,8 +51,13 @@ class ConteoController extends Controller
             ->with('success', 'Conteo No. '.$conteo->numero.' creado. Digite el cuadre de efectivo.');
     }
 
-    public function seccion(Conteo $conteo, string $seccion, ConteoService $conteos, ComprobanteConteoService $comprobantes): View
+    public function seccion(Conteo $conteo, string $seccion, ConteoService $conteos, ComprobanteConteoService $comprobantes): View|RedirectResponse
     {
+        // Los retiros antes del cierre ahora están en el cuadre de efectivo (enlaces anteriores).
+        if ($seccion === 'retiros') {
+            return redirect()->route('conteos.seccion', [$conteo, 'efectivo']);
+        }
+
         abort_unless(array_key_exists($seccion, Conteo::SECCIONES), 404);
 
         $conteo->load(['billetes', 'movimientos', 'consignaciones.turno', 'aplicaciones.cuenta', 'aplicaciones.destino', 'aplicaciones.tercero']);
@@ -95,6 +100,11 @@ class ConteoController extends Controller
                 'billetes.*.denominacion' => ['nullable', Rule::in(Conteo::DENOMINACIONES)],
                 'billetes.*.valor' => $fila,
                 'moneda' => $fila,
+                // Retiros antes de este cierre (misma pantalla).
+                'filas' => ['nullable', 'array'],
+                'filas.*.nombre' => ['nullable', 'string', 'max:120'],
+                'filas.*.concepto' => ['nullable', 'string', 'max:200'],
+                'filas.*.valor' => $fila,
             ],
             'consignaciones' => [
                 'ultima_consignacion' => ['required', 'integer', 'min:1'],

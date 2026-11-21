@@ -90,12 +90,12 @@ test('el conteo cuadra efectivo, consignaciones internas, gastos, consignaciones
             ['denominacion' => 'FAJOS', 'valor' => '17.400.000'],
         ],
         'moneda' => '209.800',
+        // Retiros antes de este cierre: en la misma pantalla del cuadre de efectivo.
+        'filas' => [
+            ['nombre' => 'Carlos', 'concepto' => 'Cambio', 'valor' => '100.000'],
+            ['nombre' => '', 'concepto' => '', 'valor' => ''],
+        ],
     ])->assertSessionHasNoErrors();
-
-    guardarSeccion($admin, $conteo, 'retiros', ['filas' => [
-        ['nombre' => 'Carlos', 'concepto' => 'Cambio', 'valor' => '100.000'],
-        ['nombre' => '', 'concepto' => '', 'valor' => ''],
-    ]])->assertSessionHasNoErrors();
 
     // Del 4560 (siguiente al 4559 del conteo anterior) al 4563; el 4562 no está en planillas.
     guardarSeccion($admin, $conteo, 'consignaciones', ['ultima_consignacion' => '4563'])->assertSessionHasNoErrors();
@@ -149,6 +149,12 @@ test('el conteo cuadra efectivo, consignaciones internas, gastos, consignaciones
     foreach (array_keys(Conteo::SECCIONES) as $seccion) {
         $this->actingAs($admin)->get(route('conteos.seccion', [$conteo, $seccion]))->assertOk()->assertSee(Conteo::SECCIONES[$seccion]);
     }
+
+    // Los retiros antes del cierre van en el cuadre de efectivo, con RETIROS y TOTAL CIERRE; ya no tienen pestaña.
+    $this->actingAs($admin)->get(route('conteos.seccion', [$conteo, 'efectivo']))
+        ->assertSeeInOrder(['CUADRE DE EFECTIVO', 'SUB TOTAL', 'RETIROS ANTES DE ESTE CIERRE', 'Carlos', 'TOTAL RETIROS', 'TOTAL CIERRE', '31.042.800'])
+        ->assertDontSee('Retiros antes del cierre</a>', false);
+    $this->actingAs($admin)->get(route('conteos.seccion', [$conteo, 'retiros']))->assertRedirect(route('conteos.seccion', [$conteo, 'efectivo']));
 
     // Imprimir, Excel y PDF.
     $this->actingAs($admin)->get(route('conteos.reporte', $conteo))->assertOk()->assertSee('C O N T E O')->assertSee('31.042.800');
