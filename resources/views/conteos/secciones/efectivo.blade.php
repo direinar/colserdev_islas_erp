@@ -96,7 +96,7 @@
                         <table class="table table-bordered table-sm mb-0 mt-3 conteo-tabla">
                             <tbody>
                                 <tr>
-                                    <th>RETIROS <span class="small fw-normal">(retiros antes de este cierre)</span></th>
+                                    <th>RETIROS ANTES DE ESTE CIERRE</th>
                                     <td class="text-end">{{ number_format($resumen['retiros'], 0, ',', '.') }}</td>
                                 </tr>
                                 <tr class="total">
